@@ -1,0 +1,400 @@
+/**
+ * Player Management Component
+ * Implements requirements 2.1, 2.2, 2.3, 2.4, 2.5
+ */
+
+import { PlayerModel, DataManager } from '../models/data-models.js';
+
+// DOM Elements
+let playerNameInput;
+let addPlayerForm;
+let playersList;
+let playerCountBadge;
+let editPlayerModal;
+let editPlayerForm;
+let editPlayerNameInput;
+let editPlayerId;
+let deleteConfirmModal;
+let deletePlayerId;
+
+/**
+ * Initialize the player management component
+ */
+export function initPlayerManagement() {
+  // Get DOM elements
+  playerNameInput = document.getElementById('player-name');
+  addPlayerForm = document.getElementById('add-player-form');
+  playersList = document.getElementById('players-list');
+  playerCountBadge = document.getElementById('player-count');
+  
+  // Create modals if they don't exist
+  createModals();
+  
+  // Set up event listeners
+  setupEventListeners();
+  
+  // Load and display players
+  loadPlayers();
+}
+
+/**
+ * Create modals for editing and deleting players
+ */
+function createModals() {
+  // Create edit player modal if it doesn't exist
+  if (!document.getElementById('edit-player-modal')) {
+    const editModalHtml = `
+      <div class="modal fade" id="edit-player-modal" tabindex="-1" aria-labelledby="editPlayerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editPlayerModalLabel">Edit Player</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="edit-player-form">
+                <div class="mb-3">
+                  <label for="edit-player-name" class="form-label">Player Name</label>
+                  <input type="text" class="form-control" id="edit-player-name" required>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-spotify" id="save-edit-player">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', editModalHtml);
+  }
+  
+  // Create delete confirmation modal if it doesn't exist
+  if (!document.getElementById('delete-player-modal')) {
+    const deleteModalHtml = `
+      <div class="modal fade" id="delete-player-modal" tabindex="-1" aria-labelledby="deletePlayerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="deletePlayerModalLabel">Delete Player</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete this player? This action cannot be undone.</p>
+              <p>This will also remove any song selections and batting order positions for this player.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-danger" id="confirm-delete-player">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', deleteModalHtml);
+  }
+  
+  // Get modal elements
+  editPlayerModal = new bootstrap.Modal(document.getElementById('edit-player-modal'));
+  editPlayerForm = document.getElementById('edit-player-form');
+  editPlayerNameInput = document.getElementById('edit-player-name');
+  deleteConfirmModal = new bootstrap.Modal(document.getElementById('delete-player-modal'));
+}
+
+/**
+ * Set up event listeners for player management
+ */
+function setupEventListeners() {
+  // Add player form submission
+  if (addPlayerForm) {
+    addPlayerForm.addEventListener('submit', handleAddPlayer);
+  }
+  
+  // Edit player form submission
+  const saveEditButton = document.getElementById('save-edit-player');
+  if (saveEditButton) {
+    saveEditButton.addEventListener('click', handleSaveEditPlayer);
+  }
+  
+  // Delete player confirmation
+  const confirmDeleteButton = document.getElementById('confirm-delete-player');
+  if (confirmDeleteButton) {
+    confirmDeleteButton.addEventListener('click', handleConfirmDeletePlayer);
+  }
+}
+
+/**
+ * Load and display players
+ */
+function loadPlayers() {
+  if (!playersList) return;
+  
+  // Clear the current list
+  playersList.innerHTML = '';
+  
+  // Get players from data manager
+  const players = DataManager.getPlayers();
+  
+  if (players.length === 0) {
+    // Display a message if no players
+    playersList.innerHTML = `
+      <li class="list-group-item text-center text-muted">
+        No players added yet. Add your first player above.
+      </li>
+    `;
+    return;
+  }
+  
+  // Add each player to the list
+  players.forEach(player => {
+    addPlayerToList(player);
+  });
+  
+  // Update player count
+  if (playerCountBadge) {
+    playerCountBadge.textContent = players.length;
+  }
+}
+
+/**
+ * Add a player to the display list
+ * @param {PlayerModel} player - The player to add
+ */
+function addPlayerToList(player) {
+  if (!playersList) return;
+  
+  const playerItem = document.createElement('li');
+  playerItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+  playerItem.dataset.playerId = player.id;
+  
+  // Get song selection for this player if it exists
+  const songSelection = DataManager.getSongSelectionForPlayer(player.id);
+  const hasSong = songSelection !== null;
+  
+  // Create player item content
+  playerItem.innerHTML = `
+    <div>
+      <h5 class="mb-1">${escapeHtml(player.name)}</h5>
+      ${hasSong ? 
+        `<small class="text-muted">
+          <i class="bi bi-music-note-beamed me-1"></i>
+          ${escapeHtml(songSelection.trackName)} - ${escapeHtml(songSelection.artistName)}
+        </small>` : 
+        '<small class="text-muted">No song selected</small>'
+      }
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-sm btn-outline-primary edit-player" title="Edit Player">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-danger delete-player" title="Delete Player">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  `;
+  
+  // Add event listeners for edit and delete buttons
+  const editButton = playerItem.querySelector('.edit-player');
+  editButton.addEventListener('click', () => openEditPlayerModal(player));
+  
+  const deleteButton = playerItem.querySelector('.delete-player');
+  deleteButton.addEventListener('click', () => openDeletePlayerModal(player.id));
+  
+  // Add to the list
+  playersList.appendChild(playerItem);
+}
+
+/**
+ * Handle adding a new player
+ * @param {Event} event - The form submission event
+ */
+function handleAddPlayer(event) {
+  event.preventDefault();
+  
+  if (!playerNameInput) return;
+  
+  const playerName = playerNameInput.value.trim();
+  
+  if (playerName) {
+    // Create a new player model
+    const player = new PlayerModel({
+      name: playerName
+    });
+    
+    // Validate and save the player
+    const validation = player.validate();
+    
+    if (validation.isValid) {
+      const result = DataManager.savePlayer(player);
+      
+      if (result.success) {
+        // Clear the form
+        playerNameInput.value = '';
+        
+        // Reload the player list
+        loadPlayers();
+        
+        // Show success message
+        showNotification('Player added successfully!', 'success');
+      } else {
+        // Show error message
+        showNotification(`Failed to add player: ${result.error}`, 'danger');
+      }
+    } else {
+      // Show validation errors
+      showNotification(`Validation error: ${validation.errors.join(', ')}`, 'danger');
+    }
+  }
+}
+
+/**
+ * Open the edit player modal
+ * @param {PlayerModel} player - The player to edit
+ */
+function openEditPlayerModal(player) {
+  if (!editPlayerModal || !editPlayerNameInput) return;
+  
+  // Set the current player data
+  editPlayerId = player.id;
+  editPlayerNameInput.value = player.name;
+  
+  // Show the modal
+  editPlayerModal.show();
+}
+
+/**
+ * Handle saving edited player
+ */
+function handleSaveEditPlayer() {
+  if (!editPlayerNameInput) return;
+  
+  const playerName = editPlayerNameInput.value.trim();
+  
+  if (playerName && editPlayerId) {
+    // Get the existing player
+    const players = DataManager.getPlayers();
+    const existingPlayer = players.find(p => p.id === editPlayerId);
+    
+    if (existingPlayer) {
+      // Update the player name
+      existingPlayer.name = playerName;
+      
+      // Validate and save the player
+      const validation = existingPlayer.validate();
+      
+      if (validation.isValid) {
+        const result = DataManager.savePlayer(existingPlayer);
+        
+        if (result.success) {
+          // Hide the modal
+          editPlayerModal.hide();
+          
+          // Reload the player list
+          loadPlayers();
+          
+          // Show success message
+          showNotification('Player updated successfully!', 'success');
+        } else {
+          // Show error message
+          showNotification(`Failed to update player: ${result.error}`, 'danger');
+        }
+      } else {
+        // Show validation errors
+        showNotification(`Validation error: ${validation.errors.join(', ')}`, 'danger');
+      }
+    }
+  }
+}
+
+/**
+ * Open the delete player confirmation modal
+ * @param {string} playerId - The ID of the player to delete
+ */
+function openDeletePlayerModal(playerId) {
+  if (!deleteConfirmModal) return;
+  
+  // Set the player ID to delete
+  deletePlayerId = playerId;
+  
+  // Show the modal
+  deleteConfirmModal.show();
+}
+
+/**
+ * Handle confirming player deletion
+ */
+function handleConfirmDeletePlayer() {
+  if (!deletePlayerId) return;
+  
+  // Delete the player
+  const result = DataManager.deletePlayer(deletePlayerId);
+  
+  if (result.success) {
+    // Hide the modal
+    deleteConfirmModal.hide();
+    
+    // Reload the player list
+    loadPlayers();
+    
+    // Show success message
+    showNotification('Player deleted successfully!', 'success');
+  } else {
+    // Show error message
+    showNotification(`Failed to delete player: ${result.error}`, 'danger');
+  }
+  
+  // Clear the player ID
+  deletePlayerId = null;
+}
+
+/**
+ * Show a notification message
+ * @param {string} message - The message to display
+ * @param {string} type - The type of notification (success, danger, etc.)
+ */
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show`;
+  notification.role = 'alert';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Find or create notification container
+  let notificationContainer = document.getElementById('notification-container');
+  if (!notificationContainer) {
+    notificationContainer = document.createElement('div');
+    notificationContainer.id = 'notification-container';
+    notificationContainer.className = 'position-fixed top-0 end-0 p-3';
+    notificationContainer.style.zIndex = '1050';
+    document.body.appendChild(notificationContainer);
+  }
+  
+  // Add notification to container
+  notificationContainer.appendChild(notification);
+  
+  // Auto-dismiss after 5 seconds
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 5000);
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ * @param {string} unsafe - The unsafe string
+ * @returns {string} - The escaped string
+ */
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

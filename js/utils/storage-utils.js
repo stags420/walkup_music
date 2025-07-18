@@ -146,7 +146,7 @@ function wouldFitInStorage(key, data) {
 }
 
 // Export the functions
-module.exports = {
+export {
   STORAGE_KEYS,
   saveData,
   getData,

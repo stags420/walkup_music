@@ -3,7 +3,7 @@
  * Implements requirements 6.1, 6.5
  */
 
-const { STORAGE_KEYS, wouldFitInStorage } = require('../utils/storage-utils');
+import { STORAGE_KEYS, wouldFitInStorage } from '../utils/storage-utils.js';
 
 // Constants for validation
 const CONSTANTS = {
@@ -659,7 +659,7 @@ class DataManager {
   }
 }
 
-module.exports = {
+export {
   CONSTANTS,
   PlayerModel,
   SongSelectionModel,

@@ -34,11 +34,8 @@ describe('Authentication Component', () => {
       writable: true
     });
 
-    // Reset location mock
-    Object.defineProperty(window, 'location', {
-      value: { href: '' },
-      writable: true
-    });
+    // Reset location mock - just reset the href property
+    window.location.href = '';
 
     // Reset document.cookie
     Object.defineProperty(document, 'cookie', {

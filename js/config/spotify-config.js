@@ -25,7 +25,7 @@ const spotifyConfig = {
     
     // The URI where Spotify will redirect after authentication
     // This must exactly match one of the Redirect URIs in your Spotify App settings
-    redirectUri: window.location.origin + '/callback.html',
+    redirectUri: 'https://stags420.github.io/walkup_music/callback.html',
     
     // The scopes define the permissions your app is requesting
     // For this app, we need:

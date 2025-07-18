@@ -137,8 +137,8 @@ footer {
     .player-controls .btn {
         margin-bottom: 0.5rem;
     }
-}/
-* Additional Responsive Styles */
+}
+/* Additional Responsive Styles */
 
 /* Extra small devices (phones, less than 576px) */
 @media (max-width: 575.98px) {
@@ -284,4 +284,44 @@ footer {
 
 .embed-responsive-1by1::before {
     padding-top: 100%;
+}
+/* Authentication Notification */
+.auth-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--spotify-black);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1050;
+    max-width: 300px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.auth-notification-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.auth-notification p {
+    margin-bottom: 10px;
+}
+
+.auth-notification.auth-error {
+    background-color: #d32f2f;
+    border-left: 4px solid #b71c1c;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }

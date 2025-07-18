@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +17,7 @@
             margin: 0;
             text-align: center;
         }
+
         .container {
             max-width: 600px;
             padding: 2rem;
@@ -23,15 +25,18 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
+
         h1 {
             color: #1DB954;
             margin-bottom: 1rem;
         }
+
         p {
             margin-bottom: 1.5rem;
             font-size: 1.1rem;
             line-height: 1.5;
         }
+
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
@@ -41,10 +46,17 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 1.5rem;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .error {
             color: #ff5252;
             background-color: rgba(255, 82, 82, 0.1);
@@ -54,6 +66,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Spotify Authentication</h1>
@@ -67,26 +80,46 @@
     <script type="module">
         import { handleAuthCallback } from './js/components/auth.js';
         import { redirectTo, getBasePath } from './js/utils/url-utils.js';
-        
+
         // This script handles the callback from Spotify OAuth authentication
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const statusMessage = document.getElementById('status-message');
             const errorContainer = document.getElementById('error-container');
             const errorMessage = document.getElementById('error-message');
-            
-            // For Authorization Code flow, the parameters are in the query string, not the hash
+
+            // Check both query parameters and hash fragment
             const queryParams = new URLSearchParams(window.location.search);
-            
-            console.log('Callback received with params:', Object.fromEntries(queryParams.entries()));
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+            // Determine which params to use (prefer query params, but use hash if query is empty)
+            const params = queryParams.has('code') || queryParams.has('error') ? queryParams : hashParams;
+
+            console.log('Callback received with query params:', Object.fromEntries(queryParams.entries()));
+            console.log('Callback received with hash params:', Object.fromEntries(hashParams.entries()));
+            console.log('Using params:', Object.fromEntries(params.entries()));
             console.log('Current URL:', window.location.href);
-            
+
+            // If we have an unsupported_response_type error, we need to switch to implicit flow
+            if (params.get('error') === 'unsupported_response_type') {
+                console.log('Detected unsupported_response_type error, redirecting to implicit flow');
+                // Store the state for the next attempt
+                localStorage.setItem('spotify_auth_retry_state', params.get('state') || '');
+
+                // Redirect to the main page to try again with implicit flow
+                statusMessage.textContent = 'Switching authentication method...';
+                setTimeout(() => {
+                    redirectTo('?retry_auth=true');
+                }, 1500);
+                return;
+            }
+
             // Process the authentication callback
-            const result = handleAuthCallback(queryParams);
-            
+            const result = handleAuthCallback(params);
+
             if (result && result.success) {
                 // Authentication successful
                 statusMessage.textContent = 'Authentication successful! Redirecting...';
-                
+
                 // Redirect back to the main application
                 setTimeout(() => {
                     redirectTo('');
@@ -95,7 +128,7 @@
                 // Authentication failed
                 statusMessage.textContent = 'Authentication failed.';
                 errorContainer.style.display = 'block';
-                
+
                 if (result && result.error) {
                     errorMessage.textContent = `Error: ${result.error}`;
                     console.error('Authentication error:', result.error);
@@ -103,7 +136,7 @@
                     errorMessage.textContent = 'An unknown error occurred during authentication.';
                     console.error('Unknown authentication error');
                 }
-                
+
                 // Add debug info to the error message
                 const debugInfo = document.createElement('div');
                 debugInfo.style.marginTop = '1rem';
@@ -112,12 +145,14 @@
                 debugInfo.innerHTML = `
                     <p>Debug Info:</p>
                     <p>URL: ${window.location.href}</p>
-                    <p>State: ${queryParams.get('state') || 'none'}</p>
-                    <p>Code: ${queryParams.get('code') ? 'present' : 'none'}</p>
-                    <p>Error: ${queryParams.get('error') || 'none'}</p>
+                    <p>Query State: ${queryParams.get('state') || 'none'}</p>
+                    <p>Hash State: ${hashParams.get('state') || 'none'}</p>
+                    <p>Code: ${params.get('code') ? 'present' : 'none'}</p>
+                    <p>Error: ${params.get('error') || 'none'}</p>
+                    <p>Stored State: ${localStorage.getItem('spotify_auth_state') || 'none'}</p>
                 `;
                 errorContainer.appendChild(debugInfo);
-                
+
                 setTimeout(() => {
                     redirectTo('');
                 }, 5000); // Give more time to see the error
@@ -125,4 +160,5 @@
         });
     </script>
 </body>
+
 </html>

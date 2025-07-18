@@ -17,6 +17,21 @@ function initApp() {
 
     // Initialize logout button
     initLogoutButton();
+    
+    // Check if we need to retry authentication with implicit flow
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('retry_auth') && urlParams.get('retry_auth') === 'true') {
+        console.log('Retrying authentication with implicit flow');
+        // Get the state from the previous attempt
+        const state = localStorage.getItem('spotify_auth_retry_state') || '';
+        // Clear the retry state
+        localStorage.removeItem('spotify_auth_retry_state');
+        // Try implicit flow
+        import('./components/auth.js').then(auth => {
+            auth.authenticateWithImplicitFlow(state);
+        });
+        return;
+    }
 
     // Check if user is already authenticated
     checkAuthentication();
@@ -45,12 +60,19 @@ function initLogoutButton() {
  * Check if the current page load is from an authentication callback
  */
 function checkForAuthCallback() {
-    // If we have a code parameter in the URL and we're not on the callback page,
+    // If we have a code parameter in the URL or an access_token in the hash and we're not on the callback page,
     // it might be an authentication callback that was redirected incorrectly
-    if (window.location.search.includes('code=') && !window.location.pathname.includes('callback.html')) {
+    if ((window.location.search.includes('code=') || window.location.hash.includes('access_token=')) && 
+        !window.location.pathname.includes('callback.html')) {
         console.warn('Authentication callback detected on main page. Redirecting to callback handler.');
-        // Redirect to the callback page with the current query string
-        window.location.href = `${createUrl('callback.html')}${window.location.search}`;
+        
+        // Redirect to the callback page with the current query string or hash
+        const callbackUrl = createUrl('callback.html');
+        if (window.location.search.includes('code=')) {
+            window.location.href = `${callbackUrl}${window.location.search}`;
+        } else {
+            window.location.href = `${callbackUrl}${window.location.hash}`;
+        }
     }
 }
 

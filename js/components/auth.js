@@ -59,7 +59,7 @@ export function checkAuthentication() {
 }
 
 /**
- * Authenticate with Spotify
+ * Authenticate with Spotify using Authorization Code flow
  * Redirects the user to Spotify's authorization page
  */
 export function authenticateWithSpotify() {
@@ -78,6 +78,36 @@ export function authenticateWithSpotify() {
     // Add query parameters
     authUrl.searchParams.append('client_id', spotifyConfig.clientId);
     authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('redirect_uri', spotifyConfig.redirectUri);
+    authUrl.searchParams.append('state', state);
+    authUrl.searchParams.append('scope', spotifyConfig.scopes.join(' '));
+    authUrl.searchParams.append('show_dialog', 'true');
+
+    // Redirect to Spotify authorization page
+    window.location.href = authUrl.toString();
+}
+
+/**
+ * Authenticate with Spotify using Implicit Grant flow
+ * Redirects the user to Spotify's authorization page
+ * @param {string} existingState - Optional existing state to reuse
+ */
+export function authenticateWithImplicitFlow(existingState = '') {
+    // Generate a random state value for security or use the existing one
+    const state = existingState || generateRandomString(16);
+
+    // Store the state in both cookie and localStorage for verification when the user returns
+    setCookie('spotify_auth_state', state, 1);
+    localStorage.setItem('spotify_auth_state', state);
+
+    console.log('Setting auth state for implicit flow:', state);
+
+    // Construct the authorization URL with required parameters
+    const authUrl = new URL(spotifyConfig.authEndpoint);
+
+    // Add query parameters for implicit flow (response_type=token instead of code)
+    authUrl.searchParams.append('client_id', spotifyConfig.clientId);
+    authUrl.searchParams.append('response_type', 'token');
     authUrl.searchParams.append('redirect_uri', spotifyConfig.redirectUri);
     authUrl.searchParams.append('state', state);
     authUrl.searchParams.append('scope', spotifyConfig.scopes.join(' '));

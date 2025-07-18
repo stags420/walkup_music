@@ -24,31 +24,27 @@ import { createUrl } from '../utils/url-utils.js';
 const callbackUrl = createUrl('callback.html');
 
 const spotifyConfig = {
-    // Replace with your actual Client ID from the Spotify Developer Dashboard
-    clientId: '7534de4cf2c14614846f1b0ca26a5400',
-    
-    // The URI where Spotify will redirect after authentication
-    // This must exactly match one of the Redirect URIs in your Spotify App settings
-    redirectUri: callbackUrl,
-    
-    // The scopes define the permissions your app is requesting
-    // For this app, we need:
-    // - user-read-private: Read access to user's subscription details
-    // - user-read-email: Read access to user's email address
-    // - streaming: Control playback of Spotify tracks
-    // - user-read-playback-state: Read access to user's playback state
-    // - user-modify-playback-state: Write access to user's playback state
-    scopes: [
-        'user-read-private',
-        'user-read-email',
-        'streaming',
-        'user-read-playback-state',
-        'user-modify-playback-state'
-    ],
-    
-    // Spotify API endpoints
-    authEndpoint: 'https://accounts.spotify.com/authorize',
-    apiBaseUrl: 'https://api.spotify.com/v1'
+  // Replace with your actual Client ID from the Spotify Developer Dashboard
+  clientId: '7534de4cf2c14614846f1b0ca26a5400',
+
+  // The URI where Spotify will redirect after authentication
+  // This must exactly match one of the Redirect URIs in your Spotify App settings
+  redirectUri: callbackUrl,
+
+  // The scopes define the permissions your app is requesting
+  // For this app, we only need:
+  // - streaming: Control playback of Spotify tracks
+  // - user-read-playback-state: Read access to user's playback state
+  // - user-modify-playback-state: Write access to user's playback state
+  scopes: [
+    'streaming',
+    'user-read-playback-state',
+    'user-modify-playback-state'
+  ],
+
+  // Spotify API endpoints
+  authEndpoint: 'https://accounts.spotify.com/authorize',
+  apiBaseUrl: 'https://api.spotify.com/v1'
 };
 
 export default spotifyConfig;

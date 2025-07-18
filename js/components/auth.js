@@ -29,8 +29,17 @@ function init() {
  */
 export function checkAuthentication() {
     // Get authentication data from cookies
-    const accessToken = getCookie(ACCESS_TOKEN_COOKIE);
-    const tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
+    let accessToken = getCookie(ACCESS_TOKEN_COOKIE);
+    let tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
+    
+    // If not found in cookies, try localStorage
+    if (!accessToken) {
+        accessToken = localStorage.getItem(ACCESS_TOKEN_COOKIE);
+    }
+    
+    if (!tokenExpiration) {
+        tokenExpiration = localStorage.getItem(TOKEN_EXPIRATION_COOKIE);
+    }
 
     // Check if token exists and is not expired
     const isAuthenticated = accessToken && tokenExpiration && Date.now() < parseInt(tokenExpiration);
@@ -57,8 +66,11 @@ export function authenticateWithSpotify() {
     // Generate a random state value for security
     const state = generateRandomString(16);
 
-    // Store the state in a cookie for verification when the user returns
+    // Store the state in both cookie and localStorage for verification when the user returns
     setCookie('spotify_auth_state', state, 1);
+    localStorage.setItem('spotify_auth_state', state);
+
+    console.log('Setting auth state:', state);
 
     // Construct the authorization URL with required parameters
     const authUrl = new URL(spotifyConfig.authEndpoint);
@@ -87,11 +99,22 @@ export function handleAuthCallback(params) {
     const state = params.get('state');
     const error = params.get('error');
 
-    // Get the stored state from cookies
-    const storedState = getCookie('spotify_auth_state');
+    console.log('Received state:', state);
 
-    // Clear the state cookie as it's no longer needed
+    // Get the stored state from cookies or localStorage
+    let storedState = getCookie('spotify_auth_state');
+    
+    // If not found in cookies, try localStorage
+    if (!storedState) {
+        storedState = localStorage.getItem('spotify_auth_state');
+        console.log('Using state from localStorage:', storedState);
+    } else {
+        console.log('Using state from cookies:', storedState);
+    }
+
+    // Clear the state storage as it's no longer needed
     deleteCookie('spotify_auth_state');
+    localStorage.removeItem('spotify_auth_state');
 
     // Check if there was an error or if the state doesn't match
     if (error) {
@@ -99,8 +122,18 @@ export function handleAuthCallback(params) {
         return { success: false, error: error };
     }
 
-    if (!state || state !== storedState) {
-        console.error('State mismatch error');
+    if (!state) {
+        console.error('No state received');
+        return { success: false, error: 'no_state' };
+    }
+    
+    if (!storedState) {
+        console.error('No stored state found');
+        return { success: false, error: 'no_stored_state' };
+    }
+    
+    if (state !== storedState) {
+        console.error('State mismatch error. Received:', state, 'Stored:', storedState);
         return { success: false, error: 'state_mismatch' };
     }
 
@@ -120,6 +153,10 @@ export function handleAuthCallback(params) {
     // Store the token in cookies
     setCookie(ACCESS_TOKEN_COOKIE, mockToken, 1); // Store for 1 day max
     setCookie(TOKEN_EXPIRATION_COOKIE, expirationTime, 1);
+    
+    // Also store in localStorage as a backup
+    localStorage.setItem(ACCESS_TOKEN_COOKIE, mockToken);
+    localStorage.setItem(TOKEN_EXPIRATION_COOKIE, expirationTime.toString());
     
     console.log('Authentication successful with code:', code);
     
@@ -144,12 +181,18 @@ export function refreshToken() {
 }
 
 /**
- * Log out the user by clearing authentication cookies
+ * Log out the user by clearing authentication cookies and localStorage
  */
 export function logout() {
+    // Clear cookies
     deleteCookie(ACCESS_TOKEN_COOKIE);
     deleteCookie(TOKEN_EXPIRATION_COOKIE);
     deleteCookie(REFRESH_TOKEN_COOKIE);
+    
+    // Clear localStorage
+    localStorage.removeItem(ACCESS_TOKEN_COOKIE);
+    localStorage.removeItem(TOKEN_EXPIRATION_COOKIE);
+    localStorage.removeItem(REFRESH_TOKEN_COOKIE);
 
     // Navigate back to the authentication view
     navigateBasedOnAuth(false);

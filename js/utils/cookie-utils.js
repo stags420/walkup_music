@@ -12,7 +12,9 @@ export function setCookie(name, value, days) {
     const date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = `expires=${date.toUTCString()}`;
-    document.cookie = `${name}=${value};${expires};path=/;SameSite=Strict`;
+    
+    // Use path=/walkup_music to ensure cookies are accessible across the application
+    document.cookie = `${name}=${value};${expires};path=/walkup_music;SameSite=Lax`;
 }
 
 /**
@@ -36,5 +38,5 @@ export function getCookie(name) {
  * @param {string} name - The name of the cookie to delete
  */
 export function deleteCookie(name) {
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Strict`;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/walkup_music;SameSite=Lax`;
 }

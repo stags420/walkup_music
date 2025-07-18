@@ -77,6 +77,9 @@
             // For Authorization Code flow, the parameters are in the query string, not the hash
             const queryParams = new URLSearchParams(window.location.search);
             
+            console.log('Callback received with params:', Object.fromEntries(queryParams.entries()));
+            console.log('Current URL:', window.location.href);
+            
             // Process the authentication callback
             const result = handleAuthCallback(queryParams);
             
@@ -95,13 +98,29 @@
                 
                 if (result && result.error) {
                     errorMessage.textContent = `Error: ${result.error}`;
+                    console.error('Authentication error:', result.error);
                 } else {
                     errorMessage.textContent = 'An unknown error occurred during authentication.';
+                    console.error('Unknown authentication error');
                 }
+                
+                // Add debug info to the error message
+                const debugInfo = document.createElement('div');
+                debugInfo.style.marginTop = '1rem';
+                debugInfo.style.fontSize = '0.8rem';
+                debugInfo.style.opacity = '0.7';
+                debugInfo.innerHTML = `
+                    <p>Debug Info:</p>
+                    <p>URL: ${window.location.href}</p>
+                    <p>State: ${queryParams.get('state') || 'none'}</p>
+                    <p>Code: ${queryParams.get('code') ? 'present' : 'none'}</p>
+                    <p>Error: ${queryParams.get('error') || 'none'}</p>
+                `;
+                errorContainer.appendChild(debugInfo);
                 
                 setTimeout(() => {
                     redirectTo('');
-                }, 3000);
+                }, 5000); // Give more time to see the error
             }
         });
     </script>

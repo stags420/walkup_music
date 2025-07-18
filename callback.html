@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Callback - Spotify Walk-up Music</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #191414;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            padding: 2rem;
+            background-color: #282828;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            color: #1DB954;
+            margin-bottom: 1rem;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #1DB954;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #ff5252;
+            background-color: rgba(255, 82, 82, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Spotify Authentication</h1>
+        <div class="spinner"></div>
+        <p id="status-message">Processing authentication response...</p>
+        <div id="error-container" style="display: none;" class="error">
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+    <script>
+        // This script handles the callback from Spotify OAuth authentication
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusMessage = document.getElementById('status-message');
+            const errorContainer = document.getElementById('error-container');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Parse the URL hash fragment
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            // Check for access token
+            const accessToken = hashParams.get('access_token');
+            const expiresIn = hashParams.get('expires_in');
+            const error = hashParams.get('error');
+            
+            if (error) {
+                // Handle authentication error
+                statusMessage.textContent = 'Authentication failed.';
+                errorContainer.style.display = 'block';
+                errorMessage.textContent = `Error: ${error}`;
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+            } else if (accessToken) {
+                // Authentication successful
+                statusMessage.textContent = 'Authentication successful! Redirecting...';
+                
+                // Calculate token expiration time
+                const expirationTime = Date.now() + (parseInt(expiresIn) * 1000);
+                
+                // Store the token in localStorage (will be moved to cookies in task 3.1)
+                localStorage.setItem('spotify_access_token', accessToken);
+                localStorage.setItem('spotify_token_expiration', expirationTime);
+                
+                // Redirect back to the main application
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            } else {
+                // No token or error found
+                statusMessage.textContent = 'No authentication data received.';
+                errorContainer.style.display = 'block';
+                errorMessage.textContent = 'The authentication response did not contain an access token or error message.';
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

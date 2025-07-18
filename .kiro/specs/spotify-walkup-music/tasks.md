@@ -19,7 +19,7 @@
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 2. Spotify Authentication Implementation
-  - [ ] 2.1 Register Spotify Developer Application
+  - [x] 2.1 Register Spotify Developer Application
     - Create application in Spotify Developer Dashboard
     - Configure redirect URIs
     - Obtain client ID

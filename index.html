@@ -30,17 +30,22 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
+                        <li class="nav-item auth-only">
                             <a href="#" class="nav-link active" data-view="auth">Login</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item app-only" style="display: none;">
                             <a href="#" class="nav-link" data-view="players">Players</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item app-only" style="display: none;">
                             <a href="#" class="nav-link" data-view="batting-order">Batting Order</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item app-only" style="display: none;">
                             <a href="#" class="nav-link" data-view="game-mode">Game Mode</a>
+                        </li>
+                        <li class="nav-item app-only" style="display: none;">
+                            <a href="#" class="nav-link" id="logout-button">
+                                <i class="bi bi-box-arrow-right me-1"></i>Logout
+                            </a>
                         </li>
                     </ul>
                 </div>

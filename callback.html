@@ -64,7 +64,9 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { handleAuthCallback } from './js/components/auth.js';
+        
         // This script handles the callback from Spotify OAuth authentication
         document.addEventListener('DOMContentLoaded', function() {
             const statusMessage = document.getElementById('status-message');
@@ -74,39 +76,28 @@
             // Parse the URL hash fragment
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             
-            // Check for access token
-            const accessToken = hashParams.get('access_token');
-            const expiresIn = hashParams.get('expires_in');
-            const error = hashParams.get('error');
+            // Process the authentication callback
+            const result = handleAuthCallback(hashParams);
             
-            if (error) {
-                // Handle authentication error
-                statusMessage.textContent = 'Authentication failed.';
-                errorContainer.style.display = 'block';
-                errorMessage.textContent = `Error: ${error}`;
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 3000);
-            } else if (accessToken) {
+            if (result && result.success) {
                 // Authentication successful
                 statusMessage.textContent = 'Authentication successful! Redirecting...';
-                
-                // Calculate token expiration time
-                const expirationTime = Date.now() + (parseInt(expiresIn) * 1000);
-                
-                // Store the token in localStorage (will be moved to cookies in task 3.1)
-                localStorage.setItem('spotify_access_token', accessToken);
-                localStorage.setItem('spotify_token_expiration', expirationTime);
                 
                 // Redirect back to the main application
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 1500);
             } else {
-                // No token or error found
-                statusMessage.textContent = 'No authentication data received.';
+                // Authentication failed
+                statusMessage.textContent = 'Authentication failed.';
                 errorContainer.style.display = 'block';
-                errorMessage.textContent = 'The authentication response did not contain an access token or error message.';
+                
+                if (result && result.error) {
+                    errorMessage.textContent = `Error: ${result.error}`;
+                } else {
+                    errorMessage.textContent = 'An unknown error occurred during authentication.';
+                }
+                
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 3000);

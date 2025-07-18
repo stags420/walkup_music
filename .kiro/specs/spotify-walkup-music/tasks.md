@@ -25,7 +25,7 @@
     - Obtain client ID
     - _Requirements: 1.1, 1.2_
 
-  - [ ] 2.2 Implement authentication flow
+  - [x] 2.2 Implement authentication flow
     - Create authentication component
     - Implement Spotify OAuth flow
     - Handle authentication callbacks

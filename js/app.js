@@ -1,6 +1,6 @@
 // Main application entry point
 import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
-import { checkAuthentication } from './components/auth.js';
+import { checkAuthentication, logout } from './components/auth.js';
 
 /**
  * Initialize the application
@@ -14,11 +14,43 @@ function initApp() {
     // Handle responsive layout
     handleResponsiveLayout();
     
+    // Initialize logout button
+    initLogoutButton();
+    
     // Check if user is already authenticated
     checkAuthentication();
     
-    // Initialize tooltips and popovers
+    // Initialize Bootstrap components
     initBootstrapComponents();
+    
+    // Check for authentication callback
+    checkForAuthCallback();
+}
+
+/**
+ * Initialize the logout button
+ */
+function initLogoutButton() {
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
+}
+
+/**
+ * Check if the current page load is from an authentication callback
+ */
+function checkForAuthCallback() {
+    // If we have a hash in the URL and we're not on the callback page,
+    // it might be an authentication callback that was redirected incorrectly
+    if (window.location.hash.includes('access_token') && !window.location.pathname.includes('callback.html')) {
+        console.warn('Authentication callback detected on main page. Redirecting to callback handler.');
+        // Redirect to the callback page with the current hash
+        window.location.href = `${window.location.origin}/callback.html${window.location.hash}`;
+    }
 }
 
 /**
@@ -27,11 +59,15 @@ function initApp() {
 function initBootstrapComponents() {
     // Initialize all tooltips
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    if (window.bootstrap && window.bootstrap.Tooltip) {
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
     
     // Initialize all popovers
     const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
-    [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    if (window.bootstrap && window.bootstrap.Popover) {
+        [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    }
 }
 
 // Initialize the application when the DOM is fully loaded

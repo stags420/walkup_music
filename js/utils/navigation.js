@@ -74,9 +74,23 @@ export function switchView(viewId, pushState = true) {
  * @param {boolean} isAuthenticated - Whether the user is authenticated
  */
 export function navigateBasedOnAuth(isAuthenticated) {
+    // Show/hide navigation items based on authentication status
+    const authOnlyItems = document.querySelectorAll('.auth-only');
+    const appOnlyItems = document.querySelectorAll('.app-only');
+    
     if (isAuthenticated) {
+        // Show app navigation items and hide auth items
+        authOnlyItems.forEach(item => item.style.display = 'none');
+        appOnlyItems.forEach(item => item.style.display = 'block');
+        
+        // Switch to players view
         switchView('players');
     } else {
+        // Show auth navigation items and hide app items
+        authOnlyItems.forEach(item => item.style.display = 'block');
+        appOnlyItems.forEach(item => item.style.display = 'none');
+        
+        // Switch to auth view
         switchView('auth');
     }
 }

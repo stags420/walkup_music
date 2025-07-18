@@ -47,20 +47,20 @@
   - [x] 2.5 Fix NPM deprecation warnings
     - Ensure that we are not seeing any 'npm warn deprecated'
 
-- [ ] 3. Storage Component Implementation
+- [x] 3. Storage Component Implementation
   - [x] 3.1 Create local storage utilities
     - Implement functions to save data to local storage
     - Implement functions to retrieve data from local storage
     - Implement functions to clear data from local storage
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 3.2 Implement data models and validation
+  - [x] 3.2 Implement data models and validation
     - Create data models for players, songs, and batting order
     - Implement validation for data models
     - Handle local storage size limitations
     - _Requirements: 6.1, 6.5_
 
-  - [ ] 3.3 Write tests for storage component
+  - [x] 3.3 Write tests for storage component
     - Test data saving and retrieval
     - Test data validation
     - Test handling of local storage limitations

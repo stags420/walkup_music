@@ -129,9 +129,7 @@ function getStorageSize(key) {
 function wouldFitInStorage(key, data) {
   try {
     // Typical localStorage limit is around 5-10MB
-    // We'll use a conservative estimate of available space
     const serializedData = JSON.stringify(data);
-    const dataSize = serializedData.length * 2; // 2 bytes per character
     
     // Try to set the data to see if it fits
     localStorage.setItem(key, serializedData);

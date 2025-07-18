@@ -65,7 +65,8 @@
     </div>
 
     <script type="module">
-        import { handleAuthCallback } from '/walkup_music/js/components/auth.js';
+        import { handleAuthCallback } from './js/components/auth.js';
+        import { redirectTo, getBasePath } from './js/utils/url-utils.js';
         
         // This script handles the callback from Spotify OAuth authentication
         document.addEventListener('DOMContentLoaded', function() {
@@ -85,7 +86,7 @@
                 
                 // Redirect back to the main application
                 setTimeout(() => {
-                    window.location.href = '/walkup_music/';
+                    redirectTo('');
                 }, 1500);
             } else {
                 // Authentication failed
@@ -99,7 +100,7 @@
                 }
                 
                 setTimeout(() => {
-                    window.location.href = '/walkup_music/';
+                    redirectTo('');
                 }, 3000);
             }
         });

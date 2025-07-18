@@ -1,28 +1,29 @@
 // Main application entry point
 import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
 import { checkAuthentication, logout } from './components/auth.js';
+import { createUrl } from './utils/url-utils.js';
 
 /**
  * Initialize the application
  */
 function initApp() {
     console.log('Spotify Walk-up Music App initialized');
-    
+
     // Initialize navigation
     initNavigation();
-    
+
     // Handle responsive layout
     handleResponsiveLayout();
-    
+
     // Initialize logout button
     initLogoutButton();
-    
+
     // Check if user is already authenticated
     checkAuthentication();
-    
+
     // Initialize Bootstrap components
     initBootstrapComponents();
-    
+
     // Check for authentication callback
     checkForAuthCallback();
 }
@@ -49,7 +50,7 @@ function checkForAuthCallback() {
     if (window.location.hash.includes('access_token') && !window.location.pathname.includes('callback.html')) {
         console.warn('Authentication callback detected on main page. Redirecting to callback handler.');
         // Redirect to the callback page with the current hash
-        window.location.href = `${window.location.origin}/callback.html${window.location.hash}`;
+        window.location.href = `${createUrl('callback.html')}${window.location.hash}`;
     }
 }
 
@@ -62,7 +63,7 @@ function initBootstrapComponents() {
     if (window.bootstrap && window.bootstrap.Tooltip) {
         [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     }
-    
+
     // Initialize all popovers
     const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
     if (window.bootstrap && window.bootstrap.Popover) {

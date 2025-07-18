@@ -18,6 +18,10 @@
  * 8. Save the settings
  * 9. Copy your Client ID and update the clientId value below
  */
+import { createUrl } from '../utils/url-utils.js';
+
+// The callback URL for Spotify authentication
+const callbackUrl = createUrl('callback.html');
 
 const spotifyConfig = {
     // Replace with your actual Client ID from the Spotify Developer Dashboard
@@ -25,7 +29,7 @@ const spotifyConfig = {
     
     // The URI where Spotify will redirect after authentication
     // This must exactly match one of the Redirect URIs in your Spotify App settings
-    redirectUri: 'https://stags420.github.io/walkup_music/callback.html',
+    redirectUri: callbackUrl,
     
     // The scopes define the permissions your app is requesting
     // For this app, we need:

@@ -44,7 +44,7 @@
     - Test token refresh mechanism
     - _Requirements: 1.3, 1.4_
 
-  - [ ] 2.5 Fix NPM deprecation warnings
+  - [x] 2.5 Fix NPM deprecation warnings
     - Ensure that we are not seeing any 'npm warn deprecated'
 
 - [ ] 3. Storage Component Implementation

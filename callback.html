@@ -74,11 +74,11 @@
             const errorContainer = document.getElementById('error-container');
             const errorMessage = document.getElementById('error-message');
             
-            // Parse the URL hash fragment
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            // For Authorization Code flow, the parameters are in the query string, not the hash
+            const queryParams = new URLSearchParams(window.location.search);
             
             // Process the authentication callback
-            const result = handleAuthCallback(hashParams);
+            const result = handleAuthCallback(queryParams);
             
             if (result && result.success) {
                 // Authentication successful

@@ -45,12 +45,12 @@ function initLogoutButton() {
  * Check if the current page load is from an authentication callback
  */
 function checkForAuthCallback() {
-    // If we have a hash in the URL and we're not on the callback page,
+    // If we have a code parameter in the URL and we're not on the callback page,
     // it might be an authentication callback that was redirected incorrectly
-    if (window.location.hash.includes('access_token') && !window.location.pathname.includes('callback.html')) {
+    if (window.location.search.includes('code=') && !window.location.pathname.includes('callback.html')) {
         console.warn('Authentication callback detected on main page. Redirecting to callback handler.');
-        // Redirect to the callback page with the current hash
-        window.location.href = `${createUrl('callback.html')}${window.location.hash}`;
+        // Redirect to the callback page with the current query string
+        window.location.href = `${createUrl('callback.html')}${window.location.search}`;
     }
 }
 

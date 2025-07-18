@@ -48,7 +48,7 @@
     - Ensure that we are not seeing any 'npm warn deprecated'
 
 - [ ] 3. Storage Component Implementation
-  - [ ] 3.1 Create local storage utilities
+  - [x] 3.1 Create local storage utilities
     - Implement functions to save data to local storage
     - Implement functions to retrieve data from local storage
     - Implement functions to clear data from local storage

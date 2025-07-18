@@ -18,7 +18,7 @@
     - Implement navigation between main views
     - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 2. Spotify Authentication Implementation
+- [x] 2. Spotify Authentication Implementation
   - [x] 2.1 Register Spotify Developer Application
     - Create application in Spotify Developer Dashboard
     - Configure redirect URIs
@@ -40,7 +40,7 @@
 
   - [x] 2.4 Write tests for authentication flow
     - Test authentication initialization
-    - Test token storage and retrieval
+    - Test token storage and retrieval from cookies
     - Test token refresh mechanism
     - _Requirements: 1.3, 1.4_
 
@@ -48,22 +48,22 @@
     - Ensure that we are not seeing any 'npm warn deprecated'
 
 - [ ] 3. Storage Component Implementation
-  - [ ] 3.1 Create cookie storage utilities
-    - Implement functions to save data to cookies
-    - Implement functions to retrieve data from cookies
-    - Implement functions to clear data from cookies
+  - [ ] 3.1 Create local storage utilities
+    - Implement functions to save data to local storage
+    - Implement functions to retrieve data from local storage
+    - Implement functions to clear data from local storage
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
   - [ ] 3.2 Implement data models and validation
     - Create data models for players, songs, and batting order
     - Implement validation for data models
-    - Handle cookie size limitations
+    - Handle local storage size limitations
     - _Requirements: 6.1, 6.5_
 
   - [ ] 3.3 Write tests for storage component
     - Test data saving and retrieval
     - Test data validation
-    - Test handling of cookie limitations
+    - Test handling of local storage limitations
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 4. Player Management Implementation
@@ -179,7 +179,7 @@
 
   - [ ] 9.3 Optimize performance
     - Minimize API calls
-    - Optimize cookie usage
+    - Optimize local storage usage
     - Improve loading times
     - _Requirements: 6.5_
 

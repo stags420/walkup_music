@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document outlines the requirements for a web application that allows baseball team managers or players to create and manage walk-up music playlists using Spotify. The application will enable users to authenticate with Spotify, select specific segments of songs for each player, arrange them in a batting order, and play them sequentially during a game. All data will be stored locally in cookies without requiring remote storage.
+This document outlines the requirements for a web application that allows baseball team managers or players to create and manage walk-up music playlists using Spotify. The application will enable users to authenticate with Spotify, select specific segments of songs for each player, arrange them in a batting order, and play them sequentially during a game. All data will be stored locally in the browser's local storage without requiring remote storage.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ This document outlines the requirements for a web application that allows baseba
 3. WHEN a player is added THEN the system SHALL display the player in the player list.
 4. WHEN a user selects a player THEN the system SHALL allow editing of that player's information.
 5. WHEN a user requests to delete a player THEN the system SHALL remove the player from the list.
-6. WHEN players are added or modified THEN the system SHALL save the changes to cookies.
+6. WHEN players are added or modified THEN the system SHALL save the changes to local storage.
 
 ### Requirement 3: Song Selection and Segmentation
 
@@ -41,7 +41,7 @@ This document outlines the requirements for a web application that allows baseba
 2. WHEN a user searches for a song THEN the system SHALL display matching results from Spotify.
 3. WHEN a user selects a song THEN the system SHALL provide controls to play the song.
 4. WHEN a song is playing THEN the system SHALL provide controls to select start and end times for the segment.
-5. WHEN a user confirms a song segment THEN the system SHALL save it to the player's profile in cookies.
+5. WHEN a user confirms a song segment THEN the system SHALL save it to the player's profile in local storage.
 6. WHEN a song segment is saved THEN the system SHALL display the song and segment information in the player's profile.
 
 ### Requirement 4: Batting Order Management
@@ -53,7 +53,7 @@ This document outlines the requirements for a web application that allows baseba
 1. WHEN players have been added THEN the system SHALL provide an interface to arrange them in a batting order.
 2. WHEN viewing the batting order THEN the system SHALL display players in their current order.
 3. WHEN a user drags a player to a new position THEN the system SHALL update the batting order.
-4. WHEN the batting order is modified THEN the system SHALL save the changes to cookies.
+4. WHEN the batting order is modified THEN the system SHALL save the changes to local storage.
 5. WHEN a player is removed THEN the system SHALL update the batting order accordingly.
 
 ### Requirement 5: Playback Control
@@ -71,15 +71,15 @@ This document outlines the requirements for a web application that allows baseba
 
 ### Requirement 6: Local Data Storage
 
-**User Story:** As a user, I want my data to be stored locally in cookies, so that I don't need to create an account or rely on remote storage.
+**User Story:** As a user, I want my data to be stored locally in local storage, so that I don't need to create an account or rely on remote storage.
 
 #### Acceptance Criteria
 
-1. WHEN user data is created or modified THEN the system SHALL save it to browser cookies.
-2. WHEN the application loads THEN the system SHALL retrieve any previously saved data from cookies.
-3. WHEN cookies are available THEN the system SHALL restore the user's previous session state.
-4. WHEN cookies are cleared THEN the system SHALL start with a fresh session.
-5. WHEN saving data THEN the system SHALL handle cookie size limitations appropriately.
+1. WHEN user data is created or modified THEN the system SHALL save it to local storage.
+2. WHEN the application loads THEN the system SHALL retrieve any previously saved data from local storage.
+3. WHEN data in local storage is available THEN the system SHALL restore the user's previous session state.
+4. WHEN local storage is cleared THEN the system SHALL start with a fresh session.
+5. WHEN saving data THEN the system SHALL handle local storage size limitations appropriately.
 
 ### Requirement 7: Responsive Web Design
 

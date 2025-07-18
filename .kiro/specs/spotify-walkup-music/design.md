@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Spotify Walk-up Music Web App is a client-side web application that allows baseball team managers or players to create and manage walk-up music playlists using Spotify. Users can authenticate with Spotify, create a list of players, select and segment songs for each player, arrange them in a batting order, and play them sequentially during a game. All data will be stored locally in cookies without requiring remote storage.
+The Spotify Walk-up Music Web App is a client-side web application that allows baseball team managers or players to create and manage walk-up music playlists using Spotify. Users can authenticate with Spotify, create a list of players, select and segment songs for each player, arrange them in a batting order, and play them sequentially during a game. All data will be stored locally in the browser's local storage without requiring remote storage.
 
 ## Architecture
 
@@ -10,19 +10,22 @@ The application will follow a client-side architecture with the following compon
 
 1. **Frontend Application**: A single-page application (SPA) built with HTML, CSS, and JavaScript.
 2. **Spotify Web API Integration**: For authentication and accessing Spotify's music library.
-3. **Local Storage**: Using browser cookies for data persistence.
+3. **Local Storage**: Using browser's local storage for application data persistence.
+4. **Cookies**: Using browser cookies for secure authentication token storage.
 
 ```mermaid
 graph TD
     User[User] --> WebApp[Web Application]
     WebApp --> SpotifyAPI[Spotify Web API]
-    WebApp --> LocalStorage[Browser Cookies]
+    WebApp --> LocalStorage[Browser Local Storage]
+    WebApp --> Cookies[Browser Cookies]
     SpotifyAPI --> Authentication[Authentication]
     SpotifyAPI --> MusicSearch[Music Search]
     SpotifyAPI --> MusicPlayback[Music Playback]
     LocalStorage --> PlayerData[Player Data]
     LocalStorage --> BattingOrder[Batting Order]
     LocalStorage --> SongSelections[Song Selections]
+    Cookies --> AuthTokens[Authentication Tokens]
 ```
 
 ## Components and Interfaces
@@ -34,10 +37,10 @@ Responsible for handling Spotify authentication flow.
 **Interfaces:**
 - `initializeAuth()`: Sets up the authentication process
 - `authenticateWithSpotify()`: Redirects to Spotify authorization
-- `handleAuthCallback()`: Processes the callback from Spotify
+- `handleAuthCallback()`: Processes the callback from Spotify and stores tokens in cookies
 - `refreshToken()`: Refreshes the authentication token when expired
-- `isAuthenticated()`: Checks if the user is authenticated
-- `logout()`: Clears authentication data
+- `isAuthenticated()`: Checks if the user is authenticated by verifying cookie tokens
+- `logout()`: Clears authentication cookies
 
 ### 2. Player Management Component
 
@@ -113,13 +116,13 @@ Controls the playback of walk-up music during a game.
 
 ### 7. Storage Component
 
-Handles saving and retrieving data from cookies.
+Handles saving and retrieving data from local storage.
 
 **Interfaces:**
-- `saveData(key, data)`: Saves data to cookies
-- `getData(key)`: Retrieves data from cookies
-- `clearData(key)`: Removes specific data from cookies
-- `clearAllData()`: Clears all application data from cookies
+- `saveData(key, data)`: Saves data to local storage
+- `getData(key)`: Retrieves data from local storage
+- `clearData(key)`: Removes specific data from local storage
+- `clearAllData()`: Clears all application data from local storage
 
 ## Data Models
 
@@ -175,8 +178,8 @@ Handles saving and retrieving data from cookies.
 - Handle rate limiting with exponential backoff
 
 ### Data Storage Errors
-- Handle cookie size limitations by splitting data if necessary
-- Provide fallback options when cookies are disabled
+- Handle local storage size limitations by splitting data if necessary
+- Provide fallback options when local storage is disabled
 - Implement data validation before saving
 
 ### Playback Errors
@@ -209,12 +212,12 @@ Handles saving and retrieving data from cookies.
 ## Security Considerations
 
 ### Authentication Security
-- Store authentication tokens securely
+- Store authentication tokens securely in cookies with appropriate flags (HttpOnly, Secure)
 - Implement proper token refresh flow
 - Clear sensitive data on logout
 
 ### Data Privacy
-- Store only necessary data in cookies
+- Store only necessary data in local storage
 - Do not store sensitive Spotify account information
 - Provide clear information about data usage
 

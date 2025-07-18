@@ -1,0 +1,13 @@
+{
+  "name": "spotify-walkup-music",
+  "version": "1.0.0",
+  "description": "A web application for managing baseball walk-up music using Spotify",
+  "main": "index.html",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}

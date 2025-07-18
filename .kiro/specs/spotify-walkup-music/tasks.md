@@ -38,11 +38,14 @@
     - Handle refresh failures
     - _Requirements: 1.4_
 
-  - [ ] 2.4 Write tests for authentication flow
+  - [x] 2.4 Write tests for authentication flow
     - Test authentication initialization
     - Test token storage and retrieval
     - Test token refresh mechanism
     - _Requirements: 1.3, 1.4_
+
+  - [ ] 2.5 Fix NPM deprecation warnings
+    - Ensure that we are not seeing any 'npm warn deprecated'
 
 - [ ] 3. Storage Component Implementation
   - [ ] 3.1 Create cookie storage utilities

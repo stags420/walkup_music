@@ -1,9 +1,10 @@
 /**
  * Player Management Component
- * Implements requirements 2.1, 2.2, 2.3, 2.4, 2.5
+ * Implements requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
  */
 
 import { PlayerModel, DataManager } from '../models/data-models.js';
+import playerManagementService from './player-management-service.js';
 
 // DOM Elements
 let playerNameInput;
@@ -133,8 +134,16 @@ function loadPlayers() {
   // Clear the current list
   playersList.innerHTML = '';
   
-  // Get players from data manager
-  const players = DataManager.getPlayers();
+  // Get players from player management service
+  const result = playerManagementService.getPlayers();
+  
+  if (!result.success) {
+    // Display error message
+    showNotification(`Failed to load players: ${result.error}`, 'danger');
+    return;
+  }
+  
+  const players = result.data;
   
   if (players.length === 0) {
     // Display a message if no players
@@ -169,8 +178,9 @@ function addPlayerToList(player) {
   playerItem.dataset.playerId = player.id;
   
   // Get song selection for this player if it exists
-  const songSelection = DataManager.getSongSelectionForPlayer(player.id);
-  const hasSong = songSelection !== null;
+  const songSelectionResult = playerManagementService.getPlayerSongSelection(player.id);
+  const hasSong = songSelectionResult.success;
+  const songSelection = hasSong ? songSelectionResult.data : null;
   
   // Create player item content
   playerItem.innerHTML = `
@@ -217,33 +227,21 @@ function handleAddPlayer(event) {
   const playerName = playerNameInput.value.trim();
   
   if (playerName) {
-    // Create a new player model
-    const player = new PlayerModel({
-      name: playerName
-    });
+    // Use the player management service to add the player
+    const result = playerManagementService.addPlayer(playerName);
     
-    // Validate and save the player
-    const validation = player.validate();
-    
-    if (validation.isValid) {
-      const result = DataManager.savePlayer(player);
+    if (result.success) {
+      // Clear the form
+      playerNameInput.value = '';
       
-      if (result.success) {
-        // Clear the form
-        playerNameInput.value = '';
-        
-        // Reload the player list
-        loadPlayers();
-        
-        // Show success message
-        showNotification('Player added successfully!', 'success');
-      } else {
-        // Show error message
-        showNotification(`Failed to add player: ${result.error}`, 'danger');
-      }
+      // Reload the player list
+      loadPlayers();
+      
+      // Show success message
+      showNotification('Player added successfully!', 'success');
     } else {
-      // Show validation errors
-      showNotification(`Validation error: ${validation.errors.join(', ')}`, 'danger');
+      // Show error message
+      showNotification(`Failed to add player: ${result.error}`, 'danger');
     }
   }
 }
@@ -272,37 +270,21 @@ function handleSaveEditPlayer() {
   const playerName = editPlayerNameInput.value.trim();
   
   if (playerName && editPlayerId) {
-    // Get the existing player
-    const players = DataManager.getPlayers();
-    const existingPlayer = players.find(p => p.id === editPlayerId);
+    // Use the player management service to update the player
+    const result = playerManagementService.updatePlayer(editPlayerId, { name: playerName });
     
-    if (existingPlayer) {
-      // Update the player name
-      existingPlayer.name = playerName;
+    if (result.success) {
+      // Hide the modal
+      editPlayerModal.hide();
       
-      // Validate and save the player
-      const validation = existingPlayer.validate();
+      // Reload the player list
+      loadPlayers();
       
-      if (validation.isValid) {
-        const result = DataManager.savePlayer(existingPlayer);
-        
-        if (result.success) {
-          // Hide the modal
-          editPlayerModal.hide();
-          
-          // Reload the player list
-          loadPlayers();
-          
-          // Show success message
-          showNotification('Player updated successfully!', 'success');
-        } else {
-          // Show error message
-          showNotification(`Failed to update player: ${result.error}`, 'danger');
-        }
-      } else {
-        // Show validation errors
-        showNotification(`Validation error: ${validation.errors.join(', ')}`, 'danger');
-      }
+      // Show success message
+      showNotification('Player updated successfully!', 'success');
+    } else {
+      // Show error message
+      showNotification(`Failed to update player: ${result.error}`, 'danger');
     }
   }
 }
@@ -327,8 +309,8 @@ function openDeletePlayerModal(playerId) {
 function handleConfirmDeletePlayer() {
   if (!deletePlayerId) return;
   
-  // Delete the player
-  const result = DataManager.deletePlayer(deletePlayerId);
+  // Use the player management service to delete the player
+  const result = playerManagementService.deletePlayer(deletePlayerId);
   
   if (result.success) {
     // Hide the modal

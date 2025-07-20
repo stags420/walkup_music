@@ -73,7 +73,7 @@
     - Implement UI for deleting players
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ] 4.2 Implement player management functionality
+  - [x] 4.2 Implement player management functionality
     - Create functions to add players
     - Create functions to edit players
     - Create functions to delete players

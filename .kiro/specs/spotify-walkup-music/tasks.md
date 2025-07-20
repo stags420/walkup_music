@@ -112,7 +112,7 @@
     - Implement controls for setting start and end times
     - _Requirements: 3.4_
 
-  - [ ] 6.2 Implement song segmentation functionality
+  - [x] 6.2 Implement song segmentation functionality
     - Create functions to set segment start time
     - Create functions to set segment end time
     - Create functions to preview segments

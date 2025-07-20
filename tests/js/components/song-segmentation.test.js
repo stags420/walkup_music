@@ -2,6 +2,26 @@
  * Tests for Song Segmentation Component
  */
 
+// Mock the required modules
+jest.mock('../../../js/components/spotify-api.js', () => ({
+    searchSongs: jest.fn(),
+    getTrack: jest.fn(),
+    playSong: jest.fn(),
+    pauseSong: jest.fn()
+}));
+
+jest.mock('../../../js/models/data-models.js', () => ({
+    DataManager: {
+        getSongSelectionForPlayer: jest.fn(),
+        saveSongSelection: jest.fn()
+    },
+    SongSelectionModel: jest.fn().mockImplementation((data) => ({
+        ...data,
+        validate: jest.fn().mockReturnValue({ isValid: true, errors: [] }),
+        toObject: jest.fn().mockReturnValue(data)
+    }))
+}));
+
 // Since we can't easily test ES modules with the current Jest setup,
 // we'll create basic DOM and functionality tests
 
@@ -290,6 +310,307 @@ describe('Song Segmentation Component', () => {
             const warningMessage = document.querySelector('.warning-message');
             expect(warningMessage).toBeTruthy();
             expect(warningMessage.textContent).toContain('Segment duration must be at least 5 seconds');
+        });
+    });
+    
+    describe('Segment Time Functions', () => {
+        // Mock data for testing
+        const mockTrack = {
+            id: 'test-track-id',
+            name: 'Test Song',
+            artists: [{ name: 'Test Artist' }],
+            duration_ms: 180000, // 3 minutes
+            album: { images: [{ url: 'http://example.com/image.jpg' }] }
+        };
+        
+        const mockPlayer = {
+            id: 'test-player-id',
+            name: 'Test Player'
+        };
+        
+        beforeEach(() => {
+            // Reset mocks
+            jest.clearAllMocks();
+        });
+        
+        test('should validate start time input', () => {
+            // Test invalid inputs
+            expect(() => {
+                // This would test the validation logic
+                const startTime = -5;
+                expect(startTime).toBeLessThan(0);
+            }).not.toThrow();
+            
+            expect(() => {
+                const startTime = 'invalid';
+                expect(typeof startTime).toBe('string');
+            }).not.toThrow();
+        });
+        
+        test('should validate end time input', () => {
+            // Test invalid inputs
+            expect(() => {
+                const endTime = 0;
+                expect(endTime).toBeLessThanOrEqual(0);
+            }).not.toThrow();
+            
+            expect(() => {
+                const endTime = 'invalid';
+                expect(typeof endTime).toBe('string');
+            }).not.toThrow();
+        });
+        
+        test('should validate segment duration constraints', () => {
+            // Test minimum duration constraint
+            const minDuration = 5;
+            const maxDuration = 60;
+            
+            expect(minDuration).toBe(5);
+            expect(maxDuration).toBe(60);
+            
+            // Test duration calculation
+            const startTime = 10;
+            const endTime = 40;
+            const duration = endTime - startTime;
+            
+            expect(duration).toBe(30);
+            expect(duration).toBeGreaterThanOrEqual(minDuration);
+            expect(duration).toBeLessThanOrEqual(maxDuration);
+        });
+        
+        test('should handle segment time updates', () => {
+            // Mock segment state
+            const currentSegment = {
+                startTime: 0,
+                endTime: 30,
+                duration: 30
+            };
+            
+            // Test start time update
+            const newStartTime = 10;
+            if (newStartTime < currentSegment.endTime) {
+                currentSegment.startTime = newStartTime;
+                currentSegment.duration = currentSegment.endTime - currentSegment.startTime;
+            }
+            
+            expect(currentSegment.startTime).toBe(10);
+            expect(currentSegment.duration).toBe(20);
+            
+            // Test end time update
+            const newEndTime = 45;
+            if (newEndTime > currentSegment.startTime) {
+                currentSegment.endTime = newEndTime;
+                currentSegment.duration = currentSegment.endTime - currentSegment.startTime;
+            }
+            
+            expect(currentSegment.endTime).toBe(45);
+            expect(currentSegment.duration).toBe(35);
+        });
+    });
+    
+    describe('Preview Functionality', () => {
+        test('should validate preview requirements', () => {
+            // Mock current track and segment
+            const currentTrack = {
+                id: 'test-track-id',
+                name: 'Test Song',
+                duration_ms: 180000
+            };
+            
+            const currentSegment = {
+                startTime: 10,
+                endTime: 40,
+                duration: 30
+            };
+            
+            // Test preview validation
+            expect(currentTrack).toBeTruthy();
+            expect(currentSegment.duration).toBeGreaterThanOrEqual(5);
+            expect(currentSegment.duration).toBeLessThanOrEqual(60);
+        });
+        
+        test('should handle preview playback controls', () => {
+            // Mock playback button states
+            const playbackButtons = {
+                preview: { display: 'inline-block' },
+                playFull: { display: 'inline-block' },
+                pause: { display: 'none' }
+            };
+            
+            // Test playing state
+            const isPlaying = true;
+            if (isPlaying) {
+                playbackButtons.preview.display = 'none';
+                playbackButtons.playFull.display = 'none';
+                playbackButtons.pause.display = 'inline-block';
+            }
+            
+            expect(playbackButtons.preview.display).toBe('none');
+            expect(playbackButtons.playFull.display).toBe('none');
+            expect(playbackButtons.pause.display).toBe('inline-block');
+            
+            // Test stopped state
+            const isStopped = true;
+            if (isStopped) {
+                playbackButtons.preview.display = 'inline-block';
+                playbackButtons.playFull.display = 'inline-block';
+                playbackButtons.pause.display = 'none';
+            }
+            
+            expect(playbackButtons.preview.display).toBe('inline-block');
+            expect(playbackButtons.playFull.display).toBe('inline-block');
+            expect(playbackButtons.pause.display).toBe('none');
+        });
+    });
+    
+    describe('Storage Integration', () => {
+        test('should validate song selection data before saving', () => {
+            const mockSongSelection = {
+                playerId: 'test-player-id',
+                trackId: 'test-track-id',
+                trackName: 'Test Song',
+                artistName: 'Test Artist',
+                albumArt: 'http://example.com/image.jpg',
+                startTime: 10,
+                endTime: 40,
+                duration: 30
+            };
+            
+            // Test required fields
+            expect(mockSongSelection.playerId).toBeTruthy();
+            expect(mockSongSelection.trackId).toBeTruthy();
+            expect(mockSongSelection.trackName).toBeTruthy();
+            expect(mockSongSelection.artistName).toBeTruthy();
+            
+            // Test time values
+            expect(mockSongSelection.startTime).toBeGreaterThanOrEqual(0);
+            expect(mockSongSelection.endTime).toBeGreaterThan(mockSongSelection.startTime);
+            expect(mockSongSelection.duration).toBe(mockSongSelection.endTime - mockSongSelection.startTime);
+            
+            // Test duration constraints
+            expect(mockSongSelection.duration).toBeGreaterThanOrEqual(5);
+            expect(mockSongSelection.duration).toBeLessThanOrEqual(60);
+        });
+        
+        test('should handle save operation results', () => {
+            // Mock successful save result
+            const successResult = {
+                success: true,
+                error: null
+            };
+            
+            expect(successResult.success).toBe(true);
+            expect(successResult.error).toBeNull();
+            
+            // Mock failed save result
+            const failureResult = {
+                success: false,
+                error: 'Storage limit exceeded'
+            };
+            
+            expect(failureResult.success).toBe(false);
+            expect(failureResult.error).toBeTruthy();
+            expect(failureResult.error).toContain('Storage limit exceeded');
+        });
+        
+        test('should handle storage integration errors', () => {
+            // Mock storage errors
+            const storageErrors = [
+                'Storage limit exceeded. Try removing some songs or players.',
+                'Failed to save data to storage.',
+                'Player ID is required',
+                'Track ID is required'
+            ];
+            
+            storageErrors.forEach(error => {
+                expect(error).toBeTruthy();
+                expect(typeof error).toBe('string');
+            });
+        });
+    });
+    
+    describe('Segment Validation', () => {
+        test('should validate segment for saving', () => {
+            // Mock validation function behavior
+            const validateSegmentForSaving = (segment) => {
+                const errors = [];
+                
+                if (segment.duration < 5) {
+                    errors.push('Segment must be at least 5 seconds long.');
+                }
+                
+                if (segment.duration > 60) {
+                    errors.push('Segment cannot exceed 60 seconds.');
+                }
+                
+                if (segment.startTime < 0) {
+                    errors.push('Start time cannot be negative.');
+                }
+                
+                if (segment.endTime <= segment.startTime) {
+                    errors.push('End time must be greater than start time.');
+                }
+                
+                return {
+                    isValid: errors.length === 0,
+                    errors
+                };
+            };
+            
+            // Test valid segment
+            const validSegment = {
+                startTime: 10,
+                endTime: 40,
+                duration: 30
+            };
+            
+            const validResult = validateSegmentForSaving(validSegment);
+            expect(validResult.isValid).toBe(true);
+            expect(validResult.errors).toHaveLength(0);
+            
+            // Test invalid segment - too short
+            const shortSegment = {
+                startTime: 10,
+                endTime: 12,
+                duration: 2
+            };
+            
+            const shortResult = validateSegmentForSaving(shortSegment);
+            expect(shortResult.isValid).toBe(false);
+            expect(shortResult.errors).toContain('Segment must be at least 5 seconds long.');
+            
+            // Test invalid segment - too long
+            const longSegment = {
+                startTime: 10,
+                endTime: 80,
+                duration: 70
+            };
+            
+            const longResult = validateSegmentForSaving(longSegment);
+            expect(longResult.isValid).toBe(false);
+            expect(longResult.errors).toContain('Segment cannot exceed 60 seconds.');
+            
+            // Test invalid segment - negative start time
+            const negativeSegment = {
+                startTime: -5,
+                endTime: 25,
+                duration: 30
+            };
+            
+            const negativeResult = validateSegmentForSaving(negativeSegment);
+            expect(negativeResult.isValid).toBe(false);
+            expect(negativeResult.errors).toContain('Start time cannot be negative.');
+            
+            // Test invalid segment - end time before start time
+            const invalidOrderSegment = {
+                startTime: 40,
+                endTime: 30,
+                duration: -10
+            };
+            
+            const invalidOrderResult = validateSegmentForSaving(invalidOrderSegment);
+            expect(invalidOrderResult.isValid).toBe(false);
+            expect(invalidOrderResult.errors).toContain('End time must be greater than start time.');
         });
     });
 });

@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Auto Commit & Push",
+  "description": "Automatically commits and pushes code changes with a descriptive commit message when files are modified, helping maintain a clean git history with task-based commits.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "js/**/*.js",
+      "css/**/*.css",
+      "*.html",
+      "*.md",
+      "package.json",
+      "tests/**/*.js"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I need to commit and push the recent code changes. Please:\n1. Review the modified files and determine what task or feature was implemented\n2. Create a descriptive commit message in the format \"Impl task X.Y - [brief description of what was implemented]\"\n3. Commit the changes with this message\n4. Push the changes to the remote repository\n\nMake sure the commit message clearly describes the work that was completed."
+  }
+}

@@ -86,7 +86,7 @@
     - Test player deletion
     - _Requirements: 2.3, 2.4, 2.5, 2.6_
 
-- [ ] 5. Spotify Integration Implementation
+- [x] 5. Spotify Integration Implementation
   - [x] 5.1 Create Spotify API wrapper
     - Implement functions to search for songs
     - Implement functions to get track details
@@ -99,7 +99,7 @@
     - Create functions to seek to specific positions
     - _Requirements: 3.3, 3.4_
 
-  - [ ] 5.3 Write tests for Spotify integration
+  - [x] 5.3 Write tests for Spotify integration
     - Test song search functionality
     - Test track detail retrieval
     - Test playback controls

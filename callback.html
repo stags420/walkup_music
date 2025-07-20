@@ -113,50 +113,58 @@
                 return;
             }
 
-            // Process the authentication callback
-            const result = handleAuthCallback(params);
+            // Process the authentication callback (now async)
+            handleAuthCallback(queryParams, window.location.hash).then(result => {
+                if (result && result.success) {
+                    // Authentication successful
+                    statusMessage.textContent = 'Authentication successful! Redirecting...';
 
-            if (result && result.success) {
-                // Authentication successful
-                statusMessage.textContent = 'Authentication successful! Redirecting...';
+                    // Redirect back to the main application
+                    setTimeout(() => {
+                        redirectTo('');
+                    }, 1500);
+                } else {
+                    // Authentication failed
+                    statusMessage.textContent = 'Authentication failed.';
+                    errorContainer.style.display = 'block';
 
-                // Redirect back to the main application
-                setTimeout(() => {
-                    redirectTo('');
-                }, 1500);
-            } else {
-                // Authentication failed
+                    if (result && result.error) {
+                        errorMessage.textContent = `Error: ${result.error}`;
+                        console.error('Authentication error:', result.error);
+                    } else {
+                        errorMessage.textContent = 'An unknown error occurred during authentication.';
+                        console.error('Unknown authentication error');
+                    }
+
+                    // Add debug info to the error message
+                    const debugInfo = document.createElement('div');
+                    debugInfo.style.marginTop = '1rem';
+                    debugInfo.style.fontSize = '0.8rem';
+                    debugInfo.style.opacity = '0.7';
+                    debugInfo.innerHTML = `
+                        <p>Debug Info:</p>
+                        <p>URL: ${window.location.href}</p>
+                        <p>Query State: ${queryParams.get('state') || 'none'}</p>
+                        <p>Code: ${queryParams.get('code') ? 'present' : 'none'}</p>
+                        <p>Error: ${queryParams.get('error') || 'none'}</p>
+                        <p>Stored State: ${localStorage.getItem('spotify_auth_state') || 'none'}</p>
+                    `;
+                    errorContainer.appendChild(debugInfo);
+
+                    setTimeout(() => {
+                        redirectTo('');
+                    }, 5000); // Give more time to see the error
+                }
+            }).catch(error => {
+                console.error('Error processing callback:', error);
                 statusMessage.textContent = 'Authentication failed.';
                 errorContainer.style.display = 'block';
-
-                if (result && result.error) {
-                    errorMessage.textContent = `Error: ${result.error}`;
-                    console.error('Authentication error:', result.error);
-                } else {
-                    errorMessage.textContent = 'An unknown error occurred during authentication.';
-                    console.error('Unknown authentication error');
-                }
-
-                // Add debug info to the error message
-                const debugInfo = document.createElement('div');
-                debugInfo.style.marginTop = '1rem';
-                debugInfo.style.fontSize = '0.8rem';
-                debugInfo.style.opacity = '0.7';
-                debugInfo.innerHTML = `
-                    <p>Debug Info:</p>
-                    <p>URL: ${window.location.href}</p>
-                    <p>Query State: ${queryParams.get('state') || 'none'}</p>
-                    <p>Hash State: ${hashParams.get('state') || 'none'}</p>
-                    <p>Code: ${params.get('code') ? 'present' : 'none'}</p>
-                    <p>Error: ${params.get('error') || 'none'}</p>
-                    <p>Stored State: ${localStorage.getItem('spotify_auth_state') || 'none'}</p>
-                `;
-                errorContainer.appendChild(debugInfo);
-
+                errorMessage.textContent = `Error: ${error.message}`;
+                
                 setTimeout(() => {
                     redirectTo('');
-                }, 5000); // Give more time to see the error
-            }
+                }, 5000);
+            });
         });
     </script>
 </body>

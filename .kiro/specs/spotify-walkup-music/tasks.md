@@ -87,7 +87,7 @@
     - _Requirements: 2.3, 2.4, 2.5, 2.6_
 
 - [ ] 5. Spotify Integration Implementation
-  - [ ] 5.1 Create Spotify API wrapper
+  - [x] 5.1 Create Spotify API wrapper
     - Implement functions to search for songs
     - Implement functions to get track details
     - Implement error handling for API calls

@@ -211,7 +211,7 @@ export async function previewSegment() {
 
         // Check for available devices first
         const devices = await getAvailableDevices();
-        
+
         if (devices.length === 0) {
             return {
                 success: false,
@@ -221,7 +221,7 @@ export async function previewSegment() {
 
         // Check if there's an active device
         let activeDevice = devices.find(device => device.is_active);
-        
+
         if (!activeDevice) {
             // Try to activate the first available device
             const availableDevice = devices.find(device => !device.is_restricted);
@@ -268,7 +268,7 @@ export async function previewSegment() {
 
     } catch (error) {
         console.error('Failed to preview segment:', error);
-        
+
         // Provide more specific error messages
         if (error.message.includes('Premium')) {
             return {
@@ -1030,7 +1030,7 @@ export async function checkDeviceStatus() {
             `;
         } else {
             const activeDevice = devices.find(device => device.is_active);
-            
+
             if (activeDevice) {
                 deviceStatus.innerHTML = `
                     <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
@@ -1066,7 +1066,7 @@ export async function checkDeviceStatus() {
         }
     } catch (error) {
         console.error('Failed to check device status:', error);
-        
+
         if (error.message.includes('Premium')) {
             deviceStatus.innerHTML = `
                 <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
@@ -1135,7 +1135,7 @@ async function handlePreviewSegment() {
 
     // Use the improved preview function
     const result = await previewSegment();
-    
+
     if (result.success) {
         showNotification('Playing segment preview...', 'success');
     } else {
@@ -1154,7 +1154,7 @@ async function handlePlayFullSong() {
 
         // Check for available devices first
         const devices = await getAvailableDevices();
-        
+
         if (devices.length === 0) {
             showNotification('No Spotify devices found. Please open Spotify on your phone, computer, or other device and try again.', 'danger');
             return;
@@ -1162,7 +1162,7 @@ async function handlePlayFullSong() {
 
         // Check if there's an active device
         let activeDevice = devices.find(device => device.is_active);
-        
+
         if (!activeDevice) {
             // Try to activate the first available device
             const availableDevice = devices.find(device => !device.is_restricted);
@@ -1191,7 +1191,7 @@ async function handlePlayFullSong() {
 
     } catch (error) {
         console.error('Failed to play full song:', error);
-        
+
         // Provide more specific error messages
         if (error.message.includes('Premium')) {
             showNotification('Spotify Premium is required to control playback. Please upgrade your account.', 'danger');

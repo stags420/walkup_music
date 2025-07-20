@@ -80,7 +80,7 @@
     - Integrate with storage component
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-  - [ ] 4.3 Write tests for player management
+  - [x] 4.3 Write tests for player management
     - Test player addition
     - Test player editing
     - Test player deletion
@@ -194,3 +194,34 @@
     - Ensure all features work in production environment
     - Configure custom domain if needed
     - _Requirements: All_
+
+- [ ] 11. Test Coverage and Quality Issues
+  - [ ] 11.1 Fix incomplete test in player-management.test.js
+    - File: tests/js/components/player-management.test.js, line 492
+    - The diff shows an incomplete test case that was cut off mid-execution
+    - The test appears to be testing song selection retrieval but the assertion was incomplete
+    - Fix: Complete the test case or remove the incomplete code
+    - _Requirements: 2.6_
+
+  - [ ] 11.2 Restore missing UI test coverage
+    - File: tests/js/components/player-management.test.js, lines 490-618 (removed in diff)
+    - Critical UI functionality tests were removed including player list display, empty state handling, and error state testing
+    - These tests covered requirement 2.6 for player list display functionality
+    - The removed tests included important edge cases like handling service errors and displaying players with/without song selections
+    - Fix: Either restore the removed UI tests or create equivalent tests that cover the same functionality
+    - _Requirements: 2.6_
+
+  - [ ] 11.3 Add integration tests for UI components
+    - File: tests/js/components/player-management.test.js
+    - The current tests only cover service layer functionality but don't test the actual UI component integration
+    - Missing tests for DOM manipulation, event handling, and user interaction flows
+    - The removed tests were attempting to test UI functionality but were incomplete
+    - Fix: Create proper integration tests that test the actual player management UI component
+    - _Requirements: 2.6_
+
+  - [ ] 11.4 Verify test consistency with actual implementation
+    - File: tests/js/components/player-management.test.js
+    - The test file creates a mock implementation of playerManagementService but doesn't verify it matches the actual service
+    - Risk of tests passing while actual implementation has bugs
+    - Fix: Either import and test the actual service or ensure mock implementation stays in sync
+    - _Requirements: 2.3, 2.4, 2.5, 2.6_

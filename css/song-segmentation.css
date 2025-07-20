@@ -1,0 +1,370 @@
+/* Song Segmentation Styles */
+
+/* Search Results */
+.search-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: white;
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fa;
+  border-color: var(--spotify-green);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-result-item.selected {
+  background-color: #e8f5e8;
+  border-color: var(--spotify-green);
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+}
+
+.search-result-info h6 {
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.search-result-info small {
+  color: #6c757d;
+}
+
+.album-art {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* Audio Timeline */
+.audio-timeline {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.timeline-container {
+  position: relative;
+  height: 60px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+.timeline-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+}
+
+.timeline-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--spotify-green) 0%, #17a2b8 100%);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: -5px;
+  width: 20px;
+  height: 70px;
+  background-color: white;
+  border: 2px solid var(--spotify-green);
+  border-radius: 4px;
+  cursor: ew-resize;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.timeline-handle:hover {
+  background-color: var(--spotify-green);
+  transform: scale(1.1);
+}
+
+.timeline-handle.dragging {
+  background-color: var(--spotify-green);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-handle.start {
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.timeline-handle.end {
+  right: 0;
+  transform: translateX(50%);
+}
+
+.timeline-time-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Segment Controls */
+.segment-controls {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.time-input {
+  width: 80px;
+  text-align: center;
+}
+
+.segment-info {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.segment-info h6 {
+  color: var(--spotify-green);
+  margin-bottom: 10px;
+}
+
+.segment-duration {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Playback Controls */
+.playback-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.playback-controls .btn {
+  min-width: 120px;
+}
+
+.play-button {
+  background-color: var(--spotify-green);
+  border-color: var(--spotify-green);
+  color: white;
+}
+
+.play-button:hover {
+  background-color: #18a448;
+  border-color: #18a448;
+}
+
+.play-button:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+/* Current Track Info */
+.current-track-info {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.current-track-info h5 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.current-track-info .text-muted {
+  margin-bottom: 10px;
+}
+
+.track-duration {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Loading States */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--spotify-green);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.search-loading {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+/* Error States */
+.error-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.warning-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Success States */
+.success-message {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+  .timeline-container {
+    height: 50px;
+  }
+  
+  .timeline-handle {
+    width: 16px;
+    height: 60px;
+    top: -5px;
+  }
+  
+  .time-input-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .playback-controls {
+    flex-direction: column;
+  }
+  
+  .playback-controls .btn {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .timeline-container {
+    height: 40px;
+    margin: 15px 0;
+  }
+  
+  .timeline-handle {
+    width: 14px;
+    height: 50px;
+    top: -5px;
+  }
+  
+  .segment-controls,
+  .audio-timeline {
+    padding: 15px;
+  }
+  
+  .time-input {
+    width: 100%;
+  }
+}
+
+/* Animation for segment updates */
+.segment-update {
+  animation: segmentPulse 0.3s ease-in-out;
+}
+
+@keyframes segmentPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Focus states for accessibility */
+.timeline-handle:focus {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+}
+
+.search-result-item:focus {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .timeline-segment {
+    background: #000;
+  }
+  
+  .timeline-handle {
+    border-color: #000;
+    background-color: #fff;
+  }
+  
+  .search-result-item.selected {
+    background-color: #000;
+    color: #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-handle,
+  .search-result-item,
+  .timeline-segment {
+    transition: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+  
+  .segment-update {
+    animation: none;
+  }
+}

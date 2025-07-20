@@ -195,6 +195,9 @@ function addPlayerToList(player) {
       }
     </div>
     <div class="btn-group">
+      <button class="btn btn-sm btn-outline-success select-music" title="Select Music">
+        <i class="bi bi-music-note"></i>
+      </button>
       <button class="btn btn-sm btn-outline-primary edit-player" title="Edit Player">
         <i class="bi bi-pencil"></i>
       </button>
@@ -204,7 +207,10 @@ function addPlayerToList(player) {
     </div>
   `;
   
-  // Add event listeners for edit and delete buttons
+  // Add event listeners for select music, edit and delete buttons
+  const selectMusicButton = playerItem.querySelector('.select-music');
+  selectMusicButton.addEventListener('click', () => openSongSelectionForPlayer(player));
+  
   const editButton = playerItem.querySelector('.edit-player');
   editButton.addEventListener('click', () => openEditPlayerModal(player));
   
@@ -365,6 +371,27 @@ function showNotification(message, type = 'info') {
       notification.remove();
     }, 300);
   }, 5000);
+}
+
+/**
+ * Open song selection for a player
+ * @param {PlayerModel} player - The player to select music for
+ */
+function openSongSelectionForPlayer(player) {
+  // Import song segmentation component dynamically
+  import('./song-segmentation.js').then(({ setCurrentPlayer }) => {
+    // Set the current player in the song segmentation component
+    setCurrentPlayer(player);
+    
+    // Navigate to song selection view
+    const songSelectionNavLink = document.querySelector('[data-view="song-selection"]');
+    if (songSelectionNavLink) {
+      songSelectionNavLink.click();
+    }
+  }).catch(error => {
+    console.error('Failed to load song segmentation component:', error);
+    showNotification('Failed to open song selection. Please try again.', 'danger');
+  });
 }
 
 /**

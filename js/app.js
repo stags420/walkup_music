@@ -3,6 +3,7 @@ import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
 import { checkAuthentication, logout } from './components/auth.js';
 import { createUrl } from './utils/url-utils.js';
 import { initPlayerManagement } from './components/player-management.js';
+import { initSongSegmentation } from './components/song-segmentation.js';
 
 /**
  * Initialize the application
@@ -42,6 +43,9 @@ function initApp() {
     
     // Initialize player management component
     initPlayerManagement();
+    
+    // Initialize song segmentation component
+    initSongSegmentation();
 
     // Check for authentication callback
     checkForAuthCallback();

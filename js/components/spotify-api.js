@@ -399,6 +399,41 @@ export async function getTrackWithRetry(trackId, options = {}) {
 }
 
 /**
+ * Play a song with automatic retry on failure
+ * @param {string} trackId - The Spotify track ID to play
+ * @param {number} startTime - Start time in seconds (optional)
+ * @returns {Promise<void>}
+ */
+export async function playSongWithRetry(trackId, startTime = 0) {
+    return retryWithBackoff(() => playSong(trackId, startTime));
+}
+
+/**
+ * Pause song with automatic retry on failure
+ * @returns {Promise<void>}
+ */
+export async function pauseSongWithRetry() {
+    return retryWithBackoff(() => pauseSong());
+}
+
+/**
+ * Seek to position with automatic retry on failure
+ * @param {number} positionMs - Position in milliseconds
+ * @returns {Promise<void>}
+ */
+export async function seekToPositionWithRetry(positionMs) {
+    return retryWithBackoff(() => seekToPosition(positionMs));
+}
+
+/**
+ * Get current playback state with automatic retry on failure
+ * @returns {Promise<Object|null>} Current playback state or null if nothing is playing
+ */
+export async function getCurrentPlaybackStateWithRetry() {
+    return retryWithBackoff(() => getCurrentPlaybackState());
+}
+
+/**
  * Check if the Spotify API is available and accessible
  * @returns {Promise<boolean>} Whether the API is available
  */
@@ -423,6 +458,169 @@ export async function getCurrentUser() {
     } catch (error) {
         if (error instanceof SpotifyAPIError) {
             error.message = `Failed to get user profile: ${error.message}`;
+        }
+        throw error;
+    }
+}
+
+/**
+ * Play a song on the user's active Spotify device
+ * @param {string} trackId - The Spotify track ID to play
+ * @param {number} startTime - Start time in seconds (optional)
+ * @returns {Promise<void>}
+ * @throws {SpotifyAPIError} When the playback request fails
+ */
+export async function playSong(trackId, startTime = 0) {
+    if (!trackId || typeof trackId !== 'string' || trackId.trim().length === 0) {
+        throw new Error('Track ID is required and must be a non-empty string');
+    }
+
+    if (typeof startTime !== 'number' || startTime < 0) {
+        throw new Error('Start time must be a non-negative number');
+    }
+
+    const trackUri = `spotify:track:${trackId.trim()}`;
+    const positionMs = Math.floor(startTime * 1000); // Convert seconds to milliseconds
+
+    const requestBody = {
+        uris: [trackUri],
+        position_ms: positionMs
+    };
+
+    try {
+        await makeSpotifyRequest('/me/player/play', {
+            method: 'PUT',
+            body: JSON.stringify(requestBody)
+        });
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            // Handle specific playback errors
+            if (error.status === 404) {
+                error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+            } else if (error.status === 403) {
+                error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to play song: ${error.message}`;
+            }
+        }
+        throw error;
+    }
+}
+
+/**
+ * Pause the currently playing song on the user's active Spotify device
+ * @returns {Promise<void>}
+ * @throws {SpotifyAPIError} When the pause request fails
+ */
+export async function pauseSong() {
+    try {
+        await makeSpotifyRequest('/me/player/pause', {
+            method: 'PUT'
+        });
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            // Handle specific playback errors
+            if (error.status === 404) {
+                error.message = 'No active Spotify device found or nothing is currently playing.';
+            } else if (error.status === 403) {
+                error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to pause song: ${error.message}`;
+            }
+        }
+        throw error;
+    }
+}
+
+/**
+ * Seek to a specific position in the currently playing track
+ * @param {number} positionMs - Position in milliseconds
+ * @returns {Promise<void>}
+ * @throws {SpotifyAPIError} When the seek request fails
+ */
+export async function seekToPosition(positionMs) {
+    if (typeof positionMs !== 'number' || positionMs < 0) {
+        throw new Error('Position must be a non-negative number in milliseconds');
+    }
+
+    const searchParams = new URLSearchParams({
+        position_ms: Math.floor(positionMs).toString()
+    });
+
+    try {
+        await makeSpotifyRequest(`/me/player/seek?${searchParams.toString()}`, {
+            method: 'PUT'
+        });
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            // Handle specific playback errors
+            if (error.status === 404) {
+                error.message = 'No active Spotify device found or nothing is currently playing.';
+            } else if (error.status === 403) {
+                error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to seek to position: ${error.message}`;
+            }
+        }
+        throw error;
+    }
+}
+
+/**
+ * Get information about the current playback state
+ * @returns {Promise<Object|null>} Current playback state or null if nothing is playing
+ * @throws {SpotifyAPIError} When the request fails
+ */
+export async function getCurrentPlaybackState() {
+    try {
+        const response = await makeSpotifyRequest('/me/player');
+        
+        // If no content is returned, nothing is currently playing
+        if (!response || Object.keys(response).length === 0) {
+            return null;
+        }
+
+        // Transform the response to a more convenient format
+        return {
+            is_playing: response.is_playing,
+            progress_ms: response.progress_ms,
+            timestamp: response.timestamp,
+            device: {
+                id: response.device?.id,
+                name: response.device?.name,
+                type: response.device?.type,
+                volume_percent: response.device?.volume_percent,
+                is_active: response.device?.is_active
+            },
+            repeat_state: response.repeat_state,
+            shuffle_state: response.shuffle_state,
+            track: response.item ? {
+                id: response.item.id,
+                name: response.item.name,
+                artists: response.item.artists?.map(artist => ({
+                    id: artist.id,
+                    name: artist.name
+                })) || [],
+                album: {
+                    id: response.item.album?.id,
+                    name: response.item.album?.name,
+                    images: response.item.album?.images || []
+                },
+                duration_ms: response.item.duration_ms,
+                uri: response.item.uri
+            } : null
+        };
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            // Handle specific errors
+            if (error.status === 404) {
+                // No active device or no playback - return null instead of throwing
+                return null;
+            } else if (error.status === 403) {
+                error.message = 'Getting playback state requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to get playback state: ${error.message}`;
+            }
         }
         throw error;
     }

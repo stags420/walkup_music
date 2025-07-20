@@ -93,7 +93,7 @@
     - Implement error handling for API calls
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 5.2 Implement song playback controls
+  - [x] 5.2 Implement song playback controls
     - Create functions to play songs
     - Create functions to pause songs
     - Create functions to seek to specific positions

@@ -315,6 +315,156 @@ describe('Spotify API Wrapper', () => {
             return await makeSpotifyRequest('/me');
         };
         
+        // Mock playback control functions
+        const playSong = async (trackId, startTime = 0) => {
+            if (!trackId || typeof trackId !== 'string' || trackId.trim().length === 0) {
+                throw new Error('Track ID is required and must be a non-empty string');
+            }
+            
+            if (typeof startTime !== 'number' || startTime < 0) {
+                throw new Error('Start time must be a non-negative number');
+            }
+            
+            const trackUri = `spotify:track:${trackId.trim()}`;
+            const positionMs = Math.floor(startTime * 1000);
+            
+            const requestBody = {
+                uris: [trackUri],
+                position_ms: positionMs
+            };
+            
+            try {
+                await makeSpotifyRequest('/me/player/play', {
+                    method: 'PUT',
+                    body: JSON.stringify(requestBody)
+                });
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 404) {
+                        error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+                    } else if (error.status === 403) {
+                        error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to play song: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
+        const pauseSong = async () => {
+            try {
+                await makeSpotifyRequest('/me/player/pause', {
+                    method: 'PUT'
+                });
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 404) {
+                        error.message = 'No active Spotify device found or nothing is currently playing.';
+                    } else if (error.status === 403) {
+                        error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to pause song: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
+        const seekToPosition = async (positionMs) => {
+            if (typeof positionMs !== 'number' || positionMs < 0) {
+                throw new Error('Position must be a non-negative number in milliseconds');
+            }
+            
+            const searchParams = new URLSearchParams({
+                position_ms: Math.floor(positionMs).toString()
+            });
+            
+            try {
+                await makeSpotifyRequest(`/me/player/seek?${searchParams.toString()}`, {
+                    method: 'PUT'
+                });
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 404) {
+                        error.message = 'No active Spotify device found or nothing is currently playing.';
+                    } else if (error.status === 403) {
+                        error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to seek to position: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
+        const getCurrentPlaybackState = async () => {
+            try {
+                const response = await makeSpotifyRequest('/me/player');
+                
+                if (!response || Object.keys(response).length === 0) {
+                    return null;
+                }
+                
+                return {
+                    is_playing: response.is_playing,
+                    progress_ms: response.progress_ms,
+                    timestamp: response.timestamp,
+                    device: {
+                        id: response.device?.id,
+                        name: response.device?.name,
+                        type: response.device?.type,
+                        volume_percent: response.device?.volume_percent,
+                        is_active: response.device?.is_active
+                    },
+                    repeat_state: response.repeat_state,
+                    shuffle_state: response.shuffle_state,
+                    track: response.item ? {
+                        id: response.item.id,
+                        name: response.item.name,
+                        artists: response.item.artists?.map(artist => ({
+                            id: artist.id,
+                            name: artist.name
+                        })) || [],
+                        album: {
+                            id: response.item.album?.id,
+                            name: response.item.album?.name,
+                            images: response.item.album?.images || []
+                        },
+                        duration_ms: response.item.duration_ms,
+                        uri: response.item.uri
+                    } : null
+                };
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 404) {
+                        return null;
+                    } else if (error.status === 403) {
+                        error.message = 'Getting playback state requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to get playback state: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
+        const playSongWithRetry = async (trackId, startTime = 0) => {
+            return retryWithBackoff(() => playSong(trackId, startTime));
+        };
+        
+        const pauseSongWithRetry = async () => {
+            return retryWithBackoff(() => pauseSong());
+        };
+        
+        const seekToPositionWithRetry = async (positionMs) => {
+            return retryWithBackoff(() => seekToPosition(positionMs));
+        };
+        
+        const getCurrentPlaybackStateWithRetry = async () => {
+            return retryWithBackoff(() => getCurrentPlaybackState());
+        };
+        
         return {
             SpotifyAPIError,
             SpotifyAuthError,
@@ -326,6 +476,14 @@ describe('Spotify API Wrapper', () => {
             getTrackWithRetry,
             checkAPIAvailability,
             getCurrentUser,
+            playSong,
+            pauseSong,
+            seekToPosition,
+            getCurrentPlaybackState,
+            playSongWithRetry,
+            pauseSongWithRetry,
+            seekToPositionWithRetry,
+            getCurrentPlaybackStateWithRetry,
             makeSpotifyRequest
         };
     };
@@ -730,6 +888,366 @@ describe('Spotify API Wrapper', () => {
             );
             
             expect(result).toEqual(mockUser);
+        });
+    });
+
+    describe('playSong', () => {
+        test('should play a song successfully', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 204,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await spotifyAPI.playSong('track123', 30);
+
+            expect(fetch).toHaveBeenCalledWith(
+                'https://api.spotify.com/v1/me/player/play',
+                expect.objectContaining({
+                    method: 'PUT',
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock_access_token',
+                        'Content-Type': 'application/json'
+                    }),
+                    body: JSON.stringify({
+                        uris: ['spotify:track:track123'],
+                        position_ms: 30000
+                    })
+                })
+            );
+        });
+
+        test('should play a song from the beginning when no start time provided', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 204,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await spotifyAPI.playSong('track123');
+
+            expect(fetch).toHaveBeenCalledWith(
+                'https://api.spotify.com/v1/me/player/play',
+                expect.objectContaining({
+                    body: JSON.stringify({
+                        uris: ['spotify:track:track123'],
+                        position_ms: 0
+                    })
+                })
+            );
+        });
+
+        test('should throw error for empty track ID', async () => {
+            await expect(spotifyAPI.playSong('')).rejects.toThrow('Track ID is required and must be a non-empty string');
+            await expect(spotifyAPI.playSong(null)).rejects.toThrow('Track ID is required and must be a non-empty string');
+        });
+
+        test('should throw error for negative start time', async () => {
+            await expect(spotifyAPI.playSong('track123', -1)).rejects.toThrow('Start time must be a non-negative number');
+        });
+
+        test('should handle no active device error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.playSong('track123')).rejects.toThrow('No active Spotify device found');
+        });
+
+        test('should handle premium required error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.playSong('track123')).rejects.toThrow('Playback control requires Spotify Premium');
+        });
+    });
+
+    describe('pauseSong', () => {
+        test('should pause song successfully', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 204,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await spotifyAPI.pauseSong();
+
+            expect(fetch).toHaveBeenCalledWith(
+                'https://api.spotify.com/v1/me/player/pause',
+                expect.objectContaining({
+                    method: 'PUT',
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock_access_token'
+                    })
+                })
+            );
+        });
+
+        test('should handle no active device error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.pauseSong()).rejects.toThrow('No active Spotify device found');
+        });
+
+        test('should handle premium required error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.pauseSong()).rejects.toThrow('Playback control requires Spotify Premium');
+        });
+    });
+
+    describe('seekToPosition', () => {
+        test('should seek to position successfully', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 204,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await spotifyAPI.seekToPosition(45000);
+
+            expect(fetch).toHaveBeenCalledWith(
+                'https://api.spotify.com/v1/me/player/seek?position_ms=45000',
+                expect.objectContaining({
+                    method: 'PUT',
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock_access_token'
+                    })
+                })
+            );
+        });
+
+        test('should throw error for negative position', async () => {
+            await expect(spotifyAPI.seekToPosition(-1)).rejects.toThrow('Position must be a non-negative number in milliseconds');
+        });
+
+        test('should throw error for non-number position', async () => {
+            await expect(spotifyAPI.seekToPosition('invalid')).rejects.toThrow('Position must be a non-negative number in milliseconds');
+        });
+
+        test('should handle no active device error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.seekToPosition(30000)).rejects.toThrow('No active Spotify device found');
+        });
+
+        test('should handle premium required error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.seekToPosition(30000)).rejects.toThrow('Playback control requires Spotify Premium');
+        });
+    });
+
+    describe('getCurrentPlaybackState', () => {
+        test('should get current playback state successfully', async () => {
+            const mockPlaybackState = {
+                is_playing: true,
+                progress_ms: 45000,
+                timestamp: 1234567890,
+                device: {
+                    id: 'device123',
+                    name: 'My Device',
+                    type: 'Computer',
+                    volume_percent: 75,
+                    is_active: true
+                },
+                repeat_state: 'off',
+                shuffle_state: false,
+                item: {
+                    id: 'track123',
+                    name: 'Test Song',
+                    artists: [{ id: 'artist1', name: 'Test Artist' }],
+                    album: {
+                        id: 'album1',
+                        name: 'Test Album',
+                        images: [{ url: 'image.jpg' }]
+                    },
+                    duration_ms: 180000,
+                    uri: 'spotify:track:track123'
+                }
+            };
+
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue(mockPlaybackState)
+            });
+
+            const result = await spotifyAPI.getCurrentPlaybackState();
+
+            expect(fetch).toHaveBeenCalledWith(
+                'https://api.spotify.com/v1/me/player',
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        'Authorization': 'Bearer mock_access_token'
+                    })
+                })
+            );
+
+            expect(result).toEqual({
+                is_playing: true,
+                progress_ms: 45000,
+                timestamp: 1234567890,
+                device: {
+                    id: 'device123',
+                    name: 'My Device',
+                    type: 'Computer',
+                    volume_percent: 75,
+                    is_active: true
+                },
+                repeat_state: 'off',
+                shuffle_state: false,
+                track: {
+                    id: 'track123',
+                    name: 'Test Song',
+                    artists: [{ id: 'artist1', name: 'Test Artist' }],
+                    album: {
+                        id: 'album1',
+                        name: 'Test Album',
+                        images: [{ url: 'image.jpg' }]
+                    },
+                    duration_ms: 180000,
+                    uri: 'spotify:track:track123'
+                }
+            });
+        });
+
+        test('should return null when nothing is playing', async () => {
+            fetch.mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            const result = await spotifyAPI.getCurrentPlaybackState();
+            expect(result).toBeNull();
+        });
+
+        test('should return null when no active device (404)', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            const result = await spotifyAPI.getCurrentPlaybackState();
+            expect(result).toBeNull();
+        });
+
+        test('should handle premium required error', async () => {
+            fetch.mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: jest.fn().mockResolvedValue({})
+            });
+
+            await expect(spotifyAPI.getCurrentPlaybackState()).rejects.toThrow('Getting playback state requires Spotify Premium');
+        });
+    });
+
+    describe('Playback control retry functions', () => {
+        test('playSongWithRetry should retry on failure', async () => {
+            fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 500,
+                    json: jest.fn().mockResolvedValue({})
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 204,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+            await spotifyAPI.playSongWithRetry('track123', 30);
+            
+            expect(fetch).toHaveBeenCalledTimes(2);
+        });
+
+        test('pauseSongWithRetry should retry on failure', async () => {
+            fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 500,
+                    json: jest.fn().mockResolvedValue({})
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 204,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+            await spotifyAPI.pauseSongWithRetry();
+            
+            expect(fetch).toHaveBeenCalledTimes(2);
+        });
+
+        test('seekToPositionWithRetry should retry on failure', async () => {
+            fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 500,
+                    json: jest.fn().mockResolvedValue({})
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 204,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+            await spotifyAPI.seekToPositionWithRetry(30000);
+            
+            expect(fetch).toHaveBeenCalledTimes(2);
+        });
+
+        test('getCurrentPlaybackStateWithRetry should retry on failure', async () => {
+            const mockState = {
+                is_playing: false,
+                progress_ms: 0,
+                timestamp: 1234567890,
+                device: null,
+                repeat_state: 'off',
+                shuffle_state: false,
+                item: null
+            };
+
+            fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 500,
+                    json: jest.fn().mockResolvedValue({})
+                })
+                .mockResolvedValueOnce({
+                    ok: true,
+                    status: 200,
+                    json: jest.fn().mockResolvedValue(mockState)
+                });
+
+            const result = await spotifyAPI.getCurrentPlaybackStateWithRetry();
+            
+            expect(fetch).toHaveBeenCalledTimes(2);
+            expect(result.is_playing).toBe(false);
         });
     });
 });

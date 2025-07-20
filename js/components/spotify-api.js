@@ -625,3 +625,69 @@ export async function getCurrentPlaybackState() {
         throw error;
     }
 }
+
+/**
+ * Get available Spotify devices
+ * @returns {Promise<Object[]>} Array of available devices
+ * @throws {SpotifyAPIError} When the request fails
+ */
+export async function getAvailableDevices() {
+    try {
+        const response = await makeSpotifyRequest('/me/player/devices');
+        
+        return response.devices.map(device => ({
+            id: device.id,
+            name: device.name,
+            type: device.type,
+            is_active: device.is_active,
+            is_private_session: device.is_private_session,
+            is_restricted: device.is_restricted,
+            volume_percent: device.volume_percent
+        }));
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            if (error.status === 403) {
+                error.message = 'Getting devices requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to get devices: ${error.message}`;
+            }
+        }
+        throw error;
+    }
+}
+
+/**
+ * Transfer playback to a specific device
+ * @param {string} deviceId - The device ID to transfer playback to
+ * @param {boolean} play - Whether to start playing immediately (default: false)
+ * @returns {Promise<void>}
+ * @throws {SpotifyAPIError} When the transfer fails
+ */
+export async function transferPlayback(deviceId, play = false) {
+    if (!deviceId || typeof deviceId !== 'string') {
+        throw new Error('Device ID is required and must be a string');
+    }
+
+    const requestBody = {
+        device_ids: [deviceId],
+        play: play
+    };
+
+    try {
+        await makeSpotifyRequest('/me/player', {
+            method: 'PUT',
+            body: JSON.stringify(requestBody)
+        });
+    } catch (error) {
+        if (error instanceof SpotifyAPIError) {
+            if (error.status === 404) {
+                error.message = 'Device not found or not available for playback transfer.';
+            } else if (error.status === 403) {
+                error.message = 'Playback transfer requires Spotify Premium. Please upgrade your account.';
+            } else {
+                error.message = `Failed to transfer playback: ${error.message}`;
+            }
+        }
+        throw error;
+    }
+}

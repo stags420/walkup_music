@@ -207,8 +207,45 @@ export async function previewSegment() {
 
     try {
         // Import playback functions dynamically to avoid circular dependencies
-        const { playSong, pauseSong } = await import('./spotify-api.js');
+        const { playSong, pauseSong, getAvailableDevices, getCurrentPlaybackState, transferPlayback } = await import('./spotify-api.js');
 
+        // Check for available devices first
+        const devices = await getAvailableDevices();
+        
+        if (devices.length === 0) {
+            return {
+                success: false,
+                error: 'No Spotify devices found. Please open Spotify on your phone, computer, or other device and try again.'
+            };
+        }
+
+        // Check if there's an active device
+        let activeDevice = devices.find(device => device.is_active);
+        
+        if (!activeDevice) {
+            // Try to activate the first available device
+            const availableDevice = devices.find(device => !device.is_restricted);
+            if (availableDevice) {
+                try {
+                    await transferPlayback(availableDevice.id, false);
+                    activeDevice = availableDevice;
+                    // Give it a moment to activate
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch (transferError) {
+                    console.warn('Failed to transfer playback:', transferError);
+                }
+            }
+        }
+
+        if (!activeDevice) {
+            const deviceNames = devices.map(d => d.name).join(', ');
+            return {
+                success: false,
+                error: `Found devices (${deviceNames}) but none are active. Please start playing music on one of your Spotify devices and try again.`
+            };
+        }
+
+        // Now try to play the segment
         await playSong(currentTrack.id, currentSegment.startTime);
 
         // Show pause button, hide play buttons
@@ -231,10 +268,24 @@ export async function previewSegment() {
 
     } catch (error) {
         console.error('Failed to preview segment:', error);
-        return {
-            success: false,
-            error: 'Failed to play preview. Make sure Spotify is open and playing.'
-        };
+        
+        // Provide more specific error messages
+        if (error.message.includes('Premium')) {
+            return {
+                success: false,
+                error: 'Spotify Premium is required to control playback. Please upgrade your account or use the 30-second preview instead.'
+            };
+        } else if (error.message.includes('No active Spotify device')) {
+            return {
+                success: false,
+                error: 'No active Spotify device found. Please open Spotify on your phone, computer, or other device, start playing any song, then try again.'
+            };
+        } else {
+            return {
+                success: false,
+                error: `Failed to play preview: ${error.message}`
+            };
+        }
     }
 }
 
@@ -639,6 +690,14 @@ function showSegmentationInterface() {
             </div>
         </div>
         
+        <!-- Device Status -->
+        <div class="device-status mb-3" id="device-status">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                <small class="text-muted">Checking Spotify devices...</small>
+            </div>
+        </div>
+        
         <!-- Playback Controls -->
         <div class="playback-controls">
             <button class="btn play-button" id="preview-segment">
@@ -665,6 +724,9 @@ function showSegmentationInterface() {
 
     // Update timeline visualization
     updateTimelineVisualization();
+
+    // Check device status
+    checkDeviceStatus();
 }
 
 /**
@@ -725,6 +787,13 @@ function setupSegmentationEventListeners() {
     // Global mouse events for dragging
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+
+    // Device refresh button (using event delegation since it's dynamically created)
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.refresh-devices')) {
+            checkDeviceStatus();
+        }
+    });
 }
 
 /**
@@ -934,6 +1003,105 @@ function updateTimelineVisualization() {
 }
 
 /**
+ * Check and display device status
+ */
+export async function checkDeviceStatus() {
+    const deviceStatus = document.getElementById('device-status');
+    if (!deviceStatus) return;
+
+    try {
+        const { getAvailableDevices } = await import('./spotify-api.js');
+        const devices = await getAvailableDevices();
+
+        if (devices.length === 0) {
+            deviceStatus.innerHTML = `
+                <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <div>
+                            <strong>No Spotify devices found.</strong><br>
+                            <small>Please open Spotify on your phone, computer, or other device to enable playback.</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device status">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            const activeDevice = devices.find(device => device.is_active);
+            
+            if (activeDevice) {
+                deviceStatus.innerHTML = `
+                    <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <div>
+                                <strong>Ready to play on ${escapeHtml(activeDevice.name)}</strong><br>
+                                <small>Device type: ${escapeHtml(activeDevice.type)}</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success refresh-devices" title="Refresh device status">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                const deviceNames = devices.map(d => d.name).join(', ');
+                deviceStatus.innerHTML = `
+                    <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <div>
+                                <strong>Devices found: ${escapeHtml(deviceNames)}</strong><br>
+                                <small>Please start playing music on one of your devices to enable segment preview.</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-info refresh-devices" title="Refresh device status">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to check device status:', error);
+        
+        if (error.message.includes('Premium')) {
+            deviceStatus.innerHTML = `
+                <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-star me-2"></i>
+                        <div>
+                            <strong>Spotify Premium Required</strong><br>
+                            <small>Playback control requires a Spotify Premium subscription. You can still save segments, but preview won't work.</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device status">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            deviceStatus.innerHTML = `
+                <div class="alert alert-secondary d-flex align-items-center justify-content-between" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-question-circle me-2"></i>
+                        <div>
+                            <strong>Unable to check device status</strong><br>
+                            <small>Preview may not work. Make sure Spotify is open and you're logged in.</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary refresh-devices" title="Refresh device status">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+/**
  * Validate time inputs
  */
 function validateTimeInputs() {
@@ -965,30 +1133,13 @@ function validateTimeInputs() {
 async function handlePreviewSegment() {
     if (!currentTrack) return;
 
-    try {
-        // Import playback functions dynamically to avoid circular dependencies
-        const { playSong, pauseSong } = await import('./spotify-api.js');
-
-        await playSong(currentTrack.id, currentSegment.startTime);
-
-        // Show pause button, hide play buttons
-        togglePlaybackButtons(true);
-
-        // Auto-pause after segment duration
-        setTimeout(async () => {
-            try {
-                await pauseSong();
-                togglePlaybackButtons(false);
-            } catch (error) {
-                console.error('Failed to auto-pause:', error);
-            }
-        }, currentSegment.duration * 1000);
-
+    // Use the improved preview function
+    const result = await previewSegment();
+    
+    if (result.success) {
         showNotification('Playing segment preview...', 'success');
-
-    } catch (error) {
-        console.error('Failed to preview segment:', error);
-        showNotification('Failed to play preview. Make sure Spotify is open and playing.', 'danger');
+    } else {
+        showNotification(result.error, 'danger');
     }
 }
 
@@ -999,7 +1150,40 @@ async function handlePlayFullSong() {
     if (!currentTrack) return;
 
     try {
-        const { playSong } = await import('./spotify-api.js');
+        const { playSong, getAvailableDevices, transferPlayback } = await import('./spotify-api.js');
+
+        // Check for available devices first
+        const devices = await getAvailableDevices();
+        
+        if (devices.length === 0) {
+            showNotification('No Spotify devices found. Please open Spotify on your phone, computer, or other device and try again.', 'danger');
+            return;
+        }
+
+        // Check if there's an active device
+        let activeDevice = devices.find(device => device.is_active);
+        
+        if (!activeDevice) {
+            // Try to activate the first available device
+            const availableDevice = devices.find(device => !device.is_restricted);
+            if (availableDevice) {
+                try {
+                    await transferPlayback(availableDevice.id, false);
+                    activeDevice = availableDevice;
+                    // Give it a moment to activate
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch (transferError) {
+                    console.warn('Failed to transfer playback:', transferError);
+                }
+            }
+        }
+
+        if (!activeDevice) {
+            const deviceNames = devices.map(d => d.name).join(', ');
+            showNotification(`Found devices (${deviceNames}) but none are active. Please start playing music on one of your Spotify devices and try again.`, 'danger');
+            return;
+        }
+
         await playSong(currentTrack.id, 0);
 
         togglePlaybackButtons(true);
@@ -1007,7 +1191,15 @@ async function handlePlayFullSong() {
 
     } catch (error) {
         console.error('Failed to play full song:', error);
-        showNotification('Failed to play song. Make sure Spotify is open and playing.', 'danger');
+        
+        // Provide more specific error messages
+        if (error.message.includes('Premium')) {
+            showNotification('Spotify Premium is required to control playback. Please upgrade your account.', 'danger');
+        } else if (error.message.includes('No active Spotify device')) {
+            showNotification('No active Spotify device found. Please open Spotify on your phone, computer, or other device, start playing any song, then try again.', 'danger');
+        } else {
+            showNotification(`Failed to play song: ${error.message}`, 'danger');
+        }
     }
 }
 

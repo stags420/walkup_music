@@ -464,19 +464,24 @@ export async function getCurrentUser() {
 }
 
 /**
- * Play a song on the user's active Spotify device
+ * Play a song on the user's Spotify device
  * @param {string} trackId - The Spotify track ID to play
  * @param {number} startTime - Start time in seconds (optional)
+ * @param {string} deviceId - The device ID to play on (optional, uses active device if not specified)
  * @returns {Promise<void>}
  * @throws {SpotifyAPIError} When the playback request fails
  */
-export async function playSong(trackId, startTime = 0) {
+export async function playSong(trackId, startTime = 0, deviceId = null) {
     if (!trackId || typeof trackId !== 'string' || trackId.trim().length === 0) {
         throw new Error('Track ID is required and must be a non-empty string');
     }
 
     if (typeof startTime !== 'number' || startTime < 0) {
         throw new Error('Start time must be a non-negative number');
+    }
+
+    if (deviceId && (typeof deviceId !== 'string' || deviceId.trim().length === 0)) {
+        throw new Error('Device ID must be a non-empty string if provided');
     }
 
     const trackUri = `spotify:track:${trackId.trim()}`;
@@ -487,6 +492,11 @@ export async function playSong(trackId, startTime = 0) {
         position_ms: positionMs
     };
 
+    // Add device_id to request body if specified
+    if (deviceId) {
+        requestBody.device_id = deviceId.trim();
+    }
+
     try {
         await makeSpotifyRequest('/me/player/play', {
             method: 'PUT',
@@ -496,7 +506,11 @@ export async function playSong(trackId, startTime = 0) {
         if (error instanceof SpotifyAPIError) {
             // Handle specific playback errors
             if (error.status === 404) {
-                error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+                if (deviceId) {
+                    error.message = 'Specified device not found or not available for playback. Please check the device is online and try again.';
+                } else {
+                    error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+                }
             } else if (error.status === 403) {
                 error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
             } else {
@@ -508,20 +522,32 @@ export async function playSong(trackId, startTime = 0) {
 }
 
 /**
- * Pause the currently playing song on the user's active Spotify device
+ * Pause the currently playing song on the user's Spotify device
+ * @param {string} deviceId - The device ID to pause on (optional, uses active device if not specified)
  * @returns {Promise<void>}
  * @throws {SpotifyAPIError} When the pause request fails
  */
-export async function pauseSong() {
+export async function pauseSong(deviceId = null) {
+    if (deviceId && (typeof deviceId !== 'string' || deviceId.trim().length === 0)) {
+        throw new Error('Device ID must be a non-empty string if provided');
+    }
+
+    const requestBody = deviceId ? { device_id: deviceId.trim() } : {};
+
     try {
         await makeSpotifyRequest('/me/player/pause', {
-            method: 'PUT'
+            method: 'PUT',
+            body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
         });
     } catch (error) {
         if (error instanceof SpotifyAPIError) {
             // Handle specific playback errors
             if (error.status === 404) {
-                error.message = 'No active Spotify device found or nothing is currently playing.';
+                if (deviceId) {
+                    error.message = 'Specified device not found or nothing is currently playing on that device.';
+                } else {
+                    error.message = 'No active Spotify device found or nothing is currently playing.';
+                }
             } else if (error.status === 403) {
                 error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
             } else {

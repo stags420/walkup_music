@@ -26,6 +26,7 @@ let isSearching = false;
 let isDragging = false;
 let dragType = null; // 'start' or 'end'
 let previewMonitorInterval = null; // For monitoring playback position during preview
+let selectedDeviceId = null; // Currently selected device for playback
 
 /**
  * Initialize the song segmentation component
@@ -208,49 +209,21 @@ export async function previewSegment() {
 
     try {
         // Import playback functions dynamically to avoid circular dependencies
-        const { playSong, pauseSong, getAvailableDevices, getCurrentPlaybackState, transferPlayback } = await import('./spotify-api.js');
+        const { playSong } = await import('./spotify-api.js');
 
-        // Check for available devices first
-        const devices = await getAvailableDevices();
-
-        if (devices.length === 0) {
+        // Check if a device is selected
+        if (!selectedDeviceId) {
             return {
                 success: false,
-                error: 'No Spotify devices found. Please open Spotify on your phone, computer, or other device and try again.'
-            };
-        }
-
-        // Check if there's an active device
-        let activeDevice = devices.find(device => device.is_active);
-
-        if (!activeDevice) {
-            // Try to activate the first available device
-            const availableDevice = devices.find(device => !device.is_restricted);
-            if (availableDevice) {
-                try {
-                    await transferPlayback(availableDevice.id, false);
-                    activeDevice = availableDevice;
-                    // Give it a moment to activate
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } catch (transferError) {
-                    console.warn('Failed to transfer playback:', transferError);
-                }
-            }
-        }
-
-        if (!activeDevice) {
-            const deviceNames = devices.map(d => d.name).join(', ');
-            return {
-                success: false,
-                error: `Found devices (${deviceNames}) but none are active. Please start playing music on one of your Spotify devices and try again.`
+                error: 'No device selected. Please select a device from the list above.'
             };
         }
 
         // Stop any existing monitoring first
         stopSegmentMonitoring();
 
-        // Now try to play the segment
-        await playSong(currentTrack.id, currentSegment.startTime);
+        // Now try to play the segment on the selected device
+        await playSong(currentTrack.id, currentSegment.startTime, selectedDeviceId);
 
         // Show pause button, hide play buttons
         togglePlaybackButtons(true);
@@ -312,7 +285,7 @@ async function startSegmentMonitoring() {
             // Check if we've reached the end of the segment
             if (playbackState.progress_ms >= segmentEndMs) {
                 // Stop playback and monitoring
-                await pauseSong();
+                await pauseSong(selectedDeviceId);
                 stopSegmentMonitoring();
                 togglePlaybackButtons(false);
                 showNotification('Segment preview completed', 'info');
@@ -327,7 +300,7 @@ async function startSegmentMonitoring() {
     setTimeout(() => {
         if (previewMonitorInterval) {
             stopSegmentMonitoring();
-            pauseSong().catch(console.error);
+            pauseSong(selectedDeviceId).catch(console.error);
             togglePlaybackButtons(false);
         }
     }, (currentSegment.duration + 2) * 1000); // Add 2 seconds buffer
@@ -1212,90 +1185,145 @@ export async function checkDeviceStatus() {
 
         if (devices.length === 0) {
             deviceStatus.innerHTML = `
-                <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <div>
-                            <strong>No Spotify devices found.</strong><br>
-                            <small>Please open Spotify on your phone, computer, or other device to enable playback.</small>
+                <div class="alert alert-warning" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>No Spotify devices found</strong>
                         </div>
+                        <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device list">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
                     </div>
-                    <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device status">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
+                    <small>Please open Spotify on your phone, computer, or other device, then refresh to see available devices.</small>
                 </div>
             `;
         } else {
-            const activeDevice = devices.find(device => device.is_active);
+            // Sort devices: active first, then by name for consistent ordering
+            const sortedDevices = [...devices].sort((a, b) => {
+                if (a.is_active && !b.is_active) return -1;
+                if (!a.is_active && b.is_active) return 1;
+                return a.name.localeCompare(b.name);
+            });
 
-            if (activeDevice) {
-                deviceStatus.innerHTML = `
-                    <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-check-circle me-2"></i>
-                            <div>
-                                <strong>Ready to play on ${escapeHtml(activeDevice.name)}</strong><br>
-                                <small>Device type: ${escapeHtml(activeDevice.type)}</small>
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-outline-success refresh-devices" title="Refresh device status">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                    </div>
-                `;
-            } else {
-                const deviceNames = devices.map(d => d.name).join(', ');
-                deviceStatus.innerHTML = `
-                    <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <div>
-                                <strong>Devices found: ${escapeHtml(deviceNames)}</strong><br>
-                                <small>Please start playing music on one of your devices to enable segment preview.</small>
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-outline-info refresh-devices" title="Refresh device status">
-                            <i class="bi bi-arrow-clockwise"></i>
-                        </button>
-                    </div>
-                `;
+            // Set default selected device if none is selected
+            if (!selectedDeviceId && sortedDevices.length > 0) {
+                const activeDevice = sortedDevices.find(device => device.is_active);
+                selectedDeviceId = activeDevice ? activeDevice.id : sortedDevices[0].id;
             }
+
+            const deviceOptions = sortedDevices.map(device => {
+                const isSelected = selectedDeviceId === device.id;
+                const activeLabel = device.is_active ? ' (Active)' : '';
+                const deviceIcon = getDeviceIcon(device.type);
+                
+                return `
+                    <div class="form-check">
+                        <input class="form-check-input device-radio" type="radio" name="spotify-device" 
+                               id="device-${device.id}" value="${device.id}" ${isSelected ? 'checked' : ''}>
+                        <label class="form-check-label d-flex align-items-center" for="device-${device.id}">
+                            <i class="bi ${deviceIcon} me-2"></i>
+                            <div>
+                                <div class="fw-medium">${escapeHtml(device.name)}${activeLabel}</div>
+                                <small class="text-muted">${escapeHtml(device.type)}</small>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            deviceStatus.innerHTML = `
+                <div class="alert alert-info" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-speaker me-2"></i>
+                            <strong>Select Playback Device</strong>
+                        </div>
+                        <button class="btn btn-sm btn-outline-info refresh-devices" title="Refresh device list">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="device-selection">
+                        ${deviceOptions}
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        Don't see your device? Open Spotify on the desired device and refresh this list.
+                    </small>
+                </div>
+            `;
+
+            // Add event listeners for device selection
+            deviceStatus.querySelectorAll('.device-radio').forEach(radio => {
+                radio.addEventListener('change', handleDeviceSelection);
+            });
         }
     } catch (error) {
         console.error('Failed to check device status:', error);
 
         if (error.message.includes('Premium')) {
             deviceStatus.innerHTML = `
-                <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-star me-2"></i>
-                        <div>
-                            <strong>Spotify Premium Required</strong><br>
-                            <small>Playback control requires a Spotify Premium subscription. You can still save segments, but preview won't work.</small>
+                <div class="alert alert-warning" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-star me-2"></i>
+                            <strong>Spotify Premium Required</strong>
                         </div>
+                        <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device status">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
                     </div>
-                    <button class="btn btn-sm btn-outline-warning refresh-devices" title="Refresh device status">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
+                    <small>Playback control requires a Spotify Premium subscription. You can still save segments, but preview won't work.</small>
                 </div>
             `;
         } else {
             deviceStatus.innerHTML = `
-                <div class="alert alert-secondary d-flex align-items-center justify-content-between" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-question-circle me-2"></i>
-                        <div>
-                            <strong>Unable to check device status</strong><br>
-                            <small>Preview may not work. Make sure Spotify is open and you're logged in.</small>
+                <div class="alert alert-secondary" role="alert">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-question-circle me-2"></i>
+                            <strong>Unable to check device status</strong>
                         </div>
+                        <button class="btn btn-sm btn-outline-secondary refresh-devices" title="Refresh device status">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary refresh-devices" title="Refresh device status">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
+                    <small>Preview may not work. Make sure Spotify is open and you're logged in.</small>
                 </div>
             `;
         }
     }
+}
+
+/**
+ * Get appropriate icon for device type
+ * @param {string} deviceType - The device type from Spotify API
+ * @returns {string} Bootstrap icon class
+ */
+function getDeviceIcon(deviceType) {
+    const type = deviceType.toLowerCase();
+    
+    if (type.includes('computer')) return 'bi-laptop';
+    if (type.includes('smartphone') || type.includes('phone')) return 'bi-phone';
+    if (type.includes('speaker')) return 'bi-speaker';
+    if (type.includes('tv')) return 'bi-tv';
+    if (type.includes('tablet')) return 'bi-tablet';
+    if (type.includes('car')) return 'bi-car-front';
+    if (type.includes('game')) return 'bi-controller';
+    
+    return 'bi-speaker'; // Default icon
+}
+
+/**
+ * Handle device selection change
+ * @param {Event} event - Change event from device radio button
+ */
+function handleDeviceSelection(event) {
+    selectedDeviceId = event.target.value;
+    console.log('Selected device:', selectedDeviceId);
+    
+    // Show feedback to user
+    const selectedDevice = event.target.closest('.form-check').querySelector('label .fw-medium').textContent;
+    showNotification(`Selected device: ${selectedDevice}`, 'info');
 }
 
 /**
@@ -1347,44 +1375,18 @@ async function handlePlayFullSong() {
     if (!currentTrack) return;
 
     try {
-        const { playSong, getAvailableDevices, transferPlayback } = await import('./spotify-api.js');
+        const { playSong } = await import('./spotify-api.js');
 
-        // Check for available devices first
-        const devices = await getAvailableDevices();
-
-        if (devices.length === 0) {
-            showNotification('No Spotify devices found. Please open Spotify on your phone, computer, or other device and try again.', 'danger');
-            return;
-        }
-
-        // Check if there's an active device
-        let activeDevice = devices.find(device => device.is_active);
-
-        if (!activeDevice) {
-            // Try to activate the first available device
-            const availableDevice = devices.find(device => !device.is_restricted);
-            if (availableDevice) {
-                try {
-                    await transferPlayback(availableDevice.id, false);
-                    activeDevice = availableDevice;
-                    // Give it a moment to activate
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } catch (transferError) {
-                    console.warn('Failed to transfer playback:', transferError);
-                }
-            }
-        }
-
-        if (!activeDevice) {
-            const deviceNames = devices.map(d => d.name).join(', ');
-            showNotification(`Found devices (${deviceNames}) but none are active. Please start playing music on one of your Spotify devices and try again.`, 'danger');
+        // Check if a device is selected
+        if (!selectedDeviceId) {
+            showNotification('No device selected. Please select a device from the list above.', 'danger');
             return;
         }
 
         // Stop any existing segment monitoring
         stopSegmentMonitoring();
 
-        await playSong(currentTrack.id, 0);
+        await playSong(currentTrack.id, 0, selectedDeviceId);
 
         togglePlaybackButtons(true);
         showNotification('Playing full song...', 'success');
@@ -1409,7 +1411,7 @@ async function handlePlayFullSong() {
 async function handlePausePlayback() {
     try {
         const { pauseSong } = await import('./spotify-api.js');
-        await pauseSong();
+        await pauseSong(selectedDeviceId);
 
         // Stop segment monitoring
         stopSegmentMonitoring();

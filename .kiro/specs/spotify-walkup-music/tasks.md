@@ -97,12 +97,14 @@
     - Create functions to play songs
     - Create functions to pause songs
     - Create functions to seek to specific positions
+    - Enhanced with device-specific playback targeting
     - _Requirements: 3.3, 3.4_
 
   - [x] 5.3 Write tests for Spotify integration
     - Test song search functionality
     - Test track detail retrieval
     - Test playback controls
+    - Test device-specific playback functionality
     - _Requirements: 3.2, 3.3, 3.4_
 
 - [ ] 6. Song Segmentation Implementation
@@ -119,11 +121,24 @@
     - Integrate with storage component
     - _Requirements: 3.4, 3.5, 3.6_
 
+  - [x] 6.2.1 Implement device selection for playback control
+    - Enhance Spotify API functions to support device-specific playback
+    - Create device selection UI with radio buttons for available devices
+    - Implement device status checking and refresh functionality
+    - Add device icons and consistent sorting (active devices first, then alphabetical)
+    - Update preview and playback functions to use selected device
+    - Implement precise segment monitoring with device-specific pause control
+    - Add user guidance for device setup and troubleshooting
+    - _Requirements: 3.3, 3.4_
+
   - [ ] 6.3 Write tests for song segmentation
     - Test segment selection
     - Test segment preview
     - Test segment saving
-    - _Requirements: 3.4, 3.5, 3.6_
+    - Test device selection functionality
+    - Test device-specific playback control
+    - Test device status checking and refresh
+    - _Requirements: 3.3, 3.4, 3.5, 3.6_
 
 - [ ] 7. Batting Order Implementation
   - [ ] 7.1 Create batting order interface

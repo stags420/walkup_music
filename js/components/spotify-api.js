@@ -169,7 +169,7 @@ export async function searchSongs(query, options = {}) {
 
     try {
         const response = await makeSpotifyRequest(endpoint);
-        
+
         // Transform the response to a more convenient format
         const tracks = response.tracks.items.map(track => ({
             id: track.id,
@@ -227,7 +227,7 @@ export async function getTrack(trackId, options = {}) {
 
     try {
         const track = await makeSpotifyRequest(endpoint);
-        
+
         // Transform the response to a consistent format
         return {
             id: track.id,
@@ -294,11 +294,11 @@ export async function getTracks(trackIds, options = {}) {
 
     try {
         const response = await makeSpotifyRequest(endpoint);
-        
+
         // Transform the response
         return response.tracks.map(track => {
             if (!track) return null; // Handle null tracks (invalid IDs)
-            
+
             return {
                 id: track.id,
                 name: track.name,
@@ -339,42 +339,42 @@ export async function getTracks(trackIds, options = {}) {
  */
 async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
     let lastError;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             return await fn();
         } catch (error) {
             lastError = error;
-            
+
             // Don't retry certain types of errors
-            if (error instanceof SpotifyAuthError || 
+            if (error instanceof SpotifyAuthError ||
                 (error instanceof SpotifyAPIError && error.status === 404)) {
                 throw error;
             }
-            
+
             // If this was the last attempt, throw the error
             if (attempt === maxRetries) {
                 throw error;
             }
-            
+
             // Calculate delay with exponential backoff
             let delay = baseDelay * Math.pow(2, attempt);
-            
+
             // For rate limit errors, use the Retry-After header if available
             if (error instanceof SpotifyRateLimitError && error.retryAfter) {
                 delay = error.retryAfter * 1000; // Convert to milliseconds
             }
-            
+
             // Add some jitter to prevent thundering herd
             delay += Math.random() * 1000;
-            
+
             console.warn(`API request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`, error.message);
-            
+
             // Wait before retrying
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
-    
+
     throw lastError;
 }
 
@@ -574,7 +574,7 @@ export async function seekToPosition(positionMs) {
 export async function getCurrentPlaybackState() {
     try {
         const response = await makeSpotifyRequest('/me/player');
-        
+
         // If no content is returned, nothing is currently playing
         if (!response || Object.keys(response).length === 0) {
             return null;
@@ -634,7 +634,7 @@ export async function getCurrentPlaybackState() {
 export async function getAvailableDevices() {
     try {
         const response = await makeSpotifyRequest('/me/player/devices');
-        
+
         return response.devices.map(device => ({
             id: device.id,
             name: device.name,

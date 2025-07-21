@@ -25,6 +25,7 @@ let currentSegment = {
 let isSearching = false;
 let isDragging = false;
 let dragType = null; // 'start' or 'end'
+let previewMonitorInterval = null; // For monitoring playback position during preview
 
 /**
  * Initialize the song segmentation component
@@ -245,21 +246,17 @@ export async function previewSegment() {
             };
         }
 
+        // Stop any existing monitoring first
+        stopSegmentMonitoring();
+
         // Now try to play the segment
         await playSong(currentTrack.id, currentSegment.startTime);
 
         // Show pause button, hide play buttons
         togglePlaybackButtons(true);
 
-        // Auto-pause after segment duration
-        setTimeout(async () => {
-            try {
-                await pauseSong();
-                togglePlaybackButtons(false);
-            } catch (error) {
-                console.error('Failed to auto-pause:', error);
-            }
-        }, currentSegment.duration * 1000);
+        // Start monitoring playback position to stop at segment end
+        startSegmentMonitoring();
 
         return {
             success: true,
@@ -287,6 +284,117 @@ export async function previewSegment() {
             };
         }
     }
+}
+
+/**
+ * Start monitoring playback position during segment preview
+ */
+async function startSegmentMonitoring() {
+    // Clear any existing monitoring
+    if (previewMonitorInterval) {
+        clearInterval(previewMonitorInterval);
+    }
+
+    const { getCurrentPlaybackState, pauseSong } = await import('./spotify-api.js');
+    const segmentEndMs = currentSegment.endTime * 1000;
+    const segmentStartMs = currentSegment.startTime * 1000;
+
+    previewMonitorInterval = setInterval(async () => {
+        try {
+            const playbackState = await getCurrentPlaybackState();
+            
+            if (!playbackState || !playbackState.is_playing) {
+                // Playback stopped, clear monitoring
+                stopSegmentMonitoring();
+                return;
+            }
+
+            // Check if we've reached the end of the segment
+            if (playbackState.progress_ms >= segmentEndMs) {
+                // Stop playback and monitoring
+                await pauseSong();
+                stopSegmentMonitoring();
+                togglePlaybackButtons(false);
+                showNotification('Segment preview completed', 'info');
+            }
+        } catch (error) {
+            console.error('Error monitoring playback:', error);
+            // Continue monitoring despite errors
+        }
+    }, 500); // Check every 500ms for responsive stopping
+
+    // Fallback timeout in case monitoring fails
+    setTimeout(() => {
+        if (previewMonitorInterval) {
+            stopSegmentMonitoring();
+            pauseSong().catch(console.error);
+            togglePlaybackButtons(false);
+        }
+    }, (currentSegment.duration + 2) * 1000); // Add 2 seconds buffer
+}
+
+/**
+ * Stop monitoring playback position
+ */
+function stopSegmentMonitoring() {
+    if (previewMonitorInterval) {
+        clearInterval(previewMonitorInterval);
+        previewMonitorInterval = null;
+    }
+}
+
+/**
+ * Use the default Spotify preview as the segment
+ * @returns {Object} - Result {success: boolean, error: string}
+ */
+export function useSpotifyPreview() {
+    if (!currentTrack) {
+        return {
+            success: false,
+            error: 'No track loaded for segmentation'
+        };
+    }
+
+    if (!currentTrack.preview_url) {
+        return {
+            success: false,
+            error: 'No preview available for this track'
+        };
+    }
+
+    // Spotify previews are typically 30 seconds starting around the middle of the song
+    const totalDurationSeconds = Math.floor(currentTrack.duration_ms / 1000);
+    const previewStart = Math.floor(totalDurationSeconds * 0.4); // Start at 40% of the song
+    const previewEnd = Math.min(previewStart + 30, totalDurationSeconds); // 30 seconds or until end
+
+    currentSegment = {
+        startTime: previewStart,
+        endTime: previewEnd,
+        duration: previewEnd - previewStart
+    };
+
+    updateSegmentDisplay();
+    updateTimelineVisualization();
+
+    // Add visual indicator that this is a preview segment
+    const segmentInfo = document.querySelector('.segment-info');
+    if (segmentInfo) {
+        segmentInfo.classList.add('preview-segment');
+        const previewBadge = segmentInfo.querySelector('.preview-badge');
+        if (!previewBadge) {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-primary preview-badge ms-2';
+            badge.innerHTML = '<i class="bi bi-magic me-1"></i>Preview Segment';
+            segmentInfo.querySelector('h6').appendChild(badge);
+        }
+    }
+
+    showNotification('Using Spotify preview segment (30 seconds)', 'success');
+
+    return {
+        success: true,
+        error: null
+    };
 }
 
 /**
@@ -471,9 +579,19 @@ function displaySearchResults(tracks) {
                         <small class="text-muted">${escapeHtml(artistNames)} • ${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}</small>
                     </div>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
-                            Select
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
+                                Custom Segment
+                            </button>
+                            ${track.preview_url ? 
+                                `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
+                                    Use Preview
+                                </button>` : 
+                                `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
+                                    No Preview
+                                </button>`
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -489,6 +607,17 @@ function displaySearchResults(tracks) {
             const track = tracks.find(t => t.id === trackId);
             if (track) {
                 selectTrack(track);
+            }
+        });
+    });
+
+    // Add click handlers for preview selection
+    searchResults.querySelectorAll('.use-preview').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const trackId = event.target.dataset.trackId;
+            const track = tracks.find(t => t.id === trackId);
+            if (track) {
+                selectTrackWithPreview(track);
             }
         });
     });
@@ -546,12 +675,28 @@ async function selectTrack(track) {
 }
 
 /**
+ * Select a track and automatically use its Spotify preview segment
+ * @param {Object} track - Selected track object
+ */
+async function selectTrackWithPreview(track) {
+    try {
+        // Get detailed track information
+        const detailedTrack = await getTrack(track.id);
+        loadTrackForSegmentation(track.id, null, detailedTrack, true);
+    } catch (error) {
+        console.error('Failed to load track details:', error);
+        showNotification('Failed to load track details. Please try again.', 'danger');
+    }
+}
+
+/**
  * Load a track for segmentation
  * @param {string} trackId - Spotify track ID
  * @param {SongSelectionModel|null} existingSelection - Existing song selection if any
  * @param {Object|null} trackData - Track data if already loaded
+ * @param {boolean} usePreview - Whether to automatically use the Spotify preview segment
  */
-async function loadTrackForSegmentation(trackId, existingSelection = null, trackData = null) {
+async function loadTrackForSegmentation(trackId, existingSelection = null, trackData = null, usePreview = false) {
     try {
         // Get track data if not provided
         if (!trackData) {
@@ -567,6 +712,19 @@ async function loadTrackForSegmentation(trackId, existingSelection = null, track
                 endTime: existingSelection.endTime,
                 duration: existingSelection.duration
             };
+        } else if (usePreview && trackData.preview_url) {
+            // Use Spotify preview segment (typically 30 seconds starting around middle of song)
+            const totalDurationSeconds = Math.floor(trackData.duration_ms / 1000);
+            const previewStart = Math.floor(totalDurationSeconds * 0.4); // Start at 40% of the song
+            const previewEnd = Math.min(previewStart + 30, totalDurationSeconds); // 30 seconds or until end
+            
+            currentSegment = {
+                startTime: previewStart,
+                endTime: previewEnd,
+                duration: previewEnd - previewStart
+            };
+            
+            showNotification('Using Spotify preview segment (30 seconds)', 'success');
         } else {
             // Default to first 30 seconds
             const maxDuration = Math.floor(trackData.duration_ms / 1000);
@@ -670,6 +828,19 @@ function showSegmentationInterface() {
                                min="0" max="${totalDurationSeconds}" step="1" value="${currentSegment.endTime}">
                         <span class="form-text">seconds</span>
                     </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-outline-primary btn-sm" id="use-spotify-preview" ${!currentTrack.preview_url ? 'disabled' : ''}>
+                        <i class="bi bi-magic me-2"></i>Use Spotify Preview Segment
+                    </button>
+                    <small class="form-text text-muted ms-2">
+                        ${currentTrack.preview_url ? 
+                            'Automatically selects a 30-second preview segment' : 
+                            'No preview available for this track'
+                        }
+                    </small>
                 </div>
             </div>
         </div>
@@ -782,6 +953,12 @@ function setupSegmentationEventListeners() {
     const saveButton = document.getElementById('save-segment');
     if (saveButton) {
         saveButton.addEventListener('click', handleSaveSegment);
+    }
+
+    // Use Spotify preview button
+    const usePreviewButton = document.getElementById('use-spotify-preview');
+    if (usePreviewButton) {
+        usePreviewButton.addEventListener('click', handleUseSpotifyPreview);
     }
 
     // Global mouse events for dragging
@@ -915,6 +1092,9 @@ function updateStartTime(newStartTime) {
     currentSegment.startTime = clampedStartTime;
     currentSegment.duration = currentSegment.endTime - currentSegment.startTime;
 
+    // Remove preview badge since user is manually adjusting
+    removePreviewBadge();
+
     updateSegmentDisplay();
     updateTimelineVisualization();
 }
@@ -930,8 +1110,25 @@ function updateEndTime(newEndTime) {
     currentSegment.endTime = clampedEndTime;
     currentSegment.duration = currentSegment.endTime - currentSegment.startTime;
 
+    // Remove preview badge since user is manually adjusting
+    removePreviewBadge();
+
     updateSegmentDisplay();
     updateTimelineVisualization();
+}
+
+/**
+ * Remove preview badge when user manually adjusts segment
+ */
+function removePreviewBadge() {
+    const segmentInfo = document.querySelector('.segment-info');
+    if (segmentInfo) {
+        segmentInfo.classList.remove('preview-segment');
+        const previewBadge = segmentInfo.querySelector('.preview-badge');
+        if (previewBadge) {
+            previewBadge.remove();
+        }
+    }
 }
 
 /**
@@ -1184,6 +1381,9 @@ async function handlePlayFullSong() {
             return;
         }
 
+        // Stop any existing segment monitoring
+        stopSegmentMonitoring();
+
         await playSong(currentTrack.id, 0);
 
         togglePlaybackButtons(true);
@@ -1211,6 +1411,9 @@ async function handlePausePlayback() {
         const { pauseSong } = await import('./spotify-api.js');
         await pauseSong();
 
+        // Stop segment monitoring
+        stopSegmentMonitoring();
+
         togglePlaybackButtons(false);
         showNotification('Playback paused.', 'info');
 
@@ -1232,6 +1435,19 @@ function togglePlaybackButtons(isPlaying) {
     if (previewButton) previewButton.style.display = isPlaying ? 'none' : 'inline-block';
     if (playFullButton) playFullButton.style.display = isPlaying ? 'none' : 'inline-block';
     if (pauseButton) pauseButton.style.display = isPlaying ? 'inline-block' : 'none';
+}
+
+/**
+ * Handle use Spotify preview button click
+ */
+function handleUseSpotifyPreview() {
+    const result = useSpotifyPreview();
+    
+    if (result.success) {
+        // Button feedback is handled by the useSpotifyPreview function
+    } else {
+        showNotification(result.error, 'warning');
+    }
 }
 
 /**
@@ -1306,6 +1522,9 @@ function validateSegmentForSaving() {
  * Handle back to players button click
  */
 function handleBackToPlayers() {
+    // Stop any active monitoring
+    stopSegmentMonitoring();
+    
     // Navigate to players view
     const playersNavLink = document.querySelector('[data-view="players"]');
     if (playersNavLink) {

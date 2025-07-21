@@ -245,6 +245,11 @@ export async function previewSegment() {
                 success: false,
                 error: 'Spotify Premium is required to control playback. Please upgrade your account or use the 30-second preview instead.'
             };
+        } else if (error.message.includes('Device not available') || error.message.includes('Device may not be ready')) {
+            return {
+                success: false,
+                error: 'Device not ready for playback. Please open Spotify on the selected device, play any song briefly to activate it, then try again.'
+            };
         } else if (error.message.includes('No active Spotify device')) {
             return {
                 success: false,
@@ -1217,6 +1222,9 @@ export async function checkDeviceStatus() {
                 const activeLabel = device.is_active ? ' (Active)' : '';
                 const deviceIcon = getDeviceIcon(device.type);
                 
+                const activationTip = !device.is_active ? 
+                    '<small class="text-warning d-block"><i class="bi bi-info-circle me-1"></i>May need activation</small>' : '';
+                
                 return `
                     <div class="form-check">
                         <input class="form-check-input device-radio" type="radio" name="spotify-device" 
@@ -1226,6 +1234,7 @@ export async function checkDeviceStatus() {
                             <div>
                                 <div class="fw-medium">${escapeHtml(device.name)}${activeLabel}</div>
                                 <small class="text-muted">${escapeHtml(device.type)}</small>
+                                ${activationTip}
                             </div>
                         </label>
                     </div>
@@ -1247,7 +1256,9 @@ export async function checkDeviceStatus() {
                         ${deviceOptions}
                     </div>
                     <small class="text-muted mt-2 d-block">
-                        Don't see your device? Open Spotify on the desired device and refresh this list.
+                        <strong>Device Setup:</strong><br>
+                        • Don't see your device? Open Spotify on the desired device and refresh this list.<br>
+                        • If playback fails: Open Spotify on the selected device, play any song briefly to activate it, then try again.
                     </small>
                 </div>
             `;
@@ -1321,9 +1332,9 @@ function handleDeviceSelection(event) {
     selectedDeviceId = event.target.value;
     console.log('Selected device:', selectedDeviceId);
     
-    // Show feedback to user
+    // Show feedback to user with activation tip
     const selectedDevice = event.target.closest('.form-check').querySelector('label .fw-medium').textContent;
-    showNotification(`Selected device: ${selectedDevice}`, 'info');
+    showNotification(`Selected device: ${selectedDevice}. If playback fails, open Spotify on this device and play any song briefly to activate it.`, 'info');
 }
 
 /**
@@ -1397,6 +1408,8 @@ async function handlePlayFullSong() {
         // Provide more specific error messages
         if (error.message.includes('Premium')) {
             showNotification('Spotify Premium is required to control playback. Please upgrade your account.', 'danger');
+        } else if (error.message.includes('Device not available') || error.message.includes('Device may not be ready')) {
+            showNotification('Device not ready for playback. Please open Spotify on the selected device, play any song briefly to activate it, then try again.', 'danger');
         } else if (error.message.includes('No active Spotify device')) {
             showNotification('No active Spotify device found. Please open Spotify on your phone, computer, or other device, start playing any song, then try again.', 'danger');
         } else {

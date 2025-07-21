@@ -103,8 +103,19 @@ async function makeSpotifyRequest(endpoint, options = {}) {
             );
         }
 
+        // Handle responses that don't have content (like playback control endpoints)
+        if (response.status === 204 || response.headers.get('content-length') === '0') {
+            return {};
+        }
+
         // Parse and return the JSON response
-        return await response.json();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        }
+
+        // If no JSON content, return empty object
+        return {};
     } catch (error) {
         // Re-throw our custom errors
         if (error instanceof SpotifyAPIError) {
@@ -507,12 +518,14 @@ export async function playSong(trackId, startTime = 0, deviceId = null) {
             // Handle specific playback errors
             if (error.status === 404) {
                 if (deviceId) {
-                    error.message = 'Specified device not found or not available for playback. Please check the device is online and try again.';
+                    error.message = 'Device not available for playback. Please open Spotify on the selected device, play any song briefly to activate it, then try again.';
                 } else {
                     error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
                 }
             } else if (error.status === 403) {
                 error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
+            } else if (error.status === 502 || error.status === 503) {
+                error.message = 'Device may not be ready for playback. Please open Spotify on the selected device, play any song briefly to activate it, then try again.';
             } else {
                 error.message = `Failed to play song: ${error.message}`;
             }
@@ -544,7 +557,7 @@ export async function pauseSong(deviceId = null) {
             // Handle specific playback errors
             if (error.status === 404) {
                 if (deviceId) {
-                    error.message = 'Specified device not found or nothing is currently playing on that device.';
+                    error.message = 'Device not available or nothing is currently playing on that device.';
                 } else {
                     error.message = 'No active Spotify device found or nothing is currently playing.';
                 }

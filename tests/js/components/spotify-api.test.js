@@ -215,13 +215,17 @@ describe('Spotify API Wrapper', () => {
         };
         
         // Mock playback control functions - Tests Requirements 3.3, 3.4 (playback controls)
-        const playSong = async (trackId, startTime = 0) => {
+        const playSong = async (trackId, startTime = 0, deviceId = null) => {
             if (!trackId || typeof trackId !== 'string' || trackId.trim().length === 0) {
                 throw new Error('Track ID is required and must be a non-empty string');
             }
             
             if (typeof startTime !== 'number' || startTime < 0) {
                 throw new Error('Start time must be a non-negative number');
+            }
+            
+            if (deviceId !== null && deviceId !== undefined && (typeof deviceId !== 'string' || deviceId.trim().length === 0)) {
+                throw new Error('Device ID must be a non-empty string if provided');
             }
             
             const trackUri = `spotify:track:${trackId.trim()}`;
@@ -232,6 +236,10 @@ describe('Spotify API Wrapper', () => {
                 position_ms: positionMs
             };
             
+            if (deviceId) {
+                requestBody.device_id = deviceId.trim();
+            }
+            
             try {
                 await makeSpotifyRequest('/me/player/play', {
                     method: 'PUT',
@@ -240,7 +248,11 @@ describe('Spotify API Wrapper', () => {
             } catch (error) {
                 if (error instanceof SpotifyAPIError) {
                     if (error.status === 404) {
-                        error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+                        if (deviceId) {
+                            error.message = 'Specified device not found or not available for playback. Please check the device is online and try again.';
+                        } else {
+                            error.message = 'No active Spotify device found. Please open Spotify on a device and start playing music.';
+                        }
                     } else if (error.status === 403) {
                         error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
                     } else {
@@ -251,15 +263,26 @@ describe('Spotify API Wrapper', () => {
             }
         };
         
-        const pauseSong = async () => {
+        const pauseSong = async (deviceId = null) => {
+            if (deviceId !== null && deviceId !== undefined && (typeof deviceId !== 'string' || deviceId.trim().length === 0)) {
+                throw new Error('Device ID must be a non-empty string if provided');
+            }
+            
+            const requestBody = deviceId ? { device_id: deviceId.trim() } : {};
+            
             try {
                 await makeSpotifyRequest('/me/player/pause', {
-                    method: 'PUT'
+                    method: 'PUT',
+                    body: Object.keys(requestBody).length > 0 ? JSON.stringify(requestBody) : undefined
                 });
             } catch (error) {
                 if (error instanceof SpotifyAPIError) {
                     if (error.status === 404) {
-                        error.message = 'No active Spotify device found or nothing is currently playing.';
+                        if (deviceId) {
+                            error.message = 'Specified device not found or nothing is currently playing on that device.';
+                        } else {
+                            error.message = 'No active Spotify device found or nothing is currently playing.';
+                        }
                     } else if (error.status === 403) {
                         error.message = 'Playback control requires Spotify Premium. Please upgrade your account.';
                     } else {
@@ -406,6 +429,61 @@ describe('Spotify API Wrapper', () => {
             return retryWithBackoff(() => getCurrentPlaybackState());
         };
         
+        // Mock device management functions
+        const getAvailableDevices = async () => {
+            try {
+                const response = await makeSpotifyRequest('/me/player/devices');
+                
+                return response.devices.map(device => ({
+                    id: device.id,
+                    name: device.name,
+                    type: device.type,
+                    is_active: device.is_active,
+                    is_private_session: device.is_private_session,
+                    is_restricted: device.is_restricted,
+                    volume_percent: device.volume_percent
+                }));
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 403) {
+                        error.message = 'Getting devices requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to get devices: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
+        const transferPlayback = async (deviceId, play = false) => {
+            if (!deviceId || typeof deviceId !== 'string') {
+                throw new Error('Device ID is required and must be a string');
+            }
+            
+            const requestBody = {
+                device_ids: [deviceId],
+                play: play
+            };
+            
+            try {
+                await makeSpotifyRequest('/me/player', {
+                    method: 'PUT',
+                    body: JSON.stringify(requestBody)
+                });
+            } catch (error) {
+                if (error instanceof SpotifyAPIError) {
+                    if (error.status === 404) {
+                        error.message = 'Device not found or not available for playback transfer.';
+                    } else if (error.status === 403) {
+                        error.message = 'Playback transfer requires Spotify Premium. Please upgrade your account.';
+                    } else {
+                        error.message = `Failed to transfer playback: ${error.message}`;
+                    }
+                }
+                throw error;
+            }
+        };
+        
         return {
             SpotifyAPIError,
             SpotifyAuthError,
@@ -421,7 +499,9 @@ describe('Spotify API Wrapper', () => {
             playSongWithRetry,
             pauseSongWithRetry,
             seekToPositionWithRetry,
-            getCurrentPlaybackStateWithRetry
+            getCurrentPlaybackStateWithRetry,
+            getAvailableDevices,
+            transferPlayback
         };
     };
     
@@ -903,6 +983,271 @@ describe('Spotify API Wrapper', () => {
                 
                 expect(fetch).toHaveBeenCalledTimes(2);
                 expect(result.is_playing).toBe(false);
+            });
+        });
+    });
+
+    describe('Device-Specific Playback Functionality (Requirements 3.3, 3.4)', () => {
+        describe('Device-Specific Play Song', () => {
+            test('should play song on specific device', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.playSong('track1', 30, 'device123');
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player/play',
+                    expect.objectContaining({
+                        method: 'PUT',
+                        headers: expect.objectContaining({
+                            'Authorization': 'Bearer mock_access_token',
+                            'Content-Type': 'application/json'
+                        }),
+                        body: JSON.stringify({
+                            uris: ['spotify:track:track1'],
+                            position_ms: 30000,
+                            device_id: 'device123'
+                        })
+                    })
+                );
+            });
+
+            test('should validate device ID parameter', async () => {
+                await expect(spotifyAPI.playSong('track1', 0, '')).rejects.toThrow('Device ID must be a non-empty string if provided');
+                await expect(spotifyAPI.playSong('track1', 0, 123)).rejects.toThrow('Device ID must be a non-empty string if provided');
+            });
+
+            test('should handle device not found error', async () => {
+                fetch.mockResolvedValue({
+                    ok: false,
+                    status: 404,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+                await expect(spotifyAPI.playSong('track1', 0, 'invalid_device')).rejects.toThrow('Specified device not found or not available for playback');
+            });
+
+            test('should play without device ID (default behavior)', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.playSong('track1', 30);
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player/play',
+                    expect.objectContaining({
+                        body: JSON.stringify({
+                            uris: ['spotify:track:track1'],
+                            position_ms: 30000
+                        })
+                    })
+                );
+            });
+        });
+
+        describe('Device-Specific Pause Song', () => {
+            test('should pause song on specific device', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.pauseSong('device123');
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player/pause',
+                    expect.objectContaining({
+                        method: 'PUT',
+                        headers: expect.objectContaining({
+                            'Authorization': 'Bearer mock_access_token',
+                            'Content-Type': 'application/json'
+                        }),
+                        body: JSON.stringify({
+                            device_id: 'device123'
+                        })
+                    })
+                );
+            });
+
+            test('should validate device ID parameter for pause', async () => {
+                await expect(spotifyAPI.pauseSong('')).rejects.toThrow('Device ID must be a non-empty string if provided');
+                await expect(spotifyAPI.pauseSong(123)).rejects.toThrow('Device ID must be a non-empty string if provided');
+            });
+
+            test('should handle device not found error when pausing', async () => {
+                fetch.mockResolvedValue({
+                    ok: false,
+                    status: 404,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+                await expect(spotifyAPI.pauseSong('invalid_device')).rejects.toThrow('Specified device not found or nothing is currently playing on that device');
+            });
+
+            test('should pause without device ID (default behavior)', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.pauseSong();
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player/pause',
+                    expect.objectContaining({
+                        method: 'PUT',
+                        body: undefined
+                    })
+                );
+            });
+        });
+
+        describe('Get Available Devices', () => {
+            test('should get available devices successfully', async () => {
+                const mockDevices = {
+                    devices: [
+                        {
+                            id: 'device1',
+                            name: 'My Computer',
+                            type: 'Computer',
+                            is_active: true,
+                            is_private_session: false,
+                            is_restricted: false,
+                            volume_percent: 80
+                        },
+                        {
+                            id: 'device2',
+                            name: 'My Phone',
+                            type: 'Smartphone',
+                            is_active: false,
+                            is_private_session: false,
+                            is_restricted: false,
+                            volume_percent: 60
+                        }
+                    ]
+                };
+
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 200,
+                    json: jest.fn().mockResolvedValue(mockDevices)
+                });
+
+                const result = await spotifyAPI.getAvailableDevices();
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player/devices',
+                    expect.objectContaining({
+                        headers: expect.objectContaining({
+                            'Authorization': 'Bearer mock_access_token'
+                        })
+                    })
+                );
+
+                expect(result).toHaveLength(2);
+                expect(result[0].id).toBe('device1');
+                expect(result[0].name).toBe('My Computer');
+                expect(result[0].is_active).toBe(true);
+                expect(result[1].id).toBe('device2');
+                expect(result[1].is_active).toBe(false);
+            });
+
+            test('should handle empty device list', async () => {
+                const mockDevices = { devices: [] };
+
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 200,
+                    json: jest.fn().mockResolvedValue(mockDevices)
+                });
+
+                const result = await spotifyAPI.getAvailableDevices();
+                expect(result).toHaveLength(0);
+            });
+
+            test('should handle premium required error for devices', async () => {
+                fetch.mockResolvedValue({
+                    ok: false,
+                    status: 403,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+                await expect(spotifyAPI.getAvailableDevices()).rejects.toThrow('Getting devices requires Spotify Premium');
+            });
+        });
+
+        describe('Transfer Playback', () => {
+            test('should transfer playback to device successfully', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.transferPlayback('device123', false);
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player',
+                    expect.objectContaining({
+                        method: 'PUT',
+                        headers: expect.objectContaining({
+                            'Authorization': 'Bearer mock_access_token',
+                            'Content-Type': 'application/json'
+                        }),
+                        body: JSON.stringify({
+                            device_ids: ['device123'],
+                            play: false
+                        })
+                    })
+                );
+            });
+
+            test('should transfer playback and start playing', async () => {
+                fetch.mockResolvedValue({
+                    ok: true,
+                    status: 204
+                });
+
+                await spotifyAPI.transferPlayback('device123', true);
+
+                expect(fetch).toHaveBeenCalledWith(
+                    'https://api.spotify.com/v1/me/player',
+                    expect.objectContaining({
+                        body: JSON.stringify({
+                            device_ids: ['device123'],
+                            play: true
+                        })
+                    })
+                );
+            });
+
+            test('should validate device ID for transfer', async () => {
+                await expect(spotifyAPI.transferPlayback('')).rejects.toThrow('Device ID is required and must be a string');
+                await expect(spotifyAPI.transferPlayback(null)).rejects.toThrow('Device ID is required and must be a string');
+                await expect(spotifyAPI.transferPlayback(123)).rejects.toThrow('Device ID is required and must be a string');
+            });
+
+            test('should handle device not found error for transfer', async () => {
+                fetch.mockResolvedValue({
+                    ok: false,
+                    status: 404,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+                await expect(spotifyAPI.transferPlayback('invalid_device')).rejects.toThrow('Device not found or not available for playback transfer');
+            });
+
+            test('should handle premium required error for transfer', async () => {
+                fetch.mockResolvedValue({
+                    ok: false,
+                    status: 403,
+                    json: jest.fn().mockResolvedValue({})
+                });
+
+                await expect(spotifyAPI.transferPlayback('device123')).rejects.toThrow('Playback transfer requires Spotify Premium');
             });
         });
     });

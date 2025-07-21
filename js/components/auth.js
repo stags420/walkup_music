@@ -44,6 +44,16 @@ export function checkAuthentication() {
     // Check if token exists and is not expired
     const isAuthenticated = accessToken && tokenExpiration && Date.now() < parseInt(tokenExpiration);
 
+    console.log('Authentication check:', {
+        hasAccessToken: !!accessToken,
+        hasTokenExpiration: !!tokenExpiration,
+        isAuthenticated: isAuthenticated,
+        tokenExpiration: tokenExpiration ? new Date(parseInt(tokenExpiration)).toISOString() : 'none',
+        currentTime: new Date().toISOString(),
+        cookieToken: !!getCookie(ACCESS_TOKEN_COOKIE),
+        localStorageToken: !!localStorage.getItem(ACCESS_TOKEN_COOKIE)
+    });
+
     // If token is about to expire (within 5 minutes), try to refresh it
     if (accessToken && tokenExpiration) {
         const expirationTime = parseInt(tokenExpiration);
@@ -409,11 +419,30 @@ export function logout() {
  * @returns {string|null} The access token or null if not authenticated
  */
 export function getAccessToken() {
-    // Check if the token is valid first
-    if (!isTokenValid()) {
+    // Try to get from cookies first
+    let accessToken = getCookie(ACCESS_TOKEN_COOKIE);
+    
+    // If not found in cookies, try localStorage
+    if (!accessToken) {
+        accessToken = localStorage.getItem(ACCESS_TOKEN_COOKIE);
+    }
+    
+    // Check if the token is valid
+    if (!accessToken) {
         return null;
     }
-    return getCookie(ACCESS_TOKEN_COOKIE);
+    
+    // Verify token expiration
+    let tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
+    if (!tokenExpiration) {
+        tokenExpiration = localStorage.getItem(TOKEN_EXPIRATION_COOKIE);
+    }
+    
+    if (!tokenExpiration || Date.now() >= parseInt(tokenExpiration)) {
+        return null;
+    }
+    
+    return accessToken;
 }
 
 /**
@@ -429,8 +458,17 @@ export function getRefreshToken() {
  * @returns {boolean} Whether the access token is valid
  */
 export function isTokenValid() {
-    const accessToken = getCookie(ACCESS_TOKEN_COOKIE);
-    const tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
+    // Try to get from cookies first
+    let accessToken = getCookie(ACCESS_TOKEN_COOKIE);
+    let tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
+
+    // If not found in cookies, try localStorage
+    if (!accessToken) {
+        accessToken = localStorage.getItem(ACCESS_TOKEN_COOKIE);
+    }
+    if (!tokenExpiration) {
+        tokenExpiration = localStorage.getItem(TOKEN_EXPIRATION_COOKIE);
+    }
 
     if (!accessToken || !tokenExpiration) {
         return false;
@@ -561,13 +599,18 @@ async function exchangeCodeForToken(code, codeVerifier) {
         // Calculate expiration time
         const expirationTime = Date.now() + (tokenData.expires_in * 1000);
 
-        // Store the tokens
+        // Store the tokens in both cookies and localStorage for maximum compatibility
         setCookie(ACCESS_TOKEN_COOKIE, tokenData.access_token, 1);
         setCookie(TOKEN_EXPIRATION_COOKIE, expirationTime, 1);
-
-        // Also store in localStorage as a backup
         localStorage.setItem(ACCESS_TOKEN_COOKIE, tokenData.access_token);
         localStorage.setItem(TOKEN_EXPIRATION_COOKIE, expirationTime.toString());
+
+        console.log('Tokens stored successfully:', {
+            accessToken: tokenData.access_token.substring(0, 20) + '...',
+            expirationTime: new Date(expirationTime).toISOString(),
+            cookieSet: !!getCookie(ACCESS_TOKEN_COOKIE),
+            localStorageSet: !!localStorage.getItem(ACCESS_TOKEN_COOKIE)
+        });
 
         // Store refresh token if provided
         if (tokenData.refresh_token) {

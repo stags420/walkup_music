@@ -119,10 +119,13 @@
                     // Authentication successful
                     statusMessage.textContent = 'Authentication successful! Redirecting...';
 
+                    // Set a flag to indicate successful authentication
+                    localStorage.setItem('spotify_auth_success', 'true');
+
                     // Redirect back to the main application
                     setTimeout(() => {
-                        redirectTo('');
-                    }, 1500);
+                        redirectTo('?auth_success=true');
+                    }, 1000); // Reduced delay for better UX
                 } else {
                     // Authentication failed
                     statusMessage.textContent = 'Authentication failed.';

@@ -35,6 +35,20 @@ function initApp() {
         return;
     }
 
+    // Check if we're returning from successful authentication
+    if (urlParams.has('auth_success') && urlParams.get('auth_success') === 'true') {
+        console.log('Returning from successful authentication');
+        // Clear the success flag
+        localStorage.removeItem('spotify_auth_success');
+        // Clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // Force authentication check with a small delay to ensure tokens are available
+        setTimeout(() => {
+            checkAuthentication();
+        }, 100);
+        return;
+    }
+
     // Check if user is already authenticated
     checkAuthentication();
 

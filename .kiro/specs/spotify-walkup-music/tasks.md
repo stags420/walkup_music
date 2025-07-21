@@ -131,6 +131,16 @@
     - Add user guidance for device setup and troubleshooting
     - _Requirements: 3.3, 3.4_
 
+  - [ ] 6.2.2 Improve song segmentation mobile UX
+    - Redesign search results layout for better mobile scrolling
+    - Implement collapsible/expandable search results section
+    - Add sticky or floating controls for better accessibility
+    - Optimize touch targets and spacing for mobile devices
+    - Implement smooth scrolling and better visual flow between sections
+    - Add mobile-specific gestures and interactions where appropriate
+    - Ensure segmentation controls are easily accessible after song selection
+    - _Requirements: 3.4, 7.1, 7.2_
+
   - [ ] 6.3 Write tests for song segmentation
     - Test segment selection
     - Test segment preview

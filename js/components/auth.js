@@ -1,7 +1,6 @@
 /**
  * Authentication component for Spotify integration
  */
-import { navigateBasedOnAuth } from '../utils/navigation.js';
 import spotifyConfig from '../config/spotify-config.js';
 import { setCookie, getCookie, deleteCookie } from '../utils/cookie-utils.js';
 

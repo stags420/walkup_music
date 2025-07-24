@@ -46,7 +46,6 @@ The tests are organized by functionality:
 The tests use Jest's mocking capabilities to mock:
 
 - Cookie utilities (setCookie, getCookie, deleteCookie)
-- Navigation utilities (navigateBasedOnAuth)
 - Browser APIs (localStorage, document.cookie)
 
 This allows us to test the authentication flow without relying on actual browser APIs or making real network requests.

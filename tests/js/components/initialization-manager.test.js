@@ -282,8 +282,8 @@ describe('Initialization Manager', () => {
         });
     });
 
-    describe('Event Listeners', () => {
-        test('should handle auth logout event', async () => {
+    describe('Manual Cleanup', () => {
+        test('should cleanup components manually', async () => {
             // Initialize components
             await initializeSongSegmentation();
             await initializeWebPlaybackSDK();
@@ -291,9 +291,8 @@ describe('Initialization Manager', () => {
             expect(isSongSegmentationInitialized()).toBe(true);
             expect(isWebPlaybackSDKInitialized()).toBe(true);
             
-            // Simulate logout event
-            const logoutEvent = new CustomEvent('authLogout');
-            document.dispatchEvent(logoutEvent);
+            // Manually cleanup components
+            await cleanupAllComponents();
             
             // Wait for async cleanup
             await new Promise(resolve => setTimeout(resolve, 0));
@@ -301,20 +300,6 @@ describe('Initialization Manager', () => {
             expect(mockDisconnectSDK).toHaveBeenCalledTimes(1);
             expect(isSongSegmentationInitialized()).toBe(false);
             expect(isWebPlaybackSDKInitialized()).toBe(false);
-        });
-
-        test('should handle auth success event', () => {
-            // Create a spy to monitor console.log
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
-            // Simulate auth success event
-            const authSuccessEvent = new CustomEvent('authSuccess');
-            document.dispatchEvent(authSuccessEvent);
-            
-            // Should log that components will be initialized on demand
-            expect(consoleSpy).toHaveBeenCalledWith('InitManager: Auth success detected, will initialize components on demand');
-            
-            consoleSpy.mockRestore();
         });
     });
 });

@@ -66,51 +66,51 @@ export function initSongSegmentation(spotifyAPIInstance) {
 async function initializeEnhancedPlaybackSystem() {
     try {
         console.log('Song segmentation: Initializing enhanced playback system...');
-        
+
         // Use initialization manager to ensure single SDK initialization
         if (!window.InitializationManager.isWebPlaybackSDKInitialized()) {
             console.log('Song segmentation: Web Playback SDK not initialized, initializing via manager...');
             const sdkResult = await window.InitializationManager.initializeWebPlaybackSDK();
-            
+
             if (!sdkResult.success) {
                 console.log('Song segmentation: SDK initialization failed, using fallback mode:', sdkResult.error);
             }
         } else {
             console.log('Song segmentation: Web Playback SDK already initialized, skipping');
         }
-        
+
         // Now initialize the enhanced playback system
         const result = await spotifyAPI.initializeEnhancedPlayback();
-        
+
         if (result.success) {
             if (result.sdkReady) {
                 console.log('Song segmentation: Web Playback SDK ready:', result.message);
-                
+
                 // Set SDK as preferred method
                 spotifyAPI.setSDKPreference(true);
-                
+
                 // Update device selection UI to show SDK device
                 updateDeviceSelectionUI(result.deviceId);
             } else {
                 console.log('Song segmentation: Using fallback mode:', result.message || result.userMessage);
-                
+
                 if (result.requiresReauth) {
                     showPlaybackStatusNotification(
-                        result.userMessage + ' <button class="btn btn-sm btn-outline-light ms-2" onclick="handleReauthForSDK()">Re-authenticate</button>', 
+                        result.userMessage + ' <button class="btn btn-sm btn-outline-light ms-2" onclick="handleReauthForSDK()">Re-authenticate</button>',
                         'warning'
                     );
                 } else if (result.requiresPremium) {
                     showPlaybackStatusNotification(
-                        'Spotify Premium required for browser player. External devices still available.', 
+                        'Spotify Premium required for browser player. External devices still available.',
                         'warning'
                     );
                 } else {
                     showPlaybackStatusNotification(
-                        result.userMessage || 'Using external device mode', 
+                        result.userMessage || 'Using external device mode',
                         'info'
                     );
                 }
-                
+
                 // Show device selection for external devices
                 showDeviceSelection();
             }
@@ -511,7 +511,7 @@ async function startSegmentMonitoring() {
                 const pauseResult = await spotifyAPI.pauseEnhanced(selectedDeviceId);
                 stopSegmentMonitoring();
                 togglePlaybackButtons(false);
-                
+
                 if (pauseResult.success) {
                     showNotification('Segment preview completed', 'info');
                 } else {
@@ -2259,13 +2259,13 @@ function getNotificationIcon(type) {
 function updateDeviceSelectionUI(sdkDeviceId) {
     // Set SDK device as selected
     selectedDeviceId = sdkDeviceId;
-    
+
     // Hide device selection since SDK handles it automatically
     const deviceSelection = document.getElementById('device-selection');
     if (deviceSelection) {
         deviceSelection.style.display = 'none';
     }
-    
+
     // Add a small indicator showing browser player is active
     addBrowserPlayerIndicator();
 }
@@ -2380,7 +2380,7 @@ function displayDeviceSelection(devices) {
             const deviceId = item.dataset.deviceId;
             const deviceName = item.querySelector('.device-name').textContent;
             const isSDKDevice = item.querySelector('.badge.bg-primary');
-            
+
             selectDevice(deviceId, deviceName, !!isSDKDevice);
         });
     });
@@ -2411,20 +2411,20 @@ function getDeviceIcon(type) {
  */
 function selectDevice(deviceId, deviceName, isSDKDevice) {
     selectedDeviceId = deviceId;
-    
+
     // Set SDK preference based on device selection
     spotifyAPI.setSDKPreference(isSDKDevice);
-    
+
     // Hide device selection
     hideDeviceSelection();
-    
+
     // Show confirmation
     if (isSDKDevice) {
         addBrowserPlayerIndicator();
         showNotification('Browser player selected', 'success');
     } else {
         showNotification(`Selected device: ${deviceName}`, 'success');
-        
+
         // Add external device indicator
         addExternalDeviceIndicator(deviceName);
     }
@@ -2479,7 +2479,7 @@ async function handleReauthForSDK() {
     try {
         // Import logout function
         const { logout } = await import('./auth.js');
-        
+
         // Show confirmation
         if (confirm('This will log you out and redirect to Spotify for re-authentication with browser player permissions. Continue?')) {
             logout();

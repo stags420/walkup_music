@@ -36,22 +36,19 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item auth-only">
-                            <a href="#" class="nav-link active" data-view="auth">Login</a>
+                        <li class="nav-item authenticated-content" style="display: none;">
+                            <a href="#" class="nav-link active" data-view="players">Players</a>
                         </li>
-                        <li class="nav-item app-only" style="display: none;">
-                            <a href="#" class="nav-link" data-view="players">Players</a>
-                        </li>
-                        <li class="nav-item app-only" style="display: none;">
+                        <li class="nav-item authenticated-content" style="display: none;">
                             <a href="#" class="nav-link" data-view="song-selection">Song Selection</a>
                         </li>
-                        <li class="nav-item app-only" style="display: none;">
+                        <li class="nav-item authenticated-content" style="display: none;">
                             <a href="#" class="nav-link" data-view="batting-order">Batting Order</a>
                         </li>
-                        <li class="nav-item app-only" style="display: none;">
+                        <li class="nav-item authenticated-content" style="display: none;">
                             <a href="#" class="nav-link" data-view="game-mode">Game Mode</a>
                         </li>
-                        <li class="nav-item app-only" style="display: none;">
+                        <li class="nav-item authenticated-content" style="display: none;">
                             <a href="#" class="nav-link" id="logout-button">
                                 <i class="bi bi-box-arrow-right me-1"></i>Logout
                             </a>
@@ -63,8 +60,8 @@
     </header>
 
     <main>
-        <!-- Authentication View -->
-        <section id="auth-view" class="view active">
+        <!-- Login Section (shown when not authenticated) -->
+        <section class="login-section">
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6">
@@ -82,193 +79,197 @@
             </div>
         </section>
 
-        <!-- Player Management View -->
-        <section id="players-view" class="view">
-            <div class="container">
-                <h2 class="mb-4">Player Management</h2>
-                <div class="row">
-                    <div class="col-md-5">
-                        <div class="card shadow mb-4">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title mb-0">Add New Player</h3>
-                            </div>
-                            <div class="card-body">
-                                <form id="add-player-form">
-                                    <div class="mb-3">
-                                        <label for="player-name" class="form-label">Player Name</label>
-                                        <input type="text" class="form-control" id="player-name"
-                                            placeholder="Enter player name" required>
-                                        <div class="form-text">Player names must be between 1-50 characters.</div>
-                                    </div>
-                                    <button type="submit" class="btn btn-spotify">
-                                        <i class="bi bi-plus-circle me-2"></i>Add Player
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="card shadow mb-4 d-none d-md-block">
-                            <div class="card-header bg-secondary text-white">
-                                <h3 class="card-title mb-0">Instructions</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><i class="bi bi-info-circle me-2"></i> Add players to your team roster.</p>
-                                <p><i class="bi bi-music-note me-2"></i> You'll be able to assign walk-up music to each
-                                    player later.</p>
-                                <p><i class="bi bi-list-ol me-2"></i> After adding players, you can arrange them in a
-                                    batting order.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-7">
-                        <div class="card shadow">
-                            <div
-                                class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                <h3 class="card-title mb-0">Players</h3>
-                                <span class="badge bg-light text-dark" id="player-count">0</span>
-                            </div>
-                            <div class="card-body">
-                                <ul id="players-list" class="list-group"></ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <!-- Authenticated Content (shown when authenticated) -->
+        <div class="authenticated-content" style="display: none;">
 
-        <!-- Song Selection View -->
-        <section id="song-selection-view" class="view">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center mb-4">
-                            <button id="back-to-players" class="btn btn-outline-secondary me-3">
-                                <i class="bi bi-arrow-left me-2"></i>Back to Players
-                            </button>
-                            <h2 class="mb-0">Select Walk-up Music</h2>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Player Info and Search -->
-                    <div class="col-lg-4">
-                        <div class="card shadow mb-4">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title mb-0">Player</h3>
+            <!-- Player Management View -->
+            <section id="players-view" class="view active">
+                <div class="container">
+                    <h2 class="mb-4">Player Management</h2>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="card shadow mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="card-title mb-0">Add New Player</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="add-player-form">
+                                        <div class="mb-3">
+                                            <label for="player-name" class="form-label">Player Name</label>
+                                            <input type="text" class="form-control" id="player-name"
+                                                placeholder="Enter player name" required>
+                                            <div class="form-text">Player names must be between 1-50 characters.</div>
+                                        </div>
+                                        <button type="submit" class="btn btn-spotify">
+                                            <i class="bi bi-plus-circle me-2"></i>Add Player
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <div id="selected-player-info">
-                                    <p class="text-muted">No player selected</p>
+                            <div class="card shadow mb-4 d-none d-md-block">
+                                <div class="card-header bg-secondary text-white">
+                                    <h3 class="card-title mb-0">Instructions</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p><i class="bi bi-info-circle me-2"></i> Add players to your team roster.</p>
+                                    <p><i class="bi bi-music-note me-2"></i> You'll be able to assign walk-up music to each
+                                        player later.</p>
+                                    <p><i class="bi bi-list-ol me-2"></i> After adding players, you can arrange them in a
+                                        batting order.</p>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="card shadow mb-4">
-                            <div class="card-header bg-secondary text-white">
-                                <h3 class="card-title mb-0">Search Songs</h3>
+                        <div class="col-md-7">
+                            <div class="card shadow">
+                                <div
+                                    class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                    <h3 class="card-title mb-0">Players</h3>
+                                    <span class="badge bg-light text-dark" id="player-count">0</span>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="players-list" class="list-group"></ul>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <form id="song-search-form">
-                                    <div class="mb-3">
-                                        <label for="song-search" class="form-label">Search for a song</label>
-                                        <input type="text" class="form-control" id="song-search"
-                                            placeholder="Enter song name or artist">
-                                    </div>
-                                    <button type="submit" class="btn btn-spotify">
-                                        <i class="bi bi-search me-2"></i>Search
-                                    </button>
-                                </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                                <div id="search-results" class="mt-3"></div>
+            <!-- Song Selection View -->
+            <section id="song-selection-view" class="view">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center mb-4">
+                                <button id="back-to-players" class="btn btn-outline-secondary me-3">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to Players
+                                </button>
+                                <h2 class="mb-0">Select Walk-up Music</h2>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Song Segmentation -->
-                    <div class="col-lg-8">
-                        <div class="card shadow">
-                            <div class="card-header bg-success text-white">
-                                <h3 class="card-title mb-0">Song Segmentation</h3>
-                            </div>
-                            <div class="card-body">
-                                <div id="segmentation-interface">
-                                    <div class="text-center text-muted py-5">
-                                        <i class="bi bi-music-note-beamed display-4 mb-3"></i>
-                                        <p>Select a song from the search results to start creating a segment</p>
+                    <div class="row">
+                        <!-- Player Info and Search -->
+                        <div class="col-lg-4">
+                            <div class="card shadow mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="card-title mb-0">Player</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="selected-player-info">
+                                        <p class="text-muted">No player selected</p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Batting Order View -->
-        <section id="batting-order-view" class="view">
-            <div class="container">
-                <h2 class="mb-4">Batting Order</h2>
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Drag and drop players to set your batting order</h3>
-                    </div>
-                    <div class="card-body">
-                        <ul id="batting-order-list" class="list-group sortable-list"></ul>
-                    </div>
-                </div>
-            </div>
-        </section>
+                            <div class="card shadow mb-4">
+                                <div class="card-header bg-secondary text-white">
+                                    <h3 class="card-title mb-0">Search Songs</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form id="song-search-form">
+                                        <div class="mb-3">
+                                            <label for="song-search" class="form-label">Search for a song</label>
+                                            <input type="text" class="form-control" id="song-search"
+                                                placeholder="Enter song name or artist">
+                                        </div>
+                                        <button type="submit" class="btn btn-spotify">
+                                            <i class="bi bi-search me-2"></i>Search
+                                        </button>
+                                    </form>
 
-        <!-- Game Mode View -->
-        <section id="game-mode-view" class="view">
-            <div class="container">
-                <h2 class="mb-4">Game Mode</h2>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card shadow mb-4 current-batter">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title mb-0">Current Batter</h3>
-                            </div>
-                            <div class="card-body">
-                                <div id="current-batter-info">
-                                    <p class="text-muted">No batter selected</p>
+                                    <div id="search-results" class="mt-3"></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card shadow mb-4 on-deck">
-                            <div class="card-header bg-warning">
-                                <h3 class="card-title mb-0">On Deck</h3>
-                            </div>
-                            <div class="card-body">
-                                <div id="on-deck-info">
-                                    <p class="text-muted">No batter on deck</p>
+
+                        <!-- Song Segmentation -->
+                        <div class="col-lg-8">
+                            <div class="card shadow">
+                                <div class="card-header bg-success text-white">
+                                    <h3 class="card-title mb-0">Song Segmentation</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="segmentation-interface">
+                                        <div class="text-center text-muted py-5">
+                                            <i class="bi bi-music-note-beamed display-4 mb-3"></i>
+                                            <p>Select a song from the search results to start creating a segment</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card shadow">
-                    <div class="card-header bg-secondary text-white">
-                        <h3 class="card-title mb-0">Controls</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex gap-2 player-controls">
-                            <button id="next-batter" class="btn btn-spotify">
-                                <i class="bi bi-skip-forward-fill me-2"></i>Next Batter
-                            </button>
-                            <button id="pause-play" class="btn btn-outline-secondary">
-                                <i class="bi bi-pause-fill me-2"></i>Pause
-                            </button>
-                            <button id="skip" class="btn btn-outline-secondary">
-                                <i class="bi bi-skip-end-fill me-2"></i>Skip
-                            </button>
+            </section>
+
+            <!-- Batting Order View -->
+            <section id="batting-order-view" class="view">
+                <div class="container">
+                    <h2 class="mb-4">Batting Order</h2>
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title mb-0">Drag and drop players to set your batting order</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul id="batting-order-list" class="list-group sortable-list"></ul>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <!-- Game Mode View -->
+            <section id="game-mode-view" class="view">
+                <div class="container">
+                    <h2 class="mb-4">Game Mode</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow mb-4 current-batter">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="card-title mb-0">Current Batter</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="current-batter-info">
+                                        <p class="text-muted">No batter selected</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow mb-4 on-deck">
+                                <div class="card-header bg-warning">
+                                    <h3 class="card-title mb-0">On Deck</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="on-deck-info">
+                                        <p class="text-muted">No batter on deck</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card shadow">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="card-title mb-0">Controls</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 player-controls">
+                                <button id="next-batter" class="btn btn-spotify">
+                                    <i class="bi bi-skip-forward-fill me-2"></i>Next Batter
+                                </button>
+                                <button id="pause-play" class="btn btn-outline-secondary">
+                                    <i class="bi bi-pause-fill me-2"></i>Pause
+                                </button>
+                                <button id="skip" class="btn btn-outline-secondary">
+                                    <i class="bi bi-skip-end-fill me-2"></i>Skip
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </main>
 
     <footer class="mt-5">

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .pass { background-color: #d4edda; color: #155724; }
+        .fail { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Flow Test</h1>
+    <div id="test-results"></div>
+
+    <script type="module">
+        import { isAuthenticated, initAuth } from './js/components/auth.js';
+
+        const results = document.getElementById('test-results');
+
+        function addResult(test, passed, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `<strong>${test}:</strong> ${passed ? 'PASS' : 'FAIL'} - ${message}`;
+            results.appendChild(div);
+        }
+
+        // Test 1: isAuthenticated should return false when no token
+        try {
+            const authenticated = isAuthenticated();
+            addResult('No Token Test', !authenticated, 'isAuthenticated() correctly returns false when no token exists');
+        } catch (error) {
+            addResult('No Token Test', false, `Error: ${error.message}`);
+        }
+
+        // Test 2: initAuth should not throw errors
+        try {
+            initAuth();
+            addResult('Init Auth Test', true, 'initAuth() executes without errors');
+        } catch (error) {
+            addResult('Init Auth Test', false, `Error: ${error.message}`);
+        }
+
+        // Test 3: Check if login button exists and has event listener
+        try {
+            const loginButton = document.getElementById('spotify-login');
+            const hasButton = !!loginButton;
+            addResult('Login Button Test', hasButton, hasButton ? 'Login button found in DOM' : 'Login button not found');
+        } catch (error) {
+            addResult('Login Button Test', false, `Error: ${error.message}`);
+        }
+
+        // Test 4: Simulate token existence
+        try {
+            // Set a mock token
+            const futureTime = Date.now() + (3600 * 1000); // 1 hour from now
+            localStorage.setItem('spotify_access_token', 'mock_token');
+            localStorage.setItem('spotify_token_expiration', futureTime.toString());
+
+            const authenticated = isAuthenticated();
+            addResult('Mock Token Test', authenticated, 'isAuthenticated() correctly returns true with valid mock token');
+
+            // Clean up
+            localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_token_expiration');
+        } catch (error) {
+            addResult('Mock Token Test', false, `Error: ${error.message}`);
+        }
+
+        // Test 5: Test expired token
+        try {
+            // Set an expired token
+            const pastTime = Date.now() - 1000; // 1 second ago
+            localStorage.setItem('spotify_access_token', 'expired_token');
+            localStorage.setItem('spotify_token_expiration', pastTime.toString());
+
+            const authenticated = isAuthenticated();
+            addResult('Expired Token Test', !authenticated, 'isAuthenticated() correctly returns false with expired token');
+
+            // Clean up
+            localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_token_expiration');
+        } catch (error) {
+            addResult('Expired Token Test', false, `Error: ${error.message}`);
+        }
+
+        console.log('Auth flow tests completed');
+    </script>
+
+    <!-- Add a mock login button for testing -->
+    <button id="spotify-login" style="display: none;">Mock Login Button</button>
+</body>
+</html>

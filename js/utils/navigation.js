@@ -69,48 +69,7 @@ export function switchView(viewId, pushState = true) {
     }
 }
 
-/**
- * Check if user is authenticated and switch to appropriate view
- * @param {boolean} isAuthenticated - Whether the user is authenticated
- */
-export function navigateBasedOnAuth(isAuthenticated) {
-    // Show/hide navigation items based on authentication status
-    const authOnlyItems = document.querySelectorAll('.auth-only');
-    const appOnlyItems = document.querySelectorAll('.app-only');
-    
-    if (isAuthenticated) {
-        // Show app navigation items and hide auth items
-        authOnlyItems.forEach(item => item.style.display = 'none');
-        appOnlyItems.forEach(item => item.style.display = 'block');
-        
-        // Switch to players view
-        switchView('players');
-        
-        // Dispatch navigation event for authenticated state
-        dispatchNavigationEvent('navigatedToApp', { isAuthenticated: true });
-    } else {
-        // Show auth navigation items and hide app items
-        authOnlyItems.forEach(item => item.style.display = 'block');
-        appOnlyItems.forEach(item => item.style.display = 'none');
-        
-        // Switch to auth view
-        switchView('auth');
-        
-        // Dispatch navigation event for unauthenticated state
-        dispatchNavigationEvent('navigatedToAuth', { isAuthenticated: false });
-    }
-}
 
-/**
- * Dispatch navigation-related events
- * @param {string} eventType - The type of navigation event
- * @param {Object} detail - Event details
- */
-function dispatchNavigationEvent(eventType, detail) {
-    const event = new CustomEvent(eventType, { detail });
-    document.dispatchEvent(event);
-    console.log(`Dispatched ${eventType} event:`, detail);
-}
 
 /**
  * Check if the device is mobile

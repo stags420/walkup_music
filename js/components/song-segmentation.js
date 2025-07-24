@@ -3,18 +3,6 @@
  * Implements requirement 3.4 - Song Selection and Segmentation
  */
 
-import { 
-    searchSongs, 
-    getTrack, 
-    initializeEnhancedPlayback,
-    playTrackEnhanced,
-    pauseEnhanced,
-    seekEnhanced,
-    getCurrentPlaybackStateEnhanced,
-    getEnhancedPlaybackStatus,
-    getAvailableDevicesEnhanced,
-    setSDKPreference
-} from './spotify-api.js';
 import { DataManager, SongSelectionModel } from '../models/data-models.js';
 
 // DOM Elements
@@ -24,6 +12,9 @@ let songSearchInput;
 let searchResults;
 let segmentationInterface;
 let backToPlayersButton;
+
+// Dependencies
+let spotifyAPI;
 
 // State
 let currentPlayer = null;
@@ -40,9 +31,13 @@ let previewMonitorInterval = null; // For monitoring playback position during pr
 let selectedDeviceId = null; // Currently selected device for playback
 
 /**
- * Initialize the song segmentation component
+ * Initialize the song segmentation component with dependency injection
+ * @param {SpotifyAPI} spotifyAPIInstance - The Spotify API instance
  */
-export function initSongSegmentation() {
+export function initSongSegmentation(spotifyAPIInstance) {
+    // Store dependencies
+    spotifyAPI = spotifyAPIInstance;
+
     // Get DOM elements
     selectedPlayerInfo = document.getElementById('selected-player-info');
     songSearchForm = document.getElementById('song-search-form');
@@ -85,15 +80,14 @@ async function initializeEnhancedPlaybackSystem() {
         }
         
         // Now initialize the enhanced playback system
-        const result = await initializeEnhancedPlayback();
+        const result = await spotifyAPI.initializeEnhancedPlayback();
         
         if (result.success) {
             if (result.sdkReady) {
                 console.log('Song segmentation: Web Playback SDK ready:', result.message);
-                showPlaybackStatusNotification('Browser player ready - no device selection needed!', 'success');
                 
                 // Set SDK as preferred method
-                setSDKPreference(true);
+                spotifyAPI.setSDKPreference(true);
                 
                 // Update device selection UI to show SDK device
                 updateDeviceSelectionUI(result.deviceId);
@@ -434,7 +428,7 @@ export async function previewSegment() {
         stopSegmentMonitoring();
 
         // Use enhanced playback (SDK first, fallback to external devices)
-        const result = await playTrackEnhanced(currentTrack.id, currentSegment.startTime, selectedDeviceId);
+        const result = await spotifyAPI.playTrackEnhanced(currentTrack.id, currentSegment.startTime, selectedDeviceId);
 
         if (!result.success) {
             return {
@@ -503,7 +497,7 @@ async function startSegmentMonitoring() {
 
     previewMonitorInterval = setInterval(async () => {
         try {
-            const playbackState = await getCurrentPlaybackStateEnhanced(selectedDeviceId);
+            const playbackState = await spotifyAPI.getCurrentPlaybackStateEnhanced(selectedDeviceId);
 
             if (!playbackState || !playbackState.is_playing) {
                 // Playback stopped, clear monitoring
@@ -514,7 +508,7 @@ async function startSegmentMonitoring() {
             // Check if we've reached the end of the segment
             if (playbackState.progress_ms >= segmentEndMs) {
                 // Stop playback and monitoring
-                const pauseResult = await pauseEnhanced(selectedDeviceId);
+                const pauseResult = await spotifyAPI.pauseEnhanced(selectedDeviceId);
                 stopSegmentMonitoring();
                 togglePlaybackButtons(false);
                 
@@ -730,7 +724,7 @@ async function performSearch(query) {
     showSearchLoading();
 
     try {
-        const results = await searchSongs(query, { limit: 10 });
+        const results = await spotifyAPI.searchSongs(query, { limit: 10 });
         displaySearchResults(results.tracks);
     } catch (error) {
         console.error('Search failed:', error);
@@ -926,7 +920,7 @@ function clearSearchResults() {
 async function selectTrack(track) {
     try {
         // Get detailed track information
-        const detailedTrack = await getTrack(track.id);
+        const detailedTrack = await spotifyAPI.getTrack(track.id);
         loadTrackForSegmentation(track.id, null, detailedTrack);
     } catch (error) {
         console.error('Failed to load track details:', error);
@@ -941,7 +935,7 @@ async function selectTrack(track) {
 async function selectTrackWithPreview(track) {
     try {
         // Get detailed track information
-        const detailedTrack = await getTrack(track.id);
+        const detailedTrack = await spotifyAPI.getTrack(track.id);
         loadTrackForSegmentation(track.id, null, detailedTrack, true);
     } catch (error) {
         console.error('Failed to load track details:', error);
@@ -960,7 +954,7 @@ async function loadTrackForSegmentation(trackId, existingSelection = null, track
     try {
         // Get track data if not provided
         if (!trackData) {
-            trackData = await getTrack(trackId);
+            trackData = await spotifyAPI.getTrack(trackId);
         }
 
         currentTrack = trackData;
@@ -2310,7 +2304,7 @@ function addBrowserPlayerIndicator() {
  */
 async function showDeviceSelection() {
     try {
-        const devices = await getAvailableDevicesEnhanced();
+        const devices = await spotifyAPI.getAvailableDevicesEnhanced();
         displayDeviceSelection(devices);
     } catch (error) {
         console.error('Failed to get devices:', error);
@@ -2419,7 +2413,7 @@ function selectDevice(deviceId, deviceName, isSDKDevice) {
     selectedDeviceId = deviceId;
     
     // Set SDK preference based on device selection
-    setSDKPreference(isSDKDevice);
+    spotifyAPI.setSDKPreference(isSDKDevice);
     
     // Hide device selection
     hideDeviceSelection();

@@ -1,68 +1,58 @@
 // Main application entry point
 import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
-import { checkAuthentication, logout } from './components/auth.js';
+import { isAuthenticated, logout, initAuth } from './components/auth.js';
 import { createUrl } from './utils/url-utils.js';
-import { initPlayerManagement } from './components/player-management.js';
 
 /**
  * Initialize the application
  */
-function initApp() {
+async function initApp() {
     console.log('Spotify Walk-up Music App initialized');
 
-    // Initialize navigation
+    // Initialize navigation and layout first
     initNavigation();
-
-    // Handle responsive layout
     handleResponsiveLayout();
-
-    // Initialize logout button
+    initBootstrapComponents();
     initLogoutButton();
     
-    // Check if we need to retry authentication with implicit flow
+    // Handle special URL cases first
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check if we need to retry authentication with implicit flow
     if (urlParams.has('retry_auth') && urlParams.get('retry_auth') === 'true') {
         console.log('Retrying authentication with implicit flow');
-        // Get the state from the previous attempt
         const state = localStorage.getItem('spotify_auth_retry_state') || '';
-        // Clear the retry state
         localStorage.removeItem('spotify_auth_retry_state');
-        // Try implicit flow
-        import('./components/auth.js').then(auth => {
-            auth.authenticateWithImplicitFlow(state);
-        });
+        const { authenticateWithImplicitFlow } = await import('./components/auth.js');
+        authenticateWithImplicitFlow(state);
         return;
     }
-
-    // Initialize Bootstrap components first
-    initBootstrapComponents();
-    
-    // Initialize player management component BEFORE authentication check
-    // This ensures event listeners are set up before auth events are dispatched
-    initPlayerManagement();
-    
-    // Note: Song segmentation (including playback system) will be initialized 
-    // lazily when first needed via the initialization manager
-
-    // Check if we're returning from successful authentication
-    if (urlParams.has('auth_success') && urlParams.get('auth_success') === 'true') {
-        console.log('Returning from successful authentication');
-        // Clear the success flag
-        localStorage.removeItem('spotify_auth_success');
-        // Clean up the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        // Force authentication check with a small delay to ensure tokens are available
-        setTimeout(() => {
-            checkAuthentication();
-        }, 100);
-        return;
-    }
-
-    // Check if user is already authenticated
-    checkAuthentication();
 
     // Check for authentication callback
-    checkForAuthCallback();
+    if (checkForAuthCallback()) {
+        return; // Callback handling will redirect
+    }
+
+    // Clean up auth success URL parameter
+    if (urlParams.has('auth_success')) {
+        localStorage.removeItem('spotify_auth_success');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Initialize auth component (sets up login button)
+    initAuth();
+
+    // Check authentication status - this is synchronous and blocks everything else
+    const authenticated = isAuthenticated();
+    
+    if (!authenticated) {
+        // Show login page - don't initialize anything else
+        showLoginPage();
+        return;
+    }
+
+    // User is authenticated - initialize the full application
+    await initAuthenticatedApp();
 }
 
 /**
@@ -79,7 +69,67 @@ function initLogoutButton() {
 }
 
 /**
+ * Show the login page by hiding authenticated content and showing login UI
+ */
+function showLoginPage() {
+    // Hide authenticated sections
+    const authenticatedSections = document.querySelectorAll('.authenticated-content');
+    authenticatedSections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show login section
+    const loginSection = document.querySelector('.login-section');
+    if (loginSection) {
+        loginSection.style.display = 'block';
+    }
+
+    console.log('Showing login page - user not authenticated');
+}
+
+/**
+ * Initialize the authenticated application with all components
+ */
+async function initAuthenticatedApp() {
+    console.log('Initializing authenticated application...');
+
+    // Hide login section
+    const loginSection = document.querySelector('.login-section');
+    if (loginSection) {
+        loginSection.style.display = 'none';
+    }
+
+    // Show authenticated sections
+    const authenticatedSections = document.querySelectorAll('.authenticated-content');
+    authenticatedSections.forEach(section => {
+        section.style.display = 'block';
+    });
+
+    try {
+        // Initialize components with dependency injection
+        const { initPlayerManagement } = await import('./components/player-management.js');
+        const { initSongSegmentation } = await import('./components/song-segmentation.js');
+        const { initializeWebPlaybackSDK } = await import('./components/web-playback-sdk.js');
+        const { SpotifyAPI } = await import('./components/spotify-api.js');
+
+        // Create shared dependencies
+        const spotifyAPI = new SpotifyAPI();
+
+        // Initialize components in order, passing dependencies
+        await initPlayerManagement(spotifyAPI);
+        await initSongSegmentation(spotifyAPI);
+        await initializeWebPlaybackSDK();
+
+        console.log('Authenticated application initialized successfully');
+    } catch (error) {
+        console.error('Error initializing authenticated application:', error);
+        // Could show an error message to user here
+    }
+}
+
+/**
  * Check if the current page load is from an authentication callback
+ * @returns {boolean} Whether this is a callback that needs handling
  */
 function checkForAuthCallback() {
     // If we have a code parameter in the URL or an access_token in the hash and we're not on the callback page,
@@ -95,7 +145,9 @@ function checkForAuthCallback() {
         } else {
             window.location.href = `${callbackUrl}${window.location.hash}`;
         }
+        return true;
     }
+    return false;
 }
 
 /**

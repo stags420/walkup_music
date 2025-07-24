@@ -324,25 +324,7 @@ async function initializeAuthenticatedComponents() {
     }
 }
 
-/**
- * Add event listeners for authentication state changes
- */
-function setupAuthEventListeners() {
-    // Listen for logout events to cleanup components
-    document.addEventListener('authLogout', () => {
-        console.log('InitManager: Auth logout detected, cleaning up components');
-        cleanupAllComponents();
-    });
-    
-    // Listen for authentication success to initialize components
-    document.addEventListener('authSuccess', () => {
-        console.log('InitManager: Auth success detected, will initialize components on demand');
-        // Note: We don't auto-initialize here, we wait for lazy initialization
-    });
-}
-
-// Set up event listeners when module loads
-setupAuthEventListeners();
+// Note: Event listeners removed - using direct dependency injection instead of events
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {

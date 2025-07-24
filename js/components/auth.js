@@ -13,21 +13,13 @@ const ACCESS_TOKEN_COOKIE = 'spotify_access_token';
 const TOKEN_EXPIRATION_COOKIE = 'spotify_token_expiration';
 const REFRESH_TOKEN_COOKIE = 'spotify_refresh_token';
 
-/**
- * Initialize authentication component
- */
-function init() {
-    // Add event listener to login button
-    if (spotifyLoginButton) {
-        spotifyLoginButton.addEventListener('click', authenticateWithSpotify);
-    }
-}
+
 
 /**
- * Check if user is already authenticated
+ * Check if user is currently authenticated (synchronous)
  * @returns {boolean} Whether the user is authenticated
  */
-export function checkAuthentication() {
+export function isAuthenticated() {
     // Get authentication data from cookies
     let accessToken = getCookie(ACCESS_TOKEN_COOKIE);
     let tokenExpiration = getCookie(TOKEN_EXPIRATION_COOKIE);
@@ -42,32 +34,28 @@ export function checkAuthentication() {
     }
 
     // Check if token exists and is not expired
-    const isAuthenticated = accessToken && tokenExpiration && Date.now() < parseInt(tokenExpiration);
+    const authenticated = accessToken && tokenExpiration && Date.now() < parseInt(tokenExpiration);
 
     console.log('Authentication check:', {
         hasAccessToken: !!accessToken,
         hasTokenExpiration: !!tokenExpiration,
-        isAuthenticated: isAuthenticated,
+        isAuthenticated: authenticated,
         tokenExpiration: tokenExpiration ? new Date(parseInt(tokenExpiration)).toISOString() : 'none',
-        currentTime: new Date().toISOString(),
-        cookieToken: !!getCookie(ACCESS_TOKEN_COOKIE),
-        localStorageToken: !!localStorage.getItem(ACCESS_TOKEN_COOKIE)
+        currentTime: new Date().toISOString()
     });
 
-    // If token is about to expire (within 5 minutes), try to refresh it
-    if (accessToken && tokenExpiration) {
+    // If token is about to expire (within 5 minutes), try to refresh it in background
+    if (accessToken && tokenExpiration && authenticated) {
         const expirationTime = parseInt(tokenExpiration);
         const isAboutToExpire = Date.now() > expirationTime - (5 * 60 * 1000);
 
         if (isAboutToExpire) {
-            console.log('Token is about to expire, refreshing...');
+            console.log('Token is about to expire, refreshing in background...');
             // Use setTimeout to avoid blocking the UI
             setTimeout(() => {
                 refreshToken().then(success => {
                     if (success) {
                         console.log('Token refreshed successfully');
-                        // Dispatch authentication refresh event
-                        dispatchAuthEvent('authRefreshed', { isAuthenticated: true });
                     } else {
                         console.warn('Token refresh failed');
                     }
@@ -76,16 +64,17 @@ export function checkAuthentication() {
         }
     }
 
-    // Initialize the auth component
-    init();
+    return authenticated;
+}
 
-    // Navigate based on authentication status
-    navigateBasedOnAuth(isAuthenticated);
-
-    // Dispatch authentication state change event
-    dispatchAuthEvent('authStateChanged', { isAuthenticated });
-
-    return isAuthenticated;
+/**
+ * Initialize the auth component (sets up login button)
+ */
+export function initAuth() {
+    // Add event listener to login button
+    if (spotifyLoginButton) {
+        spotifyLoginButton.addEventListener('click', authenticateWithSpotify);
+    }
 }
 
 /**
@@ -415,11 +404,10 @@ export function logout() {
     localStorage.removeItem(TOKEN_EXPIRATION_COOKIE);
     localStorage.removeItem(REFRESH_TOKEN_COOKIE);
 
-    // Dispatch logout event
-    dispatchAuthEvent('authLogout', { isAuthenticated: false });
+    console.log('User logged out');
 
-    // Navigate back to the authentication view
-    navigateBasedOnAuth(false);
+    // Reload the page to restart the app flow
+    window.location.reload();
 }
 
 /**
@@ -628,9 +616,6 @@ async function exchangeCodeForToken(code, codeVerifier) {
 
         console.log('Token exchange successful');
         
-        // Dispatch authentication success event
-        dispatchAuthEvent('authSuccess', { isAuthenticated: true });
-        
         return { success: true };
 
     } catch (error) {
@@ -642,13 +627,3 @@ async function exchangeCodeForToken(code, codeVerifier) {
     }
 }
 
-/**
- * Dispatch authentication-related events
- * @param {string} eventType - The type of authentication event
- * @param {Object} detail - Event details
- */
-function dispatchAuthEvent(eventType, detail) {
-    const event = new CustomEvent(eventType, { detail });
-    document.dispatchEvent(event);
-    console.log(`Dispatched ${eventType} event:`, detail);
-}

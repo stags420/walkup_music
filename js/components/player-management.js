@@ -3,7 +3,7 @@
  * Implements requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
  */
 
-import { PlayerModel, DataManager } from '../models/data-models.js';
+import { PlayerModel } from '../models/data-models.js';
 import playerManagementService from './player-management-service.js';
 
 // DOM Elements
@@ -18,10 +18,17 @@ let editPlayerId;
 let deleteConfirmModal;
 let deletePlayerId;
 
+// Dependencies
+let spotifyAPI;
+
 /**
- * Initialize the player management component
+ * Initialize the player management component with dependency injection
+ * @param {SpotifyAPI} spotifyAPIInstance - The Spotify API instance
  */
-export function initPlayerManagement() {
+export function initPlayerManagement(spotifyAPIInstance) {
+  // Store dependencies
+  spotifyAPI = spotifyAPIInstance;
+
   // Get DOM elements
   playerNameInput = document.getElementById('player-name');
   addPlayerForm = document.getElementById('add-player-form');
@@ -34,11 +41,10 @@ export function initPlayerManagement() {
   // Set up event listeners
   setupEventListeners();
 
-  // Set up authentication event listeners
-  setupAuthEventListeners();
-
   // Load and display players
   loadPlayers();
+
+  console.log('Player management initialized with dependencies');
 }
 
 /**
@@ -128,19 +134,7 @@ function setupEventListeners() {
   }
 }
 
-/**
- * Set up authentication event listeners
- */
-function setupAuthEventListeners() {
-  // Listen for authentication state changes
-  document.addEventListener('authStateChanged', handleAuthStateChange);
-  document.addEventListener('authSuccess', handleAuthSuccess);
-  document.addEventListener('authRefreshed', handleAuthRefresh);
-  document.addEventListener('authLogout', handleAuthLogout);
 
-  // Listen for navigation events
-  document.addEventListener('navigatedToApp', handleNavigatedToApp);
-}
 
 /**
  * Load and display players
@@ -429,117 +423,7 @@ async function openSongSelectionForPlayer(player) {
   }
 }
 
-/**
- * Handle authentication state changes
- * @param {CustomEvent} event - The authentication state change event
- */
-function handleAuthStateChange(event) {
-  const { isAuthenticated } = event.detail;
-  console.log('Player management: Authentication state changed:', isAuthenticated);
-  console.log('Player management: Current DOM elements available:', {
-    playersList: !!playersList,
-    playerCountBadge: !!playerCountBadge
-  });
 
-  if (isAuthenticated) {
-    // User is authenticated, refresh the player list
-    console.log('Player management: User is authenticated, triggering refresh...');
-    refreshPlayerList();
-    
-    // Note: Song segmentation will be initialized lazily when first needed
-    console.log('Player management: Song segmentation will be initialized on demand');
-  } else {
-    console.log('Player management: User is not authenticated, skipping refresh');
-  }
-}
-
-/**
- * Handle successful authentication
- * @param {CustomEvent} event - The authentication success event
- */
-function handleAuthSuccess(event) {
-  console.log('Player management: Authentication successful, refreshing player list');
-  // Refresh the player list after successful authentication
-  refreshPlayerList();
-  
-  // Note: Song segmentation will be initialized lazily when first needed
-  console.log('Player management: Song segmentation will be initialized on demand');
-}
-
-/**
- * Handle authentication token refresh
- * @param {CustomEvent} event - The authentication refresh event
- */
-function handleAuthRefresh(event) {
-  console.log('Player management: Authentication refreshed, ensuring player list is current');
-  // Refresh the player list after token refresh
-  refreshPlayerList();
-}
-
-/**
- * Handle user logout
- * @param {CustomEvent} event - The logout event
- */
-function handleAuthLogout(event) {
-  console.log('Player management: User logged out, clearing player list');
-  // Clear the player list when user logs out
-  if (playersList) {
-    playersList.innerHTML = '';
-  }
-  if (playerCountBadge) {
-    playerCountBadge.textContent = '0';
-  }
-  
-  // Note: Initialization manager will handle cleanup on logout automatically
-  console.log('Player management: Initialization manager will handle component cleanup');
-}
-
-/**
- * Handle navigation to app (authenticated state)
- * @param {CustomEvent} event - The navigation event
- */
-function handleNavigatedToApp(event) {
-  console.log('Player management: Navigated to app, refreshing player list');
-  console.log('Player management: Current DOM elements available:', {
-    playersList: !!playersList,
-    playerCountBadge: !!playerCountBadge
-  });
-  // Refresh the player list when navigating to the app
-  refreshPlayerList();
-  
-  // Note: Song segmentation will be initialized lazily when first needed
-  console.log('Player management: Song segmentation will be initialized on demand');
-}
-
-/**
- * Refresh the player list (wrapper around loadPlayers with additional logging)
- */
-function refreshPlayerList() {
-  console.log('Player management: Refreshing player list...');
-
-  // Add a small delay to ensure DOM elements are available
-  setTimeout(() => {
-    // Re-get DOM elements in case they were recreated
-    const oldPlayersList = playersList;
-    playerNameInput = document.getElementById('player-name');
-    addPlayerForm = document.getElementById('add-player-form');
-    playersList = document.getElementById('players-list');
-    playerCountBadge = document.getElementById('player-count');
-
-    console.log('Player management: DOM elements check:', {
-      playerNameInput: !!playerNameInput,
-      addPlayerForm: !!addPlayerForm,
-      playersList: !!playersList,
-      playerCountBadge: !!playerCountBadge,
-      playersListChanged: oldPlayersList !== playersList
-    });
-
-    // Load and display players
-    loadPlayers();
-
-    console.log('Player management: Player list refresh completed');
-  }, 100);
-}
 
 /**
  * Escape HTML special characters to prevent XSS

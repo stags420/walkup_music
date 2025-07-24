@@ -17,6 +17,26 @@ let isSDKReady = false;
 let isSDKInitializing = false;
 let sdkError = null;
 let isPremiumRequired = false;
+let sdkReadyCallbacks = [];
+
+// Global callback for Spotify SDK - this must be available immediately
+// even if the component hasn't been initialized yet
+window.onSpotifyWebPlaybackSDKReady = () => {
+    console.log('Spotify Web Playback SDK is ready');
+    isSDKReady = true;
+    
+    // Call any pending callbacks
+    sdkReadyCallbacks.forEach(callback => {
+        try {
+            callback();
+        } catch (error) {
+            console.error('Error in SDK ready callback:', error);
+        }
+    });
+    
+    // Clear the callbacks array
+    sdkReadyCallbacks = [];
+};
 
 // Event listeners
 const eventListeners = {
@@ -120,30 +140,38 @@ function waitForSpotifyObject() {
             reject(new Error('Spotify SDK failed to load within timeout period'));
         }, 10000); // 10 second timeout
 
-        // Define the global callback that Spotify SDK expects
-        window.onSpotifyWebPlaybackSDKReady = () => {
+        // If SDK is already ready, resolve immediately
+        if (isSDKReady && window.Spotify) {
+            clearTimeout(timeout);
+            resolve();
+            return;
+        }
+
+        // Add our callback to the list
+        const callback = () => {
             clearTimeout(timeout);
             resolve();
         };
+        
+        sdkReadyCallbacks.push(callback);
 
         // Fallback check in case the callback doesn't fire
         const checkSpotify = () => {
-            if (window.Spotify) {
+            if (window.Spotify && isSDKReady) {
                 clearTimeout(timeout);
+                // Remove our callback from the list since we're resolving
+                const index = sdkReadyCallbacks.indexOf(callback);
+                if (index > -1) {
+                    sdkReadyCallbacks.splice(index, 1);
+                }
                 resolve();
             } else {
                 setTimeout(checkSpotify, 100);
             }
         };
 
-        // Start checking immediately in case SDK is already loaded
-        if (window.Spotify) {
-            clearTimeout(timeout);
-            resolve();
-        } else {
-            // Start fallback checking after a short delay
-            setTimeout(checkSpotify, 1000);
-        }
+        // Start fallback checking after a short delay
+        setTimeout(checkSpotify, 1000);
     });
 }
 

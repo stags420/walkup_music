@@ -32,11 +32,11 @@ let selectedDeviceId = null; // Currently selected device for playback
 
 /**
  * Initialize the song segmentation component with dependency injection
- * @param {SpotifyAPI} spotifyAPIInstance - The Spotify API instance
+ * @param {Object} spotifyAPIModule - The Spotify API module
  */
-export function initSongSegmentation(spotifyAPIInstance) {
+export function initSongSegmentation(spotifyAPIModule) {
     // Store dependencies
-    spotifyAPI = spotifyAPIInstance;
+    spotifyAPI = spotifyAPIModule;
 
     // Get DOM elements
     selectedPlayerInfo = document.getElementById('selected-player-info');

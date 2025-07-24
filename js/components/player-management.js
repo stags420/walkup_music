@@ -23,11 +23,11 @@ let spotifyAPI;
 
 /**
  * Initialize the player management component with dependency injection
- * @param {SpotifyAPI} spotifyAPIInstance - The Spotify API instance
+ * @param {Object} spotifyAPIModule - The Spotify API module
  */
-export function initPlayerManagement(spotifyAPIInstance) {
+export function initPlayerManagement(spotifyAPIModule) {
   // Store dependencies
-  spotifyAPI = spotifyAPIInstance;
+  spotifyAPI = spotifyAPIModule;
 
   // Get DOM elements
   playerNameInput = document.getElementById('player-name');

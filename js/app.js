@@ -14,10 +14,10 @@ async function initApp() {
     handleResponsiveLayout();
     initBootstrapComponents();
     initLogoutButton();
-    
+
     // Handle special URL cases first
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     // Check if we need to retry authentication with implicit flow
     if (urlParams.has('retry_auth') && urlParams.get('retry_auth') === 'true') {
         console.log('Retrying authentication with implicit flow');
@@ -44,7 +44,7 @@ async function initApp() {
 
     // Check authentication status - this is synchronous and blocks everything else
     const authenticated = isAuthenticated();
-    
+
     if (!authenticated) {
         // Show login page - don't initialize anything else
         showLoginPage();
@@ -110,10 +110,7 @@ async function initAuthenticatedApp() {
         const { initPlayerManagement } = await import('./components/player-management.js');
         const { initSongSegmentation } = await import('./components/song-segmentation.js');
         const { initializeWebPlaybackSDK } = await import('./components/web-playback-sdk.js');
-        const { SpotifyAPI } = await import('./components/spotify-api.js');
-
-        // Create shared dependencies
-        const spotifyAPI = new SpotifyAPI();
+        const spotifyAPI = await import('./components/spotify-api.js');
 
         // Initialize components in order, passing dependencies
         await initPlayerManagement(spotifyAPI);
@@ -134,10 +131,10 @@ async function initAuthenticatedApp() {
 function checkForAuthCallback() {
     // If we have a code parameter in the URL or an access_token in the hash and we're not on the callback page,
     // it might be an authentication callback that was redirected incorrectly
-    if ((window.location.search.includes('code=') || window.location.hash.includes('access_token=')) && 
+    if ((window.location.search.includes('code=') || window.location.hash.includes('access_token=')) &&
         !window.location.pathname.includes('callback.html')) {
         console.warn('Authentication callback detected on main page. Redirecting to callback handler.');
-        
+
         // Redirect to the callback page with the current query string or hash
         const callbackUrl = createUrl('callback.html');
         if (window.location.search.includes('code=')) {

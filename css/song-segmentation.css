@@ -263,53 +263,435 @@
   margin-bottom: 15px;
 }
 
+/* Mobile UX Improvements */
+
+/* Collapsible Search Results */
+.search-results-container {
+  position: relative;
+}
+
+.search-results-header {
+  display: none;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.search-results-header:hover {
+  background-color: #e9ecef;
+}
+
+.search-results-header .collapse-icon {
+  transition: transform 0.2s ease;
+}
+
+.search-results-header.collapsed .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+.search-results-content {
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.search-results-content.collapsed {
+  max-height: 0;
+  overflow: hidden;
+}
+
+/* Sticky Controls */
+.sticky-controls {
+  position: sticky;
+  top: 20px;
+  z-index: 100;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.segment-info-compact {
+  font-size: 14px;
+}
+
+.floating-save-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  border-radius: 50px;
+  padding: 12px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.floating-save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced Touch Targets */
+.touch-friendly .btn {
+  min-height: 44px;
+  padding: 12px 16px;
+}
+
+.touch-friendly .search-result-item {
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.touch-friendly .timeline-handle {
+  width: 24px;
+  height: 80px;
+  top: -10px;
+}
+
+.touch-friendly .album-art {
+  width: 60px;
+  height: 60px;
+}
+
+/* Smooth Scrolling */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+.scroll-section {
+  scroll-margin-top: 80px;
+}
+
+/* Mobile Layout Improvements */
+.mobile-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-section {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.mobile-section-header {
+  background-color: #f8f9fa;
+  padding: 16px;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-section-content {
+  padding: 16px;
+}
+
+/* Mobile-specific timeline adjustments */
+.mobile-layout .timeline-container {
+  height: 50px;
+  margin: 16px 0;
+}
+
+.mobile-layout .timeline-handle {
+  width: 24px;
+  height: 60px;
+  top: -5px;
+}
+
+/* Mobile input groups */
+.mobile-layout .input-group {
+  margin-bottom: 0;
+}
+
+.mobile-layout .input-group .form-control {
+  min-height: 44px;
+  font-size: 16px; /* Prevents iOS zoom */
+}
+
+/* Mobile button improvements */
+.mobile-layout .btn {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.mobile-layout .d-grid .btn {
+  padding: 12px 16px;
+}
+
+/* Swipe Gestures */
+.swipeable {
+  touch-action: pan-y;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.swipe-indicator.left {
+  left: 20px;
+  color: #dc3545;
+  border: 2px solid #dc3545;
+}
+
+.swipe-indicator.right {
+  right: 20px;
+  color: #28a745;
+  border: 2px solid #28a745;
+}
+
+.swipeable.swiping .swipe-indicator {
+  opacity: 1;
+}
+
+.swipeable.swipe-left {
+  transform: translateX(-10px);
+}
+
+.swipeable.swipe-right {
+  transform: translateX(10px);
+}
+
 /* Responsive Design */
 @media (max-width: 991.98px) {
   .timeline-container {
-    height: 50px;
+    height: 60px;
   }
   
   .timeline-handle {
-    width: 16px;
-    height: 60px;
+    width: 20px;
+    height: 70px;
     top: -5px;
   }
   
   .time-input-group {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 12px;
   }
   
   .playback-controls {
     flex-direction: column;
+    gap: 12px;
   }
   
   .playback-controls .btn {
     width: 100%;
     min-width: auto;
+    min-height: 48px;
+  }
+  
+  .search-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .search-results {
+    max-height: 300px;
+    border-radius: 0 0 8px 8px;
   }
 }
 
 @media (max-width: 767.98px) {
+  body {
+    padding-bottom: 80px; /* Space for floating button */
+  }
+  
   .timeline-container {
-    height: 40px;
-    margin: 15px 0;
+    height: 50px;
+    margin: 20px 0;
   }
   
   .timeline-handle {
-    width: 14px;
-    height: 50px;
+    width: 24px;
+    height: 60px;
     top: -5px;
   }
   
   .segment-controls,
   .audio-timeline {
-    padding: 15px;
+    padding: 16px;
   }
   
   .time-input {
     width: 100%;
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+  
+  .search-result-item {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .search-result-item .btn {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .album-art {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .current-track-info .album-art {
+    width: 80px;
+    height: 80px;
+  }
+  
+  /* Mobile-specific layout */
+  .mobile-only {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none;
+  }
+  
+  /* Sticky search on mobile */
+  .mobile-search-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    background-color: white;
+    border-bottom: 1px solid #dee2e6;
+    padding: 16px;
+    margin: -16px -16px 16px -16px;
+  }
+  
+  /* Improved spacing for mobile */
+  .mobile-section {
+    margin-bottom: 16px;
+  }
+  
+  .mobile-section:last-child {
+    margin-bottom: 80px; /* Extra space for floating button */
+  }
+  
+  /* Better visual hierarchy on mobile */
+  .mobile-section-header {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  /* Optimized button groups for mobile */
+  .btn-group-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn-group-mobile .btn {
+    border-radius: 8px !important;
+  }
+  
+  /* Improved search results for mobile */
+  .search-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .search-results {
+    max-height: 300px;
+    border-radius: 0 0 8px 8px;
+  }
+  
+  /* Better touch targets for mobile timeline */
+  .mobile-layout .timeline-handle {
+    width: 28px;
+    height: 65px;
+    top: -7px;
+  }
+  
+  .mobile-layout .timeline-handle:before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: transparent;
+  }
+  
+  /* Mobile gesture feedback */
+  .mobile-layout .search-result-item {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .mobile-layout .search-result-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+  }
+  
+  .mobile-layout .search-result-item.swiping::after {
+    left: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .mobile-section-content {
+    padding: 12px;
+  }
+  
+  .mobile-section-header {
+    padding: 12px;
+  }
+  
+  .timeline-container {
+    height: 45px;
+    margin: 16px 0;
+  }
+  
+  .timeline-handle {
+    width: 20px;
+    height: 55px;
+  }
+  
+  .floating-save-button {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 20px;
   }
 }
 

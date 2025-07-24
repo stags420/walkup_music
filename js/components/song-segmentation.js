@@ -43,8 +43,148 @@ export function initSongSegmentation() {
     // Set up event listeners
     setupEventListeners();
 
+    // Initialize mobile UX enhancements
+    initializeMobileUX();
+
     // Initialize empty state
     showEmptySegmentationState();
+}
+
+/**
+ * Initialize mobile UX enhancements
+ */
+function initializeMobileUX() {
+    // Add mobile-friendly classes to body
+    if (window.innerWidth <= 767) {
+        document.body.classList.add('touch-friendly', 'mobile-layout');
+    }
+
+    // Add smooth scrolling behavior
+    document.documentElement.classList.add('smooth-scroll');
+
+    // Add scroll sections for better navigation
+    const sections = ['song-search-form', 'search-results', 'segmentation-interface'];
+    sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.classList.add('scroll-section');
+        }
+    });
+
+    // Handle window resize for responsive behavior
+    window.addEventListener('resize', handleWindowResize);
+
+    // Initialize touch gesture support
+    initializeTouchGestures();
+}
+
+/**
+ * Handle window resize events
+ */
+function handleWindowResize() {
+    const isMobile = window.innerWidth <= 767;
+    
+    if (isMobile) {
+        document.body.classList.add('touch-friendly', 'mobile-layout');
+    } else {
+        document.body.classList.remove('touch-friendly', 'mobile-layout');
+    }
+
+    // Update search results layout if they exist
+    const searchResultsContent = document.getElementById('search-results-content');
+    if (searchResultsContent) {
+        updateSearchResultsLayout();
+    }
+}
+
+/**
+ * Initialize touch gesture support
+ */
+function initializeTouchGestures() {
+    // Add passive event listeners for better performance
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+}
+
+/**
+ * Handle touch start events
+ */
+function handleTouchStart(event) {
+    // Store initial touch position for gesture detection
+    if (event.touches.length === 1) {
+        const touch = event.touches[0];
+        window.touchStartX = touch.clientX;
+        window.touchStartY = touch.clientY;
+        window.touchStartTime = Date.now();
+    }
+}
+
+/**
+ * Handle touch move events
+ */
+function handleTouchMove(event) {
+    // Handle swipe gestures on search result items
+    if (event.touches.length === 1 && window.touchStartX !== undefined) {
+        const touch = event.touches[0];
+        const deltaX = touch.clientX - window.touchStartX;
+        const deltaY = touch.clientY - window.touchStartY;
+        
+        // Check if this is a horizontal swipe
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+            const target = event.target.closest('.swipeable');
+            if (target) {
+                target.classList.add('swiping');
+                
+                // Show appropriate swipe indicator
+                if (deltaX > 0) {
+                    target.classList.add('swipe-right');
+                    target.classList.remove('swipe-left');
+                } else {
+                    target.classList.add('swipe-left');
+                    target.classList.remove('swipe-right');
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Handle touch end events
+ */
+function handleTouchEnd(event) {
+    if (window.touchStartX !== undefined) {
+        const touchEndTime = Date.now();
+        const touchDuration = touchEndTime - window.touchStartTime;
+        
+        // Handle swipe completion
+        const target = event.target.closest('.swipeable');
+        if (target && target.classList.contains('swiping')) {
+            const deltaX = event.changedTouches[0].clientX - window.touchStartX;
+            
+            // Trigger action based on swipe direction
+            if (Math.abs(deltaX) > 100 && touchDuration < 500) {
+                const trackId = target.dataset.trackId;
+                if (trackId) {
+                    if (deltaX > 0) {
+                        // Right swipe - use preview
+                        handleSwipePreview(trackId);
+                    } else {
+                        // Left swipe - custom segment
+                        handleSwipeCustom(trackId);
+                    }
+                }
+            }
+            
+            // Clean up swipe classes
+            target.classList.remove('swiping', 'swipe-left', 'swipe-right');
+        }
+        
+        // Reset touch tracking
+        window.touchStartX = undefined;
+        window.touchStartY = undefined;
+        window.touchStartTime = undefined;
+    }
 }
 
 /**
@@ -541,6 +681,8 @@ function displaySearchResults(tracks) {
         return;
     }
 
+    const isMobile = window.innerWidth <= 767;
+    
     const resultsHtml = tracks.map(track => {
         const albumArt = track.album.images.length > 0 ? track.album.images[0].url : '';
         const artistNames = track.artists.map(artist => artist.name).join(', ');
@@ -548,7 +690,15 @@ function displaySearchResults(tracks) {
         const durationSeconds = Math.floor((track.duration_ms % 60000) / 1000);
 
         return `
-            <div class="search-result-item" data-track-id="${track.id}">
+            <div class="search-result-item swipeable" data-track-id="${track.id}">
+                <div class="swipe-indicator left">
+                    <i class="bi bi-scissors"></i>
+                    <small>Custom</small>
+                </div>
+                <div class="swipe-indicator right">
+                    <i class="bi bi-play-circle"></i>
+                    <small>Preview</small>
+                </div>
                 <div class="d-flex align-items-center">
                     ${albumArt ? `<img src="${albumArt}" alt="Album art" class="album-art me-3">` :
                 '<div class="album-art me-3 bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-music-note text-white"></i></div>'}
@@ -557,34 +707,67 @@ function displaySearchResults(tracks) {
                         <small class="text-muted">${escapeHtml(artistNames)} • ${durationMinutes}:${durationSeconds.toString().padStart(2, '0')}</small>
                     </div>
                     <div class="text-end">
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
-                                Custom Segment
-                            </button>
-                            ${track.preview_url ? 
-                                `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
-                                    Use Preview
-                                </button>` : 
-                                `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
-                                    No Preview
-                                </button>`
-                            }
-                        </div>
+                        ${isMobile ? `
+                            <div class="btn-group-mobile">
+                                <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
+                                    <i class="bi bi-scissors me-1"></i>Custom Segment
+                                </button>
+                                ${track.preview_url ? 
+                                    `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
+                                        <i class="bi bi-play-circle me-1"></i>Use Preview
+                                    </button>` : 
+                                    `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
+                                        <i class="bi bi-x-circle me-1"></i>No Preview
+                                    </button>`
+                                }
+                            </div>
+                        ` : `
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
+                                    Custom Segment
+                                </button>
+                                ${track.preview_url ? 
+                                    `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
+                                        Use Preview
+                                    </button>` : 
+                                    `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
+                                        No Preview
+                                    </button>`
+                                }
+                            </div>
+                        `}
                     </div>
                 </div>
             </div>
         `;
     }).join('');
 
-    searchResults.innerHTML = `<div class="search-results">${resultsHtml}</div>`;
+    // Wrap results in collapsible container for mobile
+    const searchResultsContainer = isMobile ? `
+        <div class="search-results-container">
+            <div class="search-results-header" onclick="toggleSearchResults()">
+                <span><i class="bi bi-music-note me-2"></i>Search Results (${tracks.length})</span>
+                <i class="bi bi-chevron-down collapse-icon"></i>
+            </div>
+            <div class="search-results-content" id="search-results-content">
+                <div class="search-results">${resultsHtml}</div>
+            </div>
+        </div>
+    ` : `<div class="search-results">${resultsHtml}</div>`;
+
+    searchResults.innerHTML = searchResultsContainer;
 
     // Add click handlers for track selection
     searchResults.querySelectorAll('.select-track').forEach(button => {
         button.addEventListener('click', (event) => {
+            event.stopPropagation();
             const trackId = event.target.dataset.trackId;
             const track = tracks.find(t => t.id === trackId);
             if (track) {
                 selectTrack(track);
+                if (isMobile) {
+                    scrollToSegmentation();
+                }
             }
         });
     });
@@ -592,26 +775,35 @@ function displaySearchResults(tracks) {
     // Add click handlers for preview selection
     searchResults.querySelectorAll('.use-preview').forEach(button => {
         button.addEventListener('click', (event) => {
+            event.stopPropagation();
             const trackId = event.target.dataset.trackId;
             const track = tracks.find(t => t.id === trackId);
             if (track) {
                 selectTrackWithPreview(track);
+                if (isMobile) {
+                    scrollToSegmentation();
+                }
             }
         });
     });
 
-    // Add click handlers for result items
-    searchResults.querySelectorAll('.search-result-item').forEach(item => {
-        item.addEventListener('click', (event) => {
-            if (event.target.classList.contains('select-track')) return;
+    // Add click handlers for result items (desktop only)
+    if (!isMobile) {
+        searchResults.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', (event) => {
+                if (event.target.classList.contains('select-track') || event.target.classList.contains('use-preview')) return;
 
-            const trackId = item.dataset.trackId;
-            const track = tracks.find(t => t.id === trackId);
-            if (track) {
-                selectTrack(track);
-            }
+                const trackId = item.dataset.trackId;
+                const track = tracks.find(t => t.id === trackId);
+                if (track) {
+                    selectTrack(track);
+                }
+            });
         });
-    });
+    }
+
+    // Store tracks for swipe gesture handling
+    window.currentSearchTracks = tracks;
 }
 
 /**
@@ -753,10 +945,143 @@ function showSegmentationInterface() {
     const artistNames = currentTrack.artists.map(artist => artist.name).join(', ');
     const totalDurationSeconds = Math.floor(currentTrack.duration_ms / 1000);
     const albumArt = currentTrack.album.images.length > 0 ? currentTrack.album.images[0].url : '';
+    const isMobile = window.innerWidth <= 767;
 
-    segmentationInterface.innerHTML = `
+    // Create mobile-optimized layout
+    const mobileLayout = isMobile ? `
+        <div class="mobile-layout">
+            <!-- Sticky Controls for Mobile -->
+            <div class="sticky-controls d-md-none">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="segment-info-compact">
+                        <small class="text-muted">Segment: </small>
+                        <span class="fw-bold" id="mobile-segment-display">${formatTime(currentSegment.startTime)} - ${formatTime(currentSegment.endTime)}</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" id="mobile-preview">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Track Info - Mobile Section -->
+            <div class="mobile-section">
+                <div class="mobile-section-header">
+                    <i class="bi bi-music-note me-2"></i>Selected Track
+                </div>
+                <div class="mobile-section-content">
+                    <div class="d-flex align-items-center">
+                        ${albumArt ? `<img src="${albumArt}" alt="Album art" class="album-art me-3" style="width: 80px; height: 80px;">` :
+                    '<div class="album-art me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="bi bi-music-note text-white"></i></div>'}
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">${escapeHtml(currentTrack.name)}</h5>
+                            <p class="text-muted mb-1">${escapeHtml(artistNames)}</p>
+                            <small class="track-duration">Duration: ${formatTime(totalDurationSeconds)}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Timeline - Mobile Section -->
+            <div class="mobile-section">
+                <div class="mobile-section-header">
+                    <i class="bi bi-sliders me-2"></i>Timeline
+                </div>
+                <div class="mobile-section-content">
+                    <div class="timeline-container" id="timeline-container">
+                        <div class="timeline-track"></div>
+                        <div class="timeline-segment" id="timeline-segment"></div>
+                        <div class="timeline-handle start" id="start-handle" tabindex="0" role="slider" 
+                             aria-label="Start time" aria-valuemin="0" aria-valuemax="${totalDurationSeconds}" 
+                             aria-valuenow="${currentSegment.startTime}"></div>
+                        <div class="timeline-handle end" id="end-handle" tabindex="0" role="slider" 
+                             aria-label="End time" aria-valuemin="0" aria-valuemax="${totalDurationSeconds}" 
+                             aria-valuenow="${currentSegment.endTime}"></div>
+                    </div>
+                    <div class="timeline-time-labels">
+                        <span>0:00</span>
+                        <span>${formatTime(totalDurationSeconds)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Controls - Mobile Section -->
+            <div class="mobile-section">
+                <div class="mobile-section-header">
+                    <i class="bi bi-gear me-2"></i>Segment Controls
+                </div>
+                <div class="mobile-section-content">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="start-time-input" class="form-label">Start Time</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control time-input" id="start-time-input" 
+                                       min="0" max="${totalDurationSeconds}" step="1" value="${currentSegment.startTime}">
+                                <span class="input-group-text">sec</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label for="end-time-input" class="form-label">End Time</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control time-input" id="end-time-input" 
+                                       min="0" max="${totalDurationSeconds}" step="1" value="${currentSegment.endTime}">
+                                <span class="input-group-text">sec</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary w-100" id="use-spotify-preview" ${!currentTrack.preview_url ? 'disabled' : ''}>
+                            <i class="bi bi-magic me-2"></i>Use Spotify Preview (30s)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Status - Mobile Section -->
+            <div class="mobile-section">
+                <div class="mobile-section-header">
+                    <i class="bi bi-speaker me-2"></i>Playback Device
+                </div>
+                <div class="mobile-section-content">
+                    <div class="device-status" id="device-status">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                            <small class="text-muted">Checking Spotify devices...</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Playback Controls - Mobile Section -->
+            <div class="mobile-section">
+                <div class="mobile-section-header">
+                    <i class="bi bi-play-circle me-2"></i>Preview Controls
+                </div>
+                <div class="mobile-section-content">
+                    <div class="d-grid gap-2">
+                        <button class="btn play-button" id="preview-segment">
+                            <i class="bi bi-play-fill me-2"></i>Preview Segment
+                        </button>
+                        <button class="btn btn-outline-secondary" id="play-full-song">
+                            <i class="bi bi-play-circle me-2"></i>Play Full Song
+                        </button>
+                        <button class="btn btn-outline-secondary" id="pause-playback" style="display: none;">
+                            <i class="bi bi-pause-fill me-2"></i>Pause
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Save Button for Mobile -->
+            <button class="floating-save-button btn btn-spotify d-md-none" id="floating-save">
+                <i class="bi bi-check-circle me-2"></i>Save Walk-up Music
+            </button>
+        </div>
+    ` : '';
+
+    // Desktop layout (existing)
+    const desktopLayout = `
         <!-- Current Track Info -->
-        <div class="current-track-info">
+        <div class="current-track-info d-none d-md-block">
             <div class="d-flex align-items-center mb-3">
                 ${albumArt ? `<img src="${albumArt}" alt="Album art" class="album-art me-3" style="width: 60px; height: 60px;">` :
             '<div class="album-art me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;"><i class="bi bi-music-note text-white"></i></div>'}
@@ -769,7 +1094,7 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Audio Timeline -->
-        <div class="audio-timeline">
+        <div class="audio-timeline d-none d-md-block">
             <h6 class="mb-3">Audio Timeline</h6>
             <div class="timeline-container" id="timeline-container">
                 <div class="timeline-track"></div>
@@ -788,7 +1113,7 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Segment Controls -->
-        <div class="segment-controls">
+        <div class="segment-controls d-none d-md-block">
             <h6 class="mb-3">Segment Controls</h6>
             <div class="row">
                 <div class="col-md-6">
@@ -824,7 +1149,7 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Segment Info -->
-        <div class="segment-info">
+        <div class="segment-info d-none d-md-block">
             <h6><i class="bi bi-scissors me-2"></i>Selected Segment</h6>
             <div class="row">
                 <div class="col-md-4">
@@ -840,7 +1165,7 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Device Status -->
-        <div class="device-status mb-3" id="device-status">
+        <div class="device-status mb-3 d-none d-md-block" id="device-status">
             <div class="d-flex align-items-center">
                 <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
                 <small class="text-muted">Checking Spotify devices...</small>
@@ -848,7 +1173,7 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Playback Controls -->
-        <div class="playback-controls">
+        <div class="playback-controls d-none d-md-block">
             <button class="btn play-button" id="preview-segment">
                 <i class="bi bi-play-fill me-2"></i>Preview Segment
             </button>
@@ -861,12 +1186,14 @@ function showSegmentationInterface() {
         </div>
         
         <!-- Save Controls -->
-        <div class="text-center mt-4">
+        <div class="text-center mt-4 d-none d-md-block">
             <button class="btn btn-spotify btn-lg" id="save-segment">
                 <i class="bi bi-check-circle me-2"></i>Save Walk-up Music
             </button>
         </div>
     `;
+
+    segmentationInterface.innerHTML = isMobile ? mobileLayout : desktopLayout;
 
     // Set up segmentation event listeners
     setupSegmentationEventListeners();
@@ -927,16 +1254,37 @@ function setupSegmentationEventListeners() {
         pauseButton.addEventListener('click', handlePausePlayback);
     }
 
-    // Save button
+    // Save button (desktop)
     const saveButton = document.getElementById('save-segment');
     if (saveButton) {
         saveButton.addEventListener('click', handleSaveSegment);
+    }
+
+    // Floating save button (mobile)
+    const floatingSaveButton = document.getElementById('floating-save');
+    if (floatingSaveButton) {
+        floatingSaveButton.addEventListener('click', handleSaveSegment);
+    }
+
+    // Mobile preview button (sticky controls)
+    const mobilePreviewButton = document.getElementById('mobile-preview');
+    if (mobilePreviewButton) {
+        mobilePreviewButton.addEventListener('click', handlePreviewSegment);
     }
 
     // Use Spotify preview button
     const usePreviewButton = document.getElementById('use-spotify-preview');
     if (usePreviewButton) {
         usePreviewButton.addEventListener('click', handleUseSpotifyPreview);
+    }
+
+    // Add touch event listeners for timeline handles on mobile
+    if (startHandle && window.innerWidth <= 767) {
+        startHandle.addEventListener('touchstart', (e) => startTouchDrag(e, 'start'), { passive: false });
+    }
+
+    if (endHandle && window.innerWidth <= 767) {
+        endHandle.addEventListener('touchstart', (e) => startTouchDrag(e, 'end'), { passive: false });
     }
 
     // Global mouse events for dragging
@@ -1007,6 +1355,69 @@ function handleMouseUp() {
 
     // Restore text selection
     document.body.style.userSelect = '';
+}
+
+/**
+ * Start touch dragging a timeline handle
+ * @param {TouchEvent} event - Touch event
+ * @param {string} type - Handle type ('start' or 'end')
+ */
+function startTouchDrag(event, type) {
+    event.preventDefault();
+    isDragging = true;
+    dragType = type;
+
+    const handle = event.target;
+    handle.classList.add('dragging');
+
+    // Add touch move and end listeners
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchUp, { passive: false });
+}
+
+/**
+ * Handle touch move during drag
+ * @param {TouchEvent} event - Touch event
+ */
+function handleTouchMove(event) {
+    if (!isDragging || !currentTrack) return;
+
+    event.preventDefault();
+    const touch = event.touches[0];
+    const timelineContainer = document.getElementById('timeline-container');
+    
+    if (!timelineContainer) return;
+
+    const rect = timelineContainer.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const totalDurationSeconds = Math.floor(currentTrack.duration_ms / 1000);
+    const newTime = Math.floor(percentage * totalDurationSeconds);
+
+    if (dragType === 'start') {
+        updateStartTime(Math.min(newTime, currentSegment.endTime - 1));
+    } else if (dragType === 'end') {
+        updateEndTime(Math.max(newTime, currentSegment.startTime + 1));
+    }
+}
+
+/**
+ * Handle touch up (end touch drag)
+ */
+function handleTouchUp() {
+    if (!isDragging) return;
+
+    isDragging = false;
+    dragType = null;
+
+    // Remove dragging class from all handles
+    document.querySelectorAll('.timeline-handle').forEach(handle => {
+        handle.classList.remove('dragging');
+    });
+
+    // Remove touch event listeners
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchUp);
 }
 
 /**
@@ -1120,7 +1531,7 @@ function updateSegmentDisplay() {
     if (startInput) startInput.value = currentSegment.startTime;
     if (endInput) endInput.value = currentSegment.endTime;
 
-    // Update display values
+    // Update display values (desktop)
     const startDisplay = document.getElementById('segment-start-display');
     const endDisplay = document.getElementById('segment-end-display');
     const durationDisplay = document.getElementById('segment-duration-display');
@@ -1129,12 +1540,27 @@ function updateSegmentDisplay() {
     if (endDisplay) endDisplay.textContent = formatTime(currentSegment.endTime);
     if (durationDisplay) durationDisplay.textContent = formatTime(currentSegment.duration);
 
+    // Update mobile segment display (sticky controls)
+    const mobileSegmentDisplay = document.getElementById('mobile-segment-display');
+    if (mobileSegmentDisplay) {
+        mobileSegmentDisplay.textContent = `${formatTime(currentSegment.startTime)} - ${formatTime(currentSegment.endTime)}`;
+    }
+
     // Update ARIA values
     const startHandle = document.getElementById('start-handle');
     const endHandle = document.getElementById('end-handle');
 
     if (startHandle) startHandle.setAttribute('aria-valuenow', currentSegment.startTime);
     if (endHandle) endHandle.setAttribute('aria-valuenow', currentSegment.endTime);
+
+    // Add visual feedback for segment updates
+    const segmentInfo = document.querySelector('.segment-info, .mobile-segment-display');
+    if (segmentInfo) {
+        segmentInfo.classList.add('segment-update');
+        setTimeout(() => {
+            segmentInfo.classList.remove('segment-update');
+        }, 300);
+    }
 }
 
 /**
@@ -1544,6 +1970,96 @@ function handleBackToPlayers() {
     const playersNavLink = document.querySelector('[data-view="players"]');
     if (playersNavLink) {
         playersNavLink.click();
+    }
+}
+
+/**
+ * Toggle search results visibility (mobile)
+ */
+window.toggleSearchResults = function() {
+    const header = document.querySelector('.search-results-header');
+    const content = document.getElementById('search-results-content');
+    
+    if (header && content) {
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            content.classList.remove('collapsed');
+            header.classList.remove('collapsed');
+            content.style.maxHeight = content.scrollHeight + 'px';
+        } else {
+            content.classList.add('collapsed');
+            header.classList.add('collapsed');
+            content.style.maxHeight = '0px';
+        }
+    }
+};
+
+/**
+ * Update search results layout based on screen size
+ */
+function updateSearchResultsLayout() {
+    const isMobile = window.innerWidth <= 767;
+    const searchResultsContent = document.getElementById('search-results-content');
+    
+    if (searchResultsContent) {
+        if (isMobile) {
+            // Ensure mobile layout is applied
+            const header = document.querySelector('.search-results-header');
+            if (header) {
+                header.style.display = 'flex';
+            }
+        } else {
+            // Ensure desktop layout is applied
+            const header = document.querySelector('.search-results-header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            searchResultsContent.classList.remove('collapsed');
+            searchResultsContent.style.maxHeight = 'none';
+        }
+    }
+}
+
+/**
+ * Handle swipe gesture for preview selection
+ */
+function handleSwipePreview(trackId) {
+    const tracks = window.currentSearchTracks || [];
+    const track = tracks.find(t => t.id === trackId);
+    if (track && track.preview_url) {
+        selectTrackWithPreview(track);
+        scrollToSegmentation();
+        showNotification('Swipe right: Using preview segment', 'info');
+    } else {
+        showNotification('No preview available for this track', 'warning');
+    }
+}
+
+/**
+ * Handle swipe gesture for custom segment selection
+ */
+function handleSwipeCustom(trackId) {
+    const tracks = window.currentSearchTracks || [];
+    const track = tracks.find(t => t.id === trackId);
+    if (track) {
+        selectTrack(track);
+        scrollToSegmentation();
+        showNotification('Swipe left: Creating custom segment', 'info');
+    }
+}
+
+/**
+ * Scroll to segmentation interface smoothly
+ */
+function scrollToSegmentation() {
+    const segmentationInterface = document.getElementById('segmentation-interface');
+    if (segmentationInterface) {
+        segmentationInterface.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+        });
     }
 }
 

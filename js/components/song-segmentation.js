@@ -83,7 +83,7 @@ function initializeMobileUX() {
  */
 function handleWindowResize() {
     const isMobile = window.innerWidth <= 767;
-    
+
     if (isMobile) {
         document.body.classList.add('touch-friendly', 'mobile-layout');
     } else {
@@ -129,13 +129,13 @@ function handleTouchMove(event) {
         const touch = event.touches[0];
         const deltaX = touch.clientX - window.touchStartX;
         const deltaY = touch.clientY - window.touchStartY;
-        
+
         // Check if this is a horizontal swipe
         if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
             const target = event.target.closest('.swipeable');
             if (target) {
                 target.classList.add('swiping');
-                
+
                 // Show appropriate swipe indicator
                 if (deltaX > 0) {
                     target.classList.add('swipe-right');
@@ -156,12 +156,12 @@ function handleTouchEnd(event) {
     if (window.touchStartX !== undefined) {
         const touchEndTime = Date.now();
         const touchDuration = touchEndTime - window.touchStartTime;
-        
+
         // Handle swipe completion
         const target = event.target.closest('.swipeable');
         if (target && target.classList.contains('swiping')) {
             const deltaX = event.changedTouches[0].clientX - window.touchStartX;
-            
+
             // Trigger action based on swipe direction
             if (Math.abs(deltaX) > 100 && touchDuration < 500) {
                 const trackId = target.dataset.trackId;
@@ -175,11 +175,11 @@ function handleTouchEnd(event) {
                     }
                 }
             }
-            
+
             // Clean up swipe classes
             target.classList.remove('swiping', 'swipe-left', 'swipe-right');
         }
-        
+
         // Reset touch tracking
         window.touchStartX = undefined;
         window.touchStartY = undefined;
@@ -420,7 +420,7 @@ async function startSegmentMonitoring() {
     previewMonitorInterval = setInterval(async () => {
         try {
             const playbackState = await getCurrentPlaybackState();
-            
+
             if (!playbackState || !playbackState.is_playing) {
                 // Playback stopped, clear monitoring
                 stopSegmentMonitoring();
@@ -682,7 +682,7 @@ function displaySearchResults(tracks) {
     }
 
     const isMobile = window.innerWidth <= 767;
-    
+
     const resultsHtml = tracks.map(track => {
         const albumArt = track.album.images.length > 0 ? track.album.images[0].url : '';
         const artistNames = track.artists.map(artist => artist.name).join(', ');
@@ -712,28 +712,28 @@ function displaySearchResults(tracks) {
                                 <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
                                     <i class="bi bi-scissors me-1"></i>Custom Segment
                                 </button>
-                                ${track.preview_url ? 
-                                    `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
+                                ${track.preview_url ?
+                    `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
                                         <i class="bi bi-play-circle me-1"></i>Use Preview
-                                    </button>` : 
-                                    `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
+                                    </button>` :
+                    `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
                                         <i class="bi bi-x-circle me-1"></i>No Preview
                                     </button>`
-                                }
+                }
                             </div>
                         ` : `
                             <div class="btn-group" role="group">
                                 <button class="btn btn-sm btn-outline-primary select-track" data-track-id="${track.id}">
                                     Custom Segment
                                 </button>
-                                ${track.preview_url ? 
-                                    `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
+                                ${track.preview_url ?
+                `<button class="btn btn-sm btn-primary use-preview" data-track-id="${track.id}">
                                         Use Preview
-                                    </button>` : 
-                                    `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
+                                    </button>` :
+                `<button class="btn btn-sm btn-secondary" disabled title="No preview available">
                                         No Preview
                                     </button>`
-                                }
+            }
                             </div>
                         `}
                     </div>
@@ -887,13 +887,13 @@ async function loadTrackForSegmentation(trackId, existingSelection = null, track
             const totalDurationSeconds = Math.floor(trackData.duration_ms / 1000);
             const previewStart = Math.floor(totalDurationSeconds * 0.4); // Start at 40% of the song
             const previewEnd = Math.min(previewStart + 30, totalDurationSeconds); // 30 seconds or until end
-            
+
             currentSegment = {
                 startTime: previewStart,
                 endTime: previewEnd,
                 duration: previewEnd - previewStart
             };
-            
+
             showNotification('Using Spotify preview segment (30 seconds)', 'success');
         } else {
             // Default to first 30 seconds
@@ -971,7 +971,7 @@ function showSegmentationInterface() {
                 <div class="mobile-section-content">
                     <div class="d-flex align-items-center">
                         ${albumArt ? `<img src="${albumArt}" alt="Album art" class="album-art me-3" style="width: 80px; height: 80px;">` :
-                    '<div class="album-art me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="bi bi-music-note text-white"></i></div>'}
+            '<div class="album-art me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="bi bi-music-note text-white"></i></div>'}
                         <div class="flex-grow-1">
                             <h5 class="mb-1">${escapeHtml(currentTrack.name)}</h5>
                             <p class="text-muted mb-1">${escapeHtml(artistNames)}</p>
@@ -1139,10 +1139,10 @@ function showSegmentationInterface() {
                         <i class="bi bi-magic me-2"></i>Use Spotify Preview Segment
                     </button>
                     <small class="form-text text-muted ms-2">
-                        ${currentTrack.preview_url ? 
-                            'Automatically selects a 30-second preview segment' : 
-                            'No preview available for this track'
-                        }
+                        ${currentTrack.preview_url ?
+            'Automatically selects a 30-second preview segment' :
+            'No preview available for this track'
+        }
                     </small>
                 </div>
             </div>
@@ -1371,21 +1371,21 @@ function startTouchDrag(event, type) {
     handle.classList.add('dragging');
 
     // Add touch move and end listeners
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchmove', handleTimelineTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchUp, { passive: false });
 }
 
 /**
- * Handle touch move during drag
+ * Handle touch move during timeline drag
  * @param {TouchEvent} event - Touch event
  */
-function handleTouchMove(event) {
+function handleTimelineTouchMove(event) {
     if (!isDragging || !currentTrack) return;
 
     event.preventDefault();
     const touch = event.touches[0];
     const timelineContainer = document.getElementById('timeline-container');
-    
+
     if (!timelineContainer) return;
 
     const rect = timelineContainer.getBoundingClientRect();
@@ -1416,7 +1416,7 @@ function handleTouchUp() {
     });
 
     // Remove touch event listeners
-    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchmove', handleTimelineTouchMove);
     document.removeEventListener('touchend', handleTouchUp);
 }
 
@@ -1647,10 +1647,10 @@ export async function checkDeviceStatus() {
                 const isSelected = selectedDeviceId === device.id;
                 const activeLabel = device.is_active ? ' (Active)' : '';
                 const deviceIcon = getDeviceIcon(device.type);
-                
-                const activationTip = !device.is_active ? 
+
+                const activationTip = !device.is_active ?
                     '<small class="text-warning d-block"><i class="bi bi-info-circle me-1"></i>May need activation</small>' : '';
-                
+
                 return `
                     <div class="form-check">
                         <input class="form-check-input device-radio" type="radio" name="spotify-device" 
@@ -1738,7 +1738,7 @@ export async function checkDeviceStatus() {
  */
 function getDeviceIcon(deviceType) {
     const type = deviceType.toLowerCase();
-    
+
     if (type.includes('computer')) return 'bi-laptop';
     if (type.includes('smartphone') || type.includes('phone')) return 'bi-phone';
     if (type.includes('speaker')) return 'bi-speaker';
@@ -1746,7 +1746,7 @@ function getDeviceIcon(deviceType) {
     if (type.includes('tablet')) return 'bi-tablet';
     if (type.includes('car')) return 'bi-car-front';
     if (type.includes('game')) return 'bi-controller';
-    
+
     return 'bi-speaker'; // Default icon
 }
 
@@ -1757,7 +1757,7 @@ function getDeviceIcon(deviceType) {
 function handleDeviceSelection(event) {
     selectedDeviceId = event.target.value;
     console.log('Selected device:', selectedDeviceId);
-    
+
     // Show feedback to user with activation tip
     const selectedDevice = event.target.closest('.form-check').querySelector('label .fw-medium').textContent;
     showNotification(`Selected device: ${selectedDevice}. If playback fails, open Spotify on this device and play any song briefly to activate it.`, 'info');
@@ -1883,7 +1883,7 @@ function togglePlaybackButtons(isPlaying) {
  */
 function handleUseSpotifyPreview() {
     const result = useSpotifyPreview();
-    
+
     if (result.success) {
         // Button feedback is handled by the useSpotifyPreview function
     } else {
@@ -1965,7 +1965,7 @@ function validateSegmentForSaving() {
 function handleBackToPlayers() {
     // Stop any active monitoring
     stopSegmentMonitoring();
-    
+
     // Navigate to players view
     const playersNavLink = document.querySelector('[data-view="players"]');
     if (playersNavLink) {
@@ -1976,13 +1976,13 @@ function handleBackToPlayers() {
 /**
  * Toggle search results visibility (mobile)
  */
-window.toggleSearchResults = function() {
+window.toggleSearchResults = function () {
     const header = document.querySelector('.search-results-header');
     const content = document.getElementById('search-results-content');
-    
+
     if (header && content) {
         const isCollapsed = content.classList.contains('collapsed');
-        
+
         if (isCollapsed) {
             content.classList.remove('collapsed');
             header.classList.remove('collapsed');
@@ -2001,7 +2001,7 @@ window.toggleSearchResults = function() {
 function updateSearchResultsLayout() {
     const isMobile = window.innerWidth <= 767;
     const searchResultsContent = document.getElementById('search-results-content');
-    
+
     if (searchResultsContent) {
         if (isMobile) {
             // Ensure mobile layout is applied
@@ -2055,8 +2055,8 @@ function handleSwipeCustom(trackId) {
 function scrollToSegmentation() {
     const segmentationInterface = document.getElementById('segmentation-interface');
     if (segmentationInterface) {
-        segmentationInterface.scrollIntoView({ 
-            behavior: 'smooth', 
+        segmentationInterface.scrollIntoView({
+            behavior: 'smooth',
             block: 'start',
             inline: 'nearest'
         });

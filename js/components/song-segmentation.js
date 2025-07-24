@@ -1802,25 +1802,6 @@ export async function checkDeviceStatus() {
 }
 
 /**
- * Get appropriate icon for device type
- * @param {string} deviceType - The device type from Spotify API
- * @returns {string} Bootstrap icon class
- */
-function getDeviceIcon(deviceType) {
-    const type = deviceType.toLowerCase();
-
-    if (type.includes('computer')) return 'bi-laptop';
-    if (type.includes('smartphone') || type.includes('phone')) return 'bi-phone';
-    if (type.includes('speaker')) return 'bi-speaker';
-    if (type.includes('tv')) return 'bi-tv';
-    if (type.includes('tablet')) return 'bi-tablet';
-    if (type.includes('car')) return 'bi-car-front';
-    if (type.includes('game')) return 'bi-controller';
-
-    return 'bi-speaker'; // Default icon
-}
-
-/**
  * Handle device selection change
  * @param {Event} event - Change event from device radio button
  */

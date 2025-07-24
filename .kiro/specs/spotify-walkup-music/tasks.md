@@ -248,6 +248,16 @@
     - Fix: Either restore the removed UI tests or create equivalent tests that cover the same functionality
     - _Requirements: 2.6_
 
+  - [ ] 11.3 Fix player list not displaying after re-authentication
+    - Issue: When user re-authenticates after already having added players, the player list appears empty until page refresh
+    - Root cause: Player management component may not be properly reloading/refreshing player data after authentication state changes
+    - The authentication flow should trigger a refresh of the player list UI to display existing players
+    - Players are stored in localStorage/cookies and should persist across authentication sessions
+    - Fix: Ensure player management component reloads and displays existing players when authentication completes
+    - Add proper event handling for authentication state changes to refresh UI components
+    - Test that existing players remain visible after re-authentication without requiring page refresh
+    - _Requirements: 1.3, 2.1, 2.2, 2.6_
+
   - [ ] 11.3 Add integration tests for UI components
     - File: tests/js/components/player-management.test.js
     - The current tests only cover service layer functionality but don't test the actual UI component integration

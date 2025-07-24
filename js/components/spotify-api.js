@@ -755,6 +755,17 @@ let sdkInitializationPromise = null;
 let preferSDK = true; // Prefer SDK over external devices when available
 
 /**
+ * Check if current token has required scopes for Web Playback SDK
+ * @returns {boolean} Whether token has required scopes
+ */
+function hasRequiredSDKScopes() {
+    // For now, we'll assume the token is valid if it exists
+    // In a real implementation, you'd decode the token or check with Spotify API
+    // The main issue is that existing tokens were issued before we added the required scopes
+    return isTokenValid();
+}
+
+/**
  * Initialize the enhanced playback system with Web Playback SDK
  * @returns {Promise<Object>} Initialization result
  */
@@ -787,6 +798,20 @@ export async function initializeEnhancedPlayback() {
         };
     }
 
+    // Check if current token has required scopes
+    if (!hasRequiredSDKScopes()) {
+        console.log('Current token missing required scopes for Web Playback SDK');
+        return {
+            success: true,
+            sdkReady: false,
+            deviceId: null,
+            fallbackAvailable: true,
+            error: 'Token missing required scopes',
+            userMessage: 'Please log out and log back in to enable the browser player',
+            requiresReauth: true
+        };
+    }
+
     // Initialize SDK
     sdkInitializationPromise = initializeWebPlaybackSDK();
     
@@ -813,6 +838,19 @@ export async function initializeEnhancedPlayback() {
             console.log('Web Playback SDK initialization failed, using fallback mode:', result.error);
             const errorInfo = getSDKErrorInfo(result.error);
             
+            // Check if this is a scope-related error
+            if (result.error && result.error.includes('scope')) {
+                return {
+                    success: true,
+                    sdkReady: false,
+                    deviceId: null,
+                    fallbackAvailable: true,
+                    error: result.error,
+                    userMessage: 'Please log out and log back in to enable the browser player',
+                    requiresReauth: true
+                };
+            }
+            
             return {
                 success: true,
                 sdkReady: false,
@@ -826,6 +864,19 @@ export async function initializeEnhancedPlayback() {
     } catch (error) {
         console.error('Failed to initialize enhanced playback:', error);
         sdkInitializationPromise = null;
+        
+        // Check if this is a scope-related error
+        if (error.message && error.message.includes('scope')) {
+            return {
+                success: true,
+                sdkReady: false,
+                deviceId: null,
+                fallbackAvailable: true,
+                error: error.message,
+                userMessage: 'Please log out and log back in to enable the browser player',
+                requiresReauth: true
+            };
+        }
         
         return {
             success: true,

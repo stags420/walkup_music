@@ -85,7 +85,12 @@ async function initializeEnhancedPlaybackSystem() {
             } else {
                 console.log('Using fallback mode:', result.message || result.userMessage);
                 
-                if (result.requiresPremium) {
+                if (result.requiresReauth) {
+                    showPlaybackStatusNotification(
+                        result.userMessage + ' <button class="btn btn-sm btn-outline-light ms-2" onclick="handleReauthForSDK()">Re-authenticate</button>', 
+                        'warning'
+                    );
+                } else if (result.requiresPremium) {
                     showPlaybackStatusNotification(
                         'Spotify Premium required for browser player. External devices still available.', 
                         'warning'
@@ -2458,6 +2463,25 @@ function hideDeviceSelection() {
     }
 }
 
+/**
+ * Handle re-authentication for SDK scopes
+ */
+async function handleReauthForSDK() {
+    try {
+        // Import logout function
+        const { logout } = await import('./auth.js');
+        
+        // Show confirmation
+        if (confirm('This will log you out and redirect to Spotify for re-authentication with browser player permissions. Continue?')) {
+            logout();
+        }
+    } catch (error) {
+        console.error('Failed to handle re-authentication:', error);
+        alert('Failed to initiate re-authentication. Please try refreshing the page.');
+    }
+}
+
 // Make functions available globally for onclick handlers
 window.showDeviceSelection = showDeviceSelection;
 window.hideDeviceSelection = hideDeviceSelection;
+window.handleReauthForSDK = handleReauthForSDK;

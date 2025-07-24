@@ -120,6 +120,13 @@ function waitForSpotifyObject() {
             reject(new Error('Spotify SDK failed to load within timeout period'));
         }, 10000); // 10 second timeout
 
+        // Define the global callback that Spotify SDK expects
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            clearTimeout(timeout);
+            resolve();
+        };
+
+        // Fallback check in case the callback doesn't fire
         const checkSpotify = () => {
             if (window.Spotify) {
                 clearTimeout(timeout);
@@ -129,7 +136,14 @@ function waitForSpotifyObject() {
             }
         };
 
-        checkSpotify();
+        // Start checking immediately in case SDK is already loaded
+        if (window.Spotify) {
+            clearTimeout(timeout);
+            resolve();
+        } else {
+            // Start fallback checking after a short delay
+            setTimeout(checkSpotify, 1000);
+        }
     });
 }
 

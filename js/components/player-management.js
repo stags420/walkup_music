@@ -34,6 +34,9 @@ export function initPlayerManagement() {
   // Set up event listeners
   setupEventListeners();
   
+  // Set up authentication event listeners
+  setupAuthEventListeners();
+  
   // Load and display players
   loadPlayers();
 }
@@ -123,6 +126,20 @@ function setupEventListeners() {
   if (confirmDeleteButton) {
     confirmDeleteButton.addEventListener('click', handleConfirmDeletePlayer);
   }
+}
+
+/**
+ * Set up authentication event listeners
+ */
+function setupAuthEventListeners() {
+  // Listen for authentication state changes
+  document.addEventListener('authStateChanged', handleAuthStateChange);
+  document.addEventListener('authSuccess', handleAuthSuccess);
+  document.addEventListener('authRefreshed', handleAuthRefresh);
+  document.addEventListener('authLogout', handleAuthLogout);
+  
+  // Listen for navigation events
+  document.addEventListener('navigatedToApp', handleNavigatedToApp);
 }
 
 /**
@@ -392,6 +409,86 @@ function openSongSelectionForPlayer(player) {
     console.error('Failed to load song segmentation component:', error);
     showNotification('Failed to open song selection. Please try again.', 'danger');
   });
+}
+
+/**
+ * Handle authentication state changes
+ * @param {CustomEvent} event - The authentication state change event
+ */
+function handleAuthStateChange(event) {
+  const { isAuthenticated } = event.detail;
+  console.log('Player management: Authentication state changed:', isAuthenticated);
+  
+  if (isAuthenticated) {
+    // User is authenticated, refresh the player list
+    refreshPlayerList();
+  }
+}
+
+/**
+ * Handle successful authentication
+ * @param {CustomEvent} event - The authentication success event
+ */
+function handleAuthSuccess(event) {
+  console.log('Player management: Authentication successful, refreshing player list');
+  // Refresh the player list after successful authentication
+  refreshPlayerList();
+}
+
+/**
+ * Handle authentication token refresh
+ * @param {CustomEvent} event - The authentication refresh event
+ */
+function handleAuthRefresh(event) {
+  console.log('Player management: Authentication refreshed, ensuring player list is current');
+  // Refresh the player list after token refresh
+  refreshPlayerList();
+}
+
+/**
+ * Handle user logout
+ * @param {CustomEvent} event - The logout event
+ */
+function handleAuthLogout(event) {
+  console.log('Player management: User logged out, clearing player list');
+  // Clear the player list when user logs out
+  if (playersList) {
+    playersList.innerHTML = '';
+  }
+  if (playerCountBadge) {
+    playerCountBadge.textContent = '0';
+  }
+}
+
+/**
+ * Handle navigation to app (authenticated state)
+ * @param {CustomEvent} event - The navigation event
+ */
+function handleNavigatedToApp(event) {
+  console.log('Player management: Navigated to app, refreshing player list');
+  // Refresh the player list when navigating to the app
+  refreshPlayerList();
+}
+
+/**
+ * Refresh the player list (wrapper around loadPlayers with additional logging)
+ */
+function refreshPlayerList() {
+  console.log('Player management: Refreshing player list...');
+  
+  // Add a small delay to ensure DOM elements are available
+  setTimeout(() => {
+    // Re-get DOM elements in case they were recreated
+    playerNameInput = document.getElementById('player-name');
+    addPlayerForm = document.getElementById('add-player-form');
+    playersList = document.getElementById('players-list');
+    playerCountBadge = document.getElementById('player-count');
+    
+    // Load and display players
+    loadPlayers();
+    
+    console.log('Player management: Player list refreshed');
+  }, 100);
 }
 
 /**

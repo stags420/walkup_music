@@ -85,6 +85,9 @@ export function navigateBasedOnAuth(isAuthenticated) {
         
         // Switch to players view
         switchView('players');
+        
+        // Dispatch navigation event for authenticated state
+        dispatchNavigationEvent('navigatedToApp', { isAuthenticated: true });
     } else {
         // Show auth navigation items and hide app items
         authOnlyItems.forEach(item => item.style.display = 'block');
@@ -92,7 +95,21 @@ export function navigateBasedOnAuth(isAuthenticated) {
         
         // Switch to auth view
         switchView('auth');
+        
+        // Dispatch navigation event for unauthenticated state
+        dispatchNavigationEvent('navigatedToAuth', { isAuthenticated: false });
     }
+}
+
+/**
+ * Dispatch navigation-related events
+ * @param {string} eventType - The type of navigation event
+ * @param {Object} detail - Event details
+ */
+function dispatchNavigationEvent(eventType, detail) {
+    const event = new CustomEvent(eventType, { detail });
+    document.dispatchEvent(event);
+    console.log(`Dispatched ${eventType} event:`, detail);
 }
 
 /**

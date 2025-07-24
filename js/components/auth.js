@@ -66,6 +66,8 @@ export function checkAuthentication() {
                 refreshToken().then(success => {
                     if (success) {
                         console.log('Token refreshed successfully');
+                        // Dispatch authentication refresh event
+                        dispatchAuthEvent('authRefreshed', { isAuthenticated: true });
                     } else {
                         console.warn('Token refresh failed');
                     }
@@ -79,6 +81,9 @@ export function checkAuthentication() {
 
     // Navigate based on authentication status
     navigateBasedOnAuth(isAuthenticated);
+
+    // Dispatch authentication state change event
+    dispatchAuthEvent('authStateChanged', { isAuthenticated });
 
     return isAuthenticated;
 }
@@ -410,6 +415,9 @@ export function logout() {
     localStorage.removeItem(TOKEN_EXPIRATION_COOKIE);
     localStorage.removeItem(REFRESH_TOKEN_COOKIE);
 
+    // Dispatch logout event
+    dispatchAuthEvent('authLogout', { isAuthenticated: false });
+
     // Navigate back to the authentication view
     navigateBasedOnAuth(false);
 }
@@ -619,6 +627,10 @@ async function exchangeCodeForToken(code, codeVerifier) {
         }
 
         console.log('Token exchange successful');
+        
+        // Dispatch authentication success event
+        dispatchAuthEvent('authSuccess', { isAuthenticated: true });
+        
         return { success: true };
 
     } catch (error) {
@@ -628,4 +640,15 @@ async function exchangeCodeForToken(code, codeVerifier) {
             error: 'Network error during token exchange'
         };
     }
+}
+
+/**
+ * Dispatch authentication-related events
+ * @param {string} eventType - The type of authentication event
+ * @param {Object} detail - Event details
+ */
+function dispatchAuthEvent(eventType, detail) {
+    const event = new CustomEvent(eventType, { detail });
+    document.dispatchEvent(event);
+    console.log(`Dispatched ${eventType} event:`, detail);
 }

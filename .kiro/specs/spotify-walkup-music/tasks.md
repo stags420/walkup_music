@@ -248,7 +248,7 @@
     - Fix: Either restore the removed UI tests or create equivalent tests that cover the same functionality
     - _Requirements: 2.6_
 
-  - [ ] 11.3 Fix player list not displaying after re-authentication
+  - [x] 11.3 Fix player list not displaying after re-authentication
     - Issue: When user re-authenticates after already having added players, the player list appears empty until page refresh
     - Root cause: Player management component may not be properly reloading/refreshing player data after authentication state changes
     - The authentication flow should trigger a refresh of the player list UI to display existing players

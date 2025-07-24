@@ -27,16 +27,16 @@ export function initPlayerManagement() {
   addPlayerForm = document.getElementById('add-player-form');
   playersList = document.getElementById('players-list');
   playerCountBadge = document.getElementById('player-count');
-  
+
   // Create modals if they don't exist
   createModals();
-  
+
   // Set up event listeners
   setupEventListeners();
-  
+
   // Set up authentication event listeners
   setupAuthEventListeners();
-  
+
   // Load and display players
   loadPlayers();
 }
@@ -73,7 +73,7 @@ function createModals() {
     `;
     document.body.insertAdjacentHTML('beforeend', editModalHtml);
   }
-  
+
   // Create delete confirmation modal if it doesn't exist
   if (!document.getElementById('delete-player-modal')) {
     const deleteModalHtml = `
@@ -98,7 +98,7 @@ function createModals() {
     `;
     document.body.insertAdjacentHTML('beforeend', deleteModalHtml);
   }
-  
+
   // Get modal elements
   editPlayerModal = new bootstrap.Modal(document.getElementById('edit-player-modal'));
   editPlayerForm = document.getElementById('edit-player-form');
@@ -114,13 +114,13 @@ function setupEventListeners() {
   if (addPlayerForm) {
     addPlayerForm.addEventListener('submit', handleAddPlayer);
   }
-  
+
   // Edit player form submission
   const saveEditButton = document.getElementById('save-edit-player');
   if (saveEditButton) {
     saveEditButton.addEventListener('click', handleSaveEditPlayer);
   }
-  
+
   // Delete player confirmation
   const confirmDeleteButton = document.getElementById('confirm-delete-player');
   if (confirmDeleteButton) {
@@ -137,7 +137,7 @@ function setupAuthEventListeners() {
   document.addEventListener('authSuccess', handleAuthSuccess);
   document.addEventListener('authRefreshed', handleAuthRefresh);
   document.addEventListener('authLogout', handleAuthLogout);
-  
+
   // Listen for navigation events
   document.addEventListener('navigatedToApp', handleNavigatedToApp);
 }
@@ -146,22 +146,25 @@ function setupAuthEventListeners() {
  * Load and display players
  */
 function loadPlayers() {
-  if (!playersList) return;
-  
+  if (!playersList) {
+    console.log('Player management: playersList element not found, skipping load');
+    return;
+  }
+
   // Clear the current list
   playersList.innerHTML = '';
-  
+
   // Get players from player management service
   const result = playerManagementService.getPlayers();
-  
+
   if (!result.success) {
     // Display error message
     showNotification(`Failed to load players: ${result.error}`, 'danger');
     return;
   }
-  
+
   const players = result.data;
-  
+
   if (players.length === 0) {
     // Display a message if no players
     playersList.innerHTML = `
@@ -169,18 +172,19 @@ function loadPlayers() {
         No players added yet. Add your first player above.
       </li>
     `;
-    return;
+  } else {
+    // Add each player to the list
+    players.forEach(player => {
+      addPlayerToList(player);
+    });
   }
-  
-  // Add each player to the list
-  players.forEach(player => {
-    addPlayerToList(player);
-  });
-  
+
   // Update player count
   if (playerCountBadge) {
     playerCountBadge.textContent = players.length;
   }
+
+  console.log(`Player management: Loaded ${players.length} players`);
 }
 
 /**
@@ -189,27 +193,27 @@ function loadPlayers() {
  */
 function addPlayerToList(player) {
   if (!playersList) return;
-  
+
   const playerItem = document.createElement('li');
   playerItem.className = 'list-group-item d-flex justify-content-between align-items-center';
   playerItem.dataset.playerId = player.id;
-  
+
   // Get song selection for this player if it exists
   const songSelectionResult = playerManagementService.getPlayerSongSelection(player.id);
   const hasSong = songSelectionResult.success;
   const songSelection = hasSong ? songSelectionResult.data : null;
-  
+
   // Create player item content
   playerItem.innerHTML = `
     <div>
       <h5 class="mb-1">${escapeHtml(player.name)}</h5>
-      ${hasSong ? 
-        `<small class="text-muted">
+      ${hasSong ?
+      `<small class="text-muted">
           <i class="bi bi-music-note-beamed me-1"></i>
           ${escapeHtml(songSelection.trackName)} - ${escapeHtml(songSelection.artistName)}
-        </small>` : 
-        '<small class="text-muted">No song selected</small>'
-      }
+        </small>` :
+      '<small class="text-muted">No song selected</small>'
+    }
     </div>
     <div class="btn-group">
       <button class="btn btn-sm btn-outline-success select-music" title="Select Music">
@@ -223,17 +227,17 @@ function addPlayerToList(player) {
       </button>
     </div>
   `;
-  
+
   // Add event listeners for select music, edit and delete buttons
   const selectMusicButton = playerItem.querySelector('.select-music');
   selectMusicButton.addEventListener('click', () => openSongSelectionForPlayer(player));
-  
+
   const editButton = playerItem.querySelector('.edit-player');
   editButton.addEventListener('click', () => openEditPlayerModal(player));
-  
+
   const deleteButton = playerItem.querySelector('.delete-player');
   deleteButton.addEventListener('click', () => openDeletePlayerModal(player.id));
-  
+
   // Add to the list
   playersList.appendChild(playerItem);
 }
@@ -244,22 +248,22 @@ function addPlayerToList(player) {
  */
 function handleAddPlayer(event) {
   event.preventDefault();
-  
+
   if (!playerNameInput) return;
-  
+
   const playerName = playerNameInput.value.trim();
-  
+
   if (playerName) {
     // Use the player management service to add the player
     const result = playerManagementService.addPlayer(playerName);
-    
+
     if (result.success) {
       // Clear the form
       playerNameInput.value = '';
-      
+
       // Reload the player list
       loadPlayers();
-      
+
       // Show success message
       showNotification('Player added successfully!', 'success');
     } else {
@@ -275,11 +279,11 @@ function handleAddPlayer(event) {
  */
 function openEditPlayerModal(player) {
   if (!editPlayerModal || !editPlayerNameInput) return;
-  
+
   // Set the current player data
   editPlayerId = player.id;
   editPlayerNameInput.value = player.name;
-  
+
   // Show the modal
   editPlayerModal.show();
 }
@@ -289,20 +293,20 @@ function openEditPlayerModal(player) {
  */
 function handleSaveEditPlayer() {
   if (!editPlayerNameInput) return;
-  
+
   const playerName = editPlayerNameInput.value.trim();
-  
+
   if (playerName && editPlayerId) {
     // Use the player management service to update the player
     const result = playerManagementService.updatePlayer(editPlayerId, { name: playerName });
-    
+
     if (result.success) {
       // Hide the modal
       editPlayerModal.hide();
-      
+
       // Reload the player list
       loadPlayers();
-      
+
       // Show success message
       showNotification('Player updated successfully!', 'success');
     } else {
@@ -318,10 +322,10 @@ function handleSaveEditPlayer() {
  */
 function openDeletePlayerModal(playerId) {
   if (!deleteConfirmModal) return;
-  
+
   // Set the player ID to delete
   deletePlayerId = playerId;
-  
+
   // Show the modal
   deleteConfirmModal.show();
 }
@@ -331,24 +335,24 @@ function openDeletePlayerModal(playerId) {
  */
 function handleConfirmDeletePlayer() {
   if (!deletePlayerId) return;
-  
+
   // Use the player management service to delete the player
   const result = playerManagementService.deletePlayer(deletePlayerId);
-  
+
   if (result.success) {
     // Hide the modal
     deleteConfirmModal.hide();
-    
+
     // Reload the player list
     loadPlayers();
-    
+
     // Show success message
     showNotification('Player deleted successfully!', 'success');
   } else {
     // Show error message
     showNotification(`Failed to delete player: ${result.error}`, 'danger');
   }
-  
+
   // Clear the player ID
   deletePlayerId = null;
 }
@@ -367,7 +371,7 @@ function showNotification(message, type = 'info') {
     ${message}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   `;
-  
+
   // Find or create notification container
   let notificationContainer = document.getElementById('notification-container');
   if (!notificationContainer) {
@@ -377,10 +381,10 @@ function showNotification(message, type = 'info') {
     notificationContainer.style.zIndex = '1050';
     document.body.appendChild(notificationContainer);
   }
-  
+
   // Add notification to container
   notificationContainer.appendChild(notification);
-  
+
   // Auto-dismiss after 5 seconds
   setTimeout(() => {
     notification.classList.remove('show');
@@ -399,7 +403,7 @@ function openSongSelectionForPlayer(player) {
   import('./song-segmentation.js').then(({ setCurrentPlayer }) => {
     // Set the current player in the song segmentation component
     setCurrentPlayer(player);
-    
+
     // Navigate to song selection view
     const songSelectionNavLink = document.querySelector('[data-view="song-selection"]');
     if (songSelectionNavLink) {
@@ -418,10 +422,17 @@ function openSongSelectionForPlayer(player) {
 function handleAuthStateChange(event) {
   const { isAuthenticated } = event.detail;
   console.log('Player management: Authentication state changed:', isAuthenticated);
-  
+  console.log('Player management: Current DOM elements available:', {
+    playersList: !!playersList,
+    playerCountBadge: !!playerCountBadge
+  });
+
   if (isAuthenticated) {
     // User is authenticated, refresh the player list
+    console.log('Player management: User is authenticated, triggering refresh...');
     refreshPlayerList();
+  } else {
+    console.log('Player management: User is not authenticated, skipping refresh');
   }
 }
 
@@ -466,6 +477,10 @@ function handleAuthLogout(event) {
  */
 function handleNavigatedToApp(event) {
   console.log('Player management: Navigated to app, refreshing player list');
+  console.log('Player management: Current DOM elements available:', {
+    playersList: !!playersList,
+    playerCountBadge: !!playerCountBadge
+  });
   // Refresh the player list when navigating to the app
   refreshPlayerList();
 }
@@ -475,19 +490,28 @@ function handleNavigatedToApp(event) {
  */
 function refreshPlayerList() {
   console.log('Player management: Refreshing player list...');
-  
+
   // Add a small delay to ensure DOM elements are available
   setTimeout(() => {
     // Re-get DOM elements in case they were recreated
+    const oldPlayersList = playersList;
     playerNameInput = document.getElementById('player-name');
     addPlayerForm = document.getElementById('add-player-form');
     playersList = document.getElementById('players-list');
     playerCountBadge = document.getElementById('player-count');
-    
+
+    console.log('Player management: DOM elements check:', {
+      playerNameInput: !!playerNameInput,
+      addPlayerForm: !!addPlayerForm,
+      playersList: !!playersList,
+      playerCountBadge: !!playerCountBadge,
+      playersListChanged: oldPlayersList !== playersList
+    });
+
     // Load and display players
     loadPlayers();
-    
-    console.log('Player management: Player list refreshed');
+
+    console.log('Player management: Player list refresh completed');
   }, 100);
 }
 

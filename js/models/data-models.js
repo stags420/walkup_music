@@ -334,7 +334,9 @@ class DataManager {
    */
   static getPlayers() {
     const playersData = this._getDataFromStorage(STORAGE_KEYS.PLAYERS, []);
-    return playersData.map(playerData => PlayerModel.fromObject(playerData));
+    const playerModels = playersData.map(playerData => PlayerModel.fromObject(playerData));
+    console.log('DataManager: Loaded', playerModels.length, 'players from storage');
+    return playerModels;
   }
 
   /**
@@ -615,10 +617,14 @@ class DataManager {
   static _getDataFromStorage(key, defaultValue) {
     try {
       const serializedData = localStorage.getItem(key);
+      
       if (serializedData === null) {
+        console.log(`DataManager: No data found for key ${key}, using default`);
         return defaultValue;
       }
-      return JSON.parse(serializedData);
+      
+      const parsedData = JSON.parse(serializedData);
+      return parsedData;
     } catch (error) {
       console.error(`Error retrieving ${key} from storage:`, error);
       return defaultValue;

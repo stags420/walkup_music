@@ -35,6 +35,16 @@ function initApp() {
         return;
     }
 
+    // Initialize Bootstrap components first
+    initBootstrapComponents();
+    
+    // Initialize player management component BEFORE authentication check
+    // This ensures event listeners are set up before auth events are dispatched
+    initPlayerManagement();
+    
+    // Initialize song segmentation component
+    initSongSegmentation();
+
     // Check if we're returning from successful authentication
     if (urlParams.has('auth_success') && urlParams.get('auth_success') === 'true') {
         console.log('Returning from successful authentication');
@@ -51,15 +61,6 @@ function initApp() {
 
     // Check if user is already authenticated
     checkAuthentication();
-
-    // Initialize Bootstrap components
-    initBootstrapComponents();
-    
-    // Initialize player management component
-    initPlayerManagement();
-    
-    // Initialize song segmentation component
-    initSongSegmentation();
 
     // Check for authentication callback
     checkForAuthCallback();

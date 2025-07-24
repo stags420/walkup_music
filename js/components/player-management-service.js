@@ -20,6 +20,8 @@ class PlayerManagementService {
   getPlayers() {
     try {
       const players = DataManager.getPlayers();
+      console.log('PlayerManagementService: Retrieved', players.length, 'players');
+      
       return {
         success: true,
         data: players,

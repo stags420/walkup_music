@@ -141,6 +141,18 @@
     - Ensure segmentation controls are easily accessible after song selection
     - _Requirements: 3.4, 7.1, 7.2_
 
+  - [x] 6.2.3 Implement Spotify Web Playback SDK for simplified device interaction
+    - Integrate Spotify Web Playback SDK to create a browser-based playback device
+    - Implement SDK initialization with proper authentication and Premium account detection
+    - Create a local Spotify Connect device that appears in /me/player/devices automatically
+    - Eliminate the need for manual device selection by using the browser as the default device
+    - Implement seamless playback control through the Web Playback SDK player instance
+    - Add fallback to existing device selection for users who prefer external devices
+    - Handle SDK-specific error states (Premium required, browser compatibility, etc.)
+    - Implement proper cleanup and disconnection when leaving the application
+    - Add user-friendly messaging for SDK requirements and limitations
+    - _Requirements: 3.3, 3.4, 1.2_
+
   - [ ] 6.3 Write tests for song segmentation
     - Test segment selection
     - Test segment preview

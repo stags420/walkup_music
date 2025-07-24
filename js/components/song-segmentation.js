@@ -3,7 +3,18 @@
  * Implements requirement 3.4 - Song Selection and Segmentation
  */
 
-import { searchSongs, getTrack } from './spotify-api.js';
+import { 
+    searchSongs, 
+    getTrack, 
+    initializeEnhancedPlayback,
+    playTrackEnhanced,
+    pauseEnhanced,
+    seekEnhanced,
+    getCurrentPlaybackStateEnhanced,
+    getEnhancedPlaybackStatus,
+    getAvailableDevicesEnhanced,
+    setSDKPreference
+} from './spotify-api.js';
 import { DataManager, SongSelectionModel } from '../models/data-models.js';
 
 // DOM Elements
@@ -46,8 +57,59 @@ export function initSongSegmentation() {
     // Initialize mobile UX enhancements
     initializeMobileUX();
 
+    // Initialize enhanced playback with Web Playback SDK
+    initializeEnhancedPlaybackSystem();
+
     // Initialize empty state
     showEmptySegmentationState();
+}
+
+/**
+ * Initialize the enhanced playback system with Web Playback SDK
+ */
+async function initializeEnhancedPlaybackSystem() {
+    try {
+        console.log('Initializing enhanced playback system...');
+        const result = await initializeEnhancedPlayback();
+        
+        if (result.success) {
+            if (result.sdkReady) {
+                console.log('Web Playback SDK ready:', result.message);
+                showPlaybackStatusNotification('Browser player ready - no device selection needed!', 'success');
+                
+                // Set SDK as preferred method
+                setSDKPreference(true);
+                
+                // Update device selection UI to show SDK device
+                updateDeviceSelectionUI(result.deviceId);
+            } else {
+                console.log('Using fallback mode:', result.message || result.userMessage);
+                
+                if (result.requiresPremium) {
+                    showPlaybackStatusNotification(
+                        'Spotify Premium required for browser player. External devices still available.', 
+                        'warning'
+                    );
+                } else {
+                    showPlaybackStatusNotification(
+                        result.userMessage || 'Using external device mode', 
+                        'info'
+                    );
+                }
+                
+                // Show device selection for external devices
+                showDeviceSelection();
+            }
+        } else {
+            console.error('Failed to initialize enhanced playback:', result.error);
+            showPlaybackStatusNotification('Using external device mode', 'info');
+            showDeviceSelection();
+        }
+    } catch (error) {
+        console.error('Error initializing enhanced playback:', error);
+        showPlaybackStatusNotification('Using external device mode', 'info');
+        showDeviceSelection();
+    }
 }
 
 /**
@@ -348,25 +410,28 @@ export async function previewSegment() {
     }
 
     try {
-        // Import playback functions dynamically to avoid circular dependencies
-        const { playSong } = await import('./spotify-api.js');
-
-        // Check if a device is selected
-        if (!selectedDeviceId) {
-            return {
-                success: false,
-                error: 'No device selected. Please select a device from the list above.'
-            };
-        }
-
         // Stop any existing monitoring first
         stopSegmentMonitoring();
 
-        // Now try to play the segment on the selected device
-        await playSong(currentTrack.id, currentSegment.startTime, selectedDeviceId);
+        // Use enhanced playback (SDK first, fallback to external devices)
+        const result = await playTrackEnhanced(currentTrack.id, currentSegment.startTime, selectedDeviceId);
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: result.error
+            };
+        }
 
         // Show pause button, hide play buttons
         togglePlaybackButtons(true);
+
+        // Show playback method notification
+        if (result.method === 'sdk') {
+            showNotification('Playing on browser player', 'success');
+        } else {
+            showNotification(result.message || 'Playing on selected device', 'info');
+        }
 
         // Start monitoring playback position to stop at segment end
         startSegmentMonitoring();
@@ -413,13 +478,12 @@ async function startSegmentMonitoring() {
         clearInterval(previewMonitorInterval);
     }
 
-    const { getCurrentPlaybackState, pauseSong } = await import('./spotify-api.js');
     const segmentEndMs = currentSegment.endTime * 1000;
     const segmentStartMs = currentSegment.startTime * 1000;
 
     previewMonitorInterval = setInterval(async () => {
         try {
-            const playbackState = await getCurrentPlaybackState();
+            const playbackState = await getCurrentPlaybackStateEnhanced(selectedDeviceId);
 
             if (!playbackState || !playbackState.is_playing) {
                 // Playback stopped, clear monitoring
@@ -430,10 +494,16 @@ async function startSegmentMonitoring() {
             // Check if we've reached the end of the segment
             if (playbackState.progress_ms >= segmentEndMs) {
                 // Stop playback and monitoring
-                await pauseSong(selectedDeviceId);
+                const pauseResult = await pauseEnhanced(selectedDeviceId);
                 stopSegmentMonitoring();
                 togglePlaybackButtons(false);
-                showNotification('Segment preview completed', 'info');
+                
+                if (pauseResult.success) {
+                    showNotification('Segment preview completed', 'info');
+                } else {
+                    console.warn('Failed to pause after segment:', pauseResult.error);
+                    showNotification('Segment preview completed (manual stop may be needed)', 'warning');
+                }
             }
         } catch (error) {
             console.error('Error monitoring playback:', error);
@@ -2138,3 +2208,275 @@ function escapeHtml(unsafe) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+/**
+ *
+ Show playback status notification
+ * @param {string} message - Notification message
+ * @param {string} type - Notification type (success, info, warning, danger)
+ */
+function showPlaybackStatusNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show playback-notification`;
+    notification.innerHTML = `
+        <i class="bi bi-${getNotificationIcon(type)} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to the top of the song selection view
+    const songSelectionView = document.getElementById('song-selection-view');
+    if (songSelectionView) {
+        const container = songSelectionView.querySelector('.container');
+        if (container) {
+            container.insertBefore(notification, container.firstChild);
+        }
+    }
+
+    // Auto-dismiss after 5 seconds for info messages
+    if (type === 'info') {
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+}
+
+/**
+ * Get notification icon based on type
+ * @param {string} type - Notification type
+ * @returns {string} Bootstrap icon name
+ */
+function getNotificationIcon(type) {
+    switch (type) {
+        case 'success': return 'check-circle';
+        case 'warning': return 'exclamation-triangle';
+        case 'danger': return 'x-circle';
+        default: return 'info-circle';
+    }
+}
+
+/**
+ * Update device selection UI to show SDK device as default
+ * @param {string} sdkDeviceId - SDK device ID
+ */
+function updateDeviceSelectionUI(sdkDeviceId) {
+    // Set SDK device as selected
+    selectedDeviceId = sdkDeviceId;
+    
+    // Hide device selection since SDK handles it automatically
+    const deviceSelection = document.getElementById('device-selection');
+    if (deviceSelection) {
+        deviceSelection.style.display = 'none';
+    }
+    
+    // Add a small indicator showing browser player is active
+    addBrowserPlayerIndicator();
+}
+
+/**
+ * Add browser player indicator to the UI
+ */
+function addBrowserPlayerIndicator() {
+    const segmentationInterface = document.getElementById('segmentation-interface');
+    if (!segmentationInterface) return;
+
+    // Check if indicator already exists
+    if (segmentationInterface.querySelector('.browser-player-indicator')) return;
+
+    const indicator = document.createElement('div');
+    indicator.className = 'browser-player-indicator alert alert-success mb-3';
+    indicator.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-browser-chrome me-2"></i>
+            <div class="flex-grow-1">
+                <strong>Browser Player Active</strong>
+                <small class="d-block text-muted">Music will play directly in your browser - no device selection needed</small>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="showDeviceSelection()">
+                <i class="bi bi-gear me-1"></i>Change
+            </button>
+        </div>
+    `;
+
+    // Insert at the top of segmentation interface
+    segmentationInterface.insertBefore(indicator, segmentationInterface.firstChild);
+}
+
+/**
+ * Show device selection interface
+ */
+async function showDeviceSelection() {
+    try {
+        const devices = await getAvailableDevicesEnhanced();
+        displayDeviceSelection(devices);
+    } catch (error) {
+        console.error('Failed to get devices:', error);
+        showNotification('Failed to load devices. Please try again.', 'danger');
+    }
+}
+
+/**
+ * Display device selection interface
+ * @param {Array} devices - Available devices
+ */
+function displayDeviceSelection(devices) {
+    const segmentationInterface = document.getElementById('segmentation-interface');
+    if (!segmentationInterface) return;
+
+    // Remove existing device selection
+    const existingSelection = segmentationInterface.querySelector('.device-selection-container');
+    if (existingSelection) {
+        existingSelection.remove();
+    }
+
+    // Remove browser player indicator
+    const indicator = segmentationInterface.querySelector('.browser-player-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+
+    if (devices.length === 0) {
+        showNotification('No devices available. Please open Spotify on a device and try again.', 'warning');
+        return;
+    }
+
+    const deviceSelectionHtml = `
+        <div class="device-selection-container card mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-speaker me-2"></i>Select Playback Device
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="device-list">
+                    ${devices.map(device => `
+                        <div class="device-item ${device.is_active ? 'active' : ''}" data-device-id="${device.id}">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-${getDeviceIcon(device.type)} me-3"></i>
+                                <div class="flex-grow-1">
+                                    <div class="device-name">${escapeHtml(device.name)}</div>
+                                    <small class="text-muted">${device.type}${device.is_sdk_device ? ' (Browser)' : ''}</small>
+                                </div>
+                                <div class="device-status">
+                                    ${device.is_active ? '<span class="badge bg-success">Active</span>' : ''}
+                                    ${device.is_sdk_device ? '<span class="badge bg-primary ms-1">Recommended</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-secondary" onclick="hideDeviceSelection()">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insert device selection
+    segmentationInterface.insertAdjacentHTML('afterbegin', deviceSelectionHtml);
+
+    // Add click handlers for device selection
+    segmentationInterface.querySelectorAll('.device-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const deviceId = item.dataset.deviceId;
+            const deviceName = item.querySelector('.device-name').textContent;
+            const isSDKDevice = item.querySelector('.badge.bg-primary');
+            
+            selectDevice(deviceId, deviceName, !!isSDKDevice);
+        });
+    });
+}
+
+/**
+ * Get device icon based on device type
+ * @param {string} type - Device type
+ * @returns {string} Bootstrap icon name
+ */
+function getDeviceIcon(type) {
+    switch (type.toLowerCase()) {
+        case 'computer': return 'laptop';
+        case 'smartphone': return 'phone';
+        case 'speaker': return 'speaker';
+        case 'tv': return 'tv';
+        case 'automobile': return 'car-front';
+        case 'game_console': return 'controller';
+        default: return 'speaker';
+    }
+}
+
+/**
+ * Select a device for playback
+ * @param {string} deviceId - Device ID
+ * @param {string} deviceName - Device name
+ * @param {boolean} isSDKDevice - Whether this is the SDK device
+ */
+function selectDevice(deviceId, deviceName, isSDKDevice) {
+    selectedDeviceId = deviceId;
+    
+    // Set SDK preference based on device selection
+    setSDKPreference(isSDKDevice);
+    
+    // Hide device selection
+    hideDeviceSelection();
+    
+    // Show confirmation
+    if (isSDKDevice) {
+        addBrowserPlayerIndicator();
+        showNotification('Browser player selected', 'success');
+    } else {
+        showNotification(`Selected device: ${deviceName}`, 'success');
+        
+        // Add external device indicator
+        addExternalDeviceIndicator(deviceName);
+    }
+}
+
+/**
+ * Add external device indicator
+ * @param {string} deviceName - Selected device name
+ */
+function addExternalDeviceIndicator(deviceName) {
+    const segmentationInterface = document.getElementById('segmentation-interface');
+    if (!segmentationInterface) return;
+
+    // Remove existing indicators
+    const existingIndicator = segmentationInterface.querySelector('.device-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+
+    const indicator = document.createElement('div');
+    indicator.className = 'device-indicator alert alert-info mb-3';
+    indicator.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-speaker me-2"></i>
+            <div class="flex-grow-1">
+                <strong>External Device Selected</strong>
+                <small class="d-block text-muted">Playing on: ${escapeHtml(deviceName)}</small>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="showDeviceSelection()">
+                <i class="bi bi-gear me-1"></i>Change
+            </button>
+        </div>
+    `;
+
+    segmentationInterface.insertBefore(indicator, segmentationInterface.firstChild);
+}
+
+/**
+ * Hide device selection interface
+ */
+function hideDeviceSelection() {
+    const deviceSelection = document.querySelector('.device-selection-container');
+    if (deviceSelection) {
+        deviceSelection.remove();
+    }
+}
+
+// Make functions available globally for onclick handlers
+window.showDeviceSelection = showDeviceSelection;
+window.hideDeviceSelection = hideDeviceSelection;

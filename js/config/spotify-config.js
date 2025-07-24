@@ -32,14 +32,16 @@ const spotifyConfig = {
   redirectUri: callbackUrl,
 
   // The scopes define the permissions your app is requesting
-  // For this app, we only need:
-  // - streaming: Control playback of Spotify tracks
+  // For this app, we need:
+  // - streaming: Required for Web Playback SDK to control playback
   // - user-read-playback-state: Read access to user's playback state
   // - user-modify-playback-state: Write access to user's playback state
+  // - user-read-email: Required for Web Playback SDK initialization
   scopes: [
     'streaming',
     'user-read-playback-state',
-    'user-modify-playback-state'
+    'user-modify-playback-state',
+    'user-read-email'
   ],
 
   // Spotify API endpoints

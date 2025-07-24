@@ -1,0 +1,281 @@
+/**
+ * Web Playback SDK Component Styles
+ */
+
+/* Playback status notifications */
+.playback-notification {
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.playback-notification .bi {
+    font-size: 1.1em;
+}
+
+/* Browser player indicator */
+.browser-player-indicator {
+    border: none;
+    background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+}
+
+.browser-player-indicator .btn-outline-secondary {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.browser-player-indicator .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* Device selection container */
+.device-selection-container {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.device-selection-container .card-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    border: none;
+    padding: 1rem 1.25rem;
+}
+
+/* Device list */
+.device-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.device-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.device-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.device-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.device-item.active {
+    background-color: #e8f5e8;
+    border-left: 4px solid #1DB954;
+}
+
+.device-item .bi {
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.device-item:hover .bi {
+    color: #1DB954;
+}
+
+.device-name {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0.25rem;
+}
+
+.device-status .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.device-status .badge.bg-primary {
+    background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%) !important;
+    border: none;
+}
+
+/* External device indicator */
+.device-indicator {
+    border: none;
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.device-indicator .btn-outline-secondary {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.device-indicator .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* SDK initialization loading */
+.sdk-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.sdk-loading .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 1rem;
+    color: #1DB954;
+}
+
+/* Premium required message */
+.premium-required {
+    background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+    color: #212529;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.premium-required .bi {
+    color: #212529;
+}
+
+/* Browser compatibility warning */
+.browser-compatibility {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .browser-player-indicator,
+    .device-indicator {
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+    
+    .browser-player-indicator .btn,
+    .device-indicator .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .device-item {
+        padding: 0.75rem;
+    }
+    
+    .device-item .bi {
+        font-size: 1.25rem;
+    }
+    
+    .device-selection-container .card-header {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* Animation for device selection */
+.device-selection-container {
+    animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse animation for active device */
+.device-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Smooth transitions */
+.device-item,
+.browser-player-indicator,
+.device-indicator,
+.playback-notification {
+    transition: all 0.3s ease;
+}
+
+/* Focus states for accessibility */
+.device-item:focus,
+.browser-player-indicator .btn:focus,
+.device-indicator .btn:focus {
+    outline: 2px solid #1DB954;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .browser-player-indicator,
+    .device-indicator {
+        border: 2px solid currentColor;
+    }
+    
+    .device-item {
+        border: 1px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .device-item,
+    .browser-player-indicator,
+    .device-indicator,
+    .playback-notification {
+        transition: none;
+    }
+    
+    .device-selection-container {
+        animation: none;
+    }
+    
+    .device-item.active::before {
+        animation: none;
+    }
+}

@@ -4,10 +4,24 @@
  * This component provides a wrapper around the Spotify Web API for searching songs,
  * getting track details, and handling API errors. It uses the authentication tokens
  * from the auth component to make authenticated requests.
+ * 
+ * Enhanced with Web Playback SDK integration for seamless browser-based playback.
  */
 
 import { getAccessToken, isTokenValid } from './auth.js';
 import spotifyConfig from '../config/spotify-config.js';
+import { 
+    initializeWebPlaybackSDK, 
+    playTrackWithSDK, 
+    pauseWithSDK, 
+    resumeWithSDK, 
+    seekWithSDK,
+    getCurrentStateFromSDK,
+    getSDKStatus,
+    isSDKSupported,
+    getSDKErrorInfo,
+    addSDKEventListener
+} from './web-playback-sdk.js';
 
 /**
  * Base class for Spotify API errors
@@ -727,6 +741,377 @@ export async function transferPlayback(deviceId, play = false) {
                 error.message = `Failed to transfer playback: ${error.message}`;
             }
         }
+        throw error;
+    }
+}
+/**
+
+ * Enhanced playback functions with Web Playback SDK integration
+ */
+
+// SDK initialization state
+let sdkInitialized = false;
+let sdkInitializationPromise = null;
+let preferSDK = true; // Prefer SDK over external devices when available
+
+/**
+ * Initialize the enhanced playback system with Web Playback SDK
+ * @returns {Promise<Object>} Initialization result
+ */
+export async function initializeEnhancedPlayback() {
+    // Return existing promise if already initializing
+    if (sdkInitializationPromise) {
+        return sdkInitializationPromise;
+    }
+
+    // Return success if already initialized
+    if (sdkInitialized) {
+        const status = getSDKStatus();
+        return {
+            success: true,
+            sdkReady: status.isReady,
+            deviceId: status.deviceId,
+            fallbackAvailable: true
+        };
+    }
+
+    // Check if SDK is supported in this browser
+    if (!isSDKSupported()) {
+        console.log('Web Playback SDK not supported in this browser, using fallback mode');
+        return {
+            success: true,
+            sdkReady: false,
+            deviceId: null,
+            fallbackAvailable: true,
+            message: 'Using external device mode (Web Player not supported in this browser)'
+        };
+    }
+
+    // Initialize SDK
+    sdkInitializationPromise = initializeWebPlaybackSDK();
+    
+    try {
+        const result = await sdkInitializationPromise;
+        sdkInitialized = result.success;
+        
+        if (result.success) {
+            console.log('Web Playback SDK initialized successfully');
+            
+            // Set up event listeners for SDK state changes
+            addSDKEventListener('not_ready', () => {
+                console.log('SDK device became unavailable, falling back to external devices');
+            });
+            
+            return {
+                success: true,
+                sdkReady: true,
+                deviceId: result.deviceId,
+                fallbackAvailable: true,
+                message: 'Browser player ready'
+            };
+        } else {
+            console.log('Web Playback SDK initialization failed, using fallback mode:', result.error);
+            const errorInfo = getSDKErrorInfo(result.error);
+            
+            return {
+                success: true,
+                sdkReady: false,
+                deviceId: null,
+                fallbackAvailable: true,
+                error: result.error,
+                userMessage: errorInfo.userMessage,
+                requiresPremium: errorInfo.requiresPremium
+            };
+        }
+    } catch (error) {
+        console.error('Failed to initialize enhanced playback:', error);
+        sdkInitializationPromise = null;
+        
+        return {
+            success: true,
+            sdkReady: false,
+            deviceId: null,
+            fallbackAvailable: true,
+            error: error.message,
+            message: 'Using external device mode'
+        };
+    }
+}
+
+/**
+ * Enhanced play function that uses SDK when available, falls back to external devices
+ * @param {string} trackId - Spotify track ID
+ * @param {number} startTime - Start time in seconds (default: 0)
+ * @param {string|null} deviceId - Specific device ID (optional, uses SDK device if available)
+ * @returns {Promise<Object>} Result object
+ */
+export async function playTrackEnhanced(trackId, startTime = 0, deviceId = null) {
+    if (!trackId || typeof trackId !== 'string') {
+        return {
+            success: false,
+            error: 'Track ID is required and must be a string'
+        };
+    }
+
+    // Initialize enhanced playback if not already done
+    if (!sdkInitialized && !sdkInitializationPromise) {
+        await initializeEnhancedPlayback();
+    }
+
+    const sdkStatus = getSDKStatus();
+    
+    // Try SDK first if it's ready and no specific device is requested
+    if (preferSDK && sdkStatus.isReady && !deviceId) {
+        console.log('Using Web Playback SDK for playback');
+        const result = await playTrackWithSDK(trackId, startTime);
+        
+        if (result.success) {
+            return {
+                success: true,
+                method: 'sdk',
+                deviceId: sdkStatus.deviceId,
+                message: 'Playing on browser player'
+            };
+        } else {
+            console.log('SDK playback failed, falling back to external device:', result.error);
+            // Fall through to external device playback
+        }
+    }
+
+    // Use external device playback (original implementation)
+    try {
+        await playSong(trackId, startTime, deviceId);
+        return {
+            success: true,
+            method: 'external',
+            deviceId: deviceId,
+            message: deviceId ? 'Playing on selected device' : 'Playing on active device'
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+            method: 'external'
+        };
+    }
+}
+
+/**
+ * Enhanced pause function that uses SDK when available
+ * @param {string|null} deviceId - Specific device ID (optional)
+ * @returns {Promise<Object>} Result object
+ */
+export async function pauseEnhanced(deviceId = null) {
+    const sdkStatus = getSDKStatus();
+    
+    // Try SDK first if it's ready and no specific device is requested
+    if (preferSDK && sdkStatus.isReady && !deviceId) {
+        console.log('Using Web Playback SDK for pause');
+        const result = await pauseWithSDK();
+        
+        if (result.success) {
+            return {
+                success: true,
+                method: 'sdk',
+                deviceId: sdkStatus.deviceId
+            };
+        } else {
+            console.log('SDK pause failed, falling back to external device:', result.error);
+            // Fall through to external device pause
+        }
+    }
+
+    // Use external device pause (original implementation)
+    try {
+        await pauseSong(deviceId);
+        return {
+            success: true,
+            method: 'external',
+            deviceId: deviceId
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+            method: 'external'
+        };
+    }
+}
+
+/**
+ * Enhanced seek function that uses SDK when available
+ * @param {number} positionMs - Position in milliseconds
+ * @param {string|null} deviceId - Specific device ID (optional)
+ * @returns {Promise<Object>} Result object
+ */
+export async function seekEnhanced(positionMs, deviceId = null) {
+    if (typeof positionMs !== 'number' || positionMs < 0) {
+        return {
+            success: false,
+            error: 'Position must be a non-negative number in milliseconds'
+        };
+    }
+
+    const sdkStatus = getSDKStatus();
+    
+    // Try SDK first if it's ready and no specific device is requested
+    if (preferSDK && sdkStatus.isReady && !deviceId) {
+        console.log('Using Web Playback SDK for seek');
+        const result = await seekWithSDK(positionMs);
+        
+        if (result.success) {
+            return {
+                success: true,
+                method: 'sdk',
+                deviceId: sdkStatus.deviceId
+            };
+        } else {
+            console.log('SDK seek failed, falling back to external device:', result.error);
+            // Fall through to external device seek
+        }
+    }
+
+    // Use external device seek (original implementation)
+    try {
+        await seekToPosition(positionMs);
+        return {
+            success: true,
+            method: 'external',
+            deviceId: deviceId
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message,
+            method: 'external'
+        };
+    }
+}
+
+/**
+ * Enhanced playback state function that uses SDK when available
+ * @param {string|null} deviceId - Specific device ID (optional)
+ * @returns {Promise<Object|null>} Current playback state
+ */
+export async function getCurrentPlaybackStateEnhanced(deviceId = null) {
+    const sdkStatus = getSDKStatus();
+    
+    // Try SDK first if it's ready and no specific device is requested
+    if (preferSDK && sdkStatus.isReady && !deviceId) {
+        const state = await getCurrentStateFromSDK();
+        
+        if (state) {
+            // Transform SDK state to match API format
+            return {
+                is_playing: !state.paused,
+                progress_ms: state.position,
+                timestamp: Date.now(),
+                device: {
+                    id: sdkStatus.deviceId,
+                    name: 'Walk-up Music Player',
+                    type: 'Computer',
+                    volume_percent: Math.round((state.volume || 0.8) * 100),
+                    is_active: true
+                },
+                repeat_state: state.repeat_mode === 1 ? 'track' : state.repeat_mode === 2 ? 'context' : 'off',
+                shuffle_state: state.shuffle || false,
+                track: state.track_window?.current_track ? {
+                    id: state.track_window.current_track.id,
+                    name: state.track_window.current_track.name,
+                    artists: state.track_window.current_track.artists.map(artist => ({
+                        id: artist.uri.split(':')[2],
+                        name: artist.name
+                    })),
+                    album: {
+                        id: state.track_window.current_track.album.uri.split(':')[2],
+                        name: state.track_window.current_track.album.name,
+                        images: state.track_window.current_track.album.images || []
+                    },
+                    duration_ms: state.duration,
+                    uri: state.track_window.current_track.uri
+                } : null
+            };
+        }
+    }
+
+    // Use external device state (original implementation)
+    return await getCurrentPlaybackState();
+}
+
+/**
+ * Get enhanced playback status including SDK information
+ * @returns {Object} Enhanced status information
+ */
+export function getEnhancedPlaybackStatus() {
+    const sdkStatus = getSDKStatus();
+    
+    return {
+        sdkSupported: isSDKSupported(),
+        sdkReady: sdkStatus.isReady,
+        sdkInitializing: sdkStatus.isInitializing,
+        sdkDeviceId: sdkStatus.deviceId,
+        sdkError: sdkStatus.error,
+        requiresPremium: sdkStatus.requiresPremium,
+        preferSDK: preferSDK,
+        fallbackAvailable: true
+    };
+}
+
+/**
+ * Set preference for using SDK vs external devices
+ * @param {boolean} prefer - Whether to prefer SDK over external devices
+ */
+export function setSDKPreference(prefer) {
+    preferSDK = prefer;
+    console.log(`SDK preference set to: ${prefer ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Get available devices including SDK device
+ * @returns {Promise<Object[]>} Array of available devices
+ */
+export async function getAvailableDevicesEnhanced() {
+    try {
+        // Get external devices
+        const externalDevices = await getAvailableDevices();
+        
+        // Add SDK device if available
+        const sdkStatus = getSDKStatus();
+        if (sdkStatus.isReady) {
+            const sdkDevice = {
+                id: sdkStatus.deviceId,
+                name: 'Walk-up Music Player (Browser)',
+                type: 'Computer',
+                is_active: false, // Will be determined by current playback state
+                is_private_session: false,
+                is_restricted: false,
+                volume_percent: 80,
+                is_sdk_device: true
+            };
+            
+            // Add SDK device at the beginning of the list
+            return [sdkDevice, ...externalDevices];
+        }
+        
+        return externalDevices;
+    } catch (error) {
+        console.error('Failed to get enhanced device list:', error);
+        
+        // Return SDK device only if external devices fail
+        const sdkStatus = getSDKStatus();
+        if (sdkStatus.isReady) {
+            return [{
+                id: sdkStatus.deviceId,
+                name: 'Walk-up Music Player (Browser)',
+                type: 'Computer',
+                is_active: false,
+                is_private_session: false,
+                is_restricted: false,
+                volume_percent: 80,
+                is_sdk_device: true
+            }];
+        }
+        
         throw error;
     }
 }

@@ -3,7 +3,7 @@
  * Implements requirements 6.1, 6.5
  */
 
-import { STORAGE_KEYS, wouldFitInStorage } from '../utils/storage-utils.js';
+import { STORAGE_KEYS } from '../utils/storage-utils.js';
 
 // Constants for validation
 const CONSTANTS = {
@@ -355,14 +355,6 @@ class DataManager {
     // Convert to plain objects for storage
     const playersData = players.map(p => p.toObject());
 
-    // Check if data will fit in storage
-    if (!wouldFitInStorage(STORAGE_KEYS.PLAYERS, playersData)) {
-      return {
-        success: false,
-        error: 'Storage limit exceeded. Try removing some players or songs.'
-      };
-    }
-
     // Save to storage
     const result = this._saveDataToStorage(STORAGE_KEYS.PLAYERS, playersData);
 
@@ -518,14 +510,6 @@ class DataManager {
     // Convert to plain objects for storage
     const selectionsData = selections.map(s => s.toObject());
 
-    // Check if data will fit in storage
-    if (!wouldFitInStorage(STORAGE_KEYS.SONG_SELECTIONS, selectionsData)) {
-      return {
-        success: false,
-        error: 'Storage limit exceeded. Try removing some songs or players.'
-      };
-    }
-
     // Save to storage
     return this._saveDataToStorage(STORAGE_KEYS.SONG_SELECTIONS, selectionsData);
   }
@@ -579,14 +563,6 @@ class DataManager {
     // Convert to plain object for storage
     const orderData = battingOrder.toObject();
 
-    // Check if data will fit in storage
-    if (!wouldFitInStorage(STORAGE_KEYS.BATTING_ORDER, orderData)) {
-      return {
-        success: false,
-        error: 'Storage limit exceeded.'
-      };
-    }
-
     // Save to storage
     return this._saveDataToStorage(STORAGE_KEYS.BATTING_ORDER, orderData);
   }
@@ -634,14 +610,6 @@ class DataManager {
 
     // Convert to plain object for storage
     const stateData = appState.toObject();
-
-    // Check if data will fit in storage
-    if (!wouldFitInStorage(STORAGE_KEYS.APP_STATE, stateData)) {
-      return {
-        success: false,
-        error: 'Storage limit exceeded.'
-      };
-    }
 
     // Save to storage
     return this._saveDataToStorage(STORAGE_KEYS.APP_STATE, stateData);

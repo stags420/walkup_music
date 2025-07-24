@@ -120,30 +120,7 @@ function getStorageSize(key) {
   }
 }
 
-/**
- * Check if adding data would exceed storage limits
- * @param {string} key - The key to store data under
- * @param {any} data - The data to check
- * @returns {boolean} - True if data would fit, false if it would exceed limits
- */
-function wouldFitInStorage(key, data) {
-  try {
-    // Typical localStorage limit is around 5-10MB
-    const serializedData = JSON.stringify(data);
-    
-    // Try to set the data to see if it fits
-    localStorage.setItem(key, serializedData);
-    localStorage.removeItem(key);
-    
-    return true;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      return false;
-    }
-    console.error('Error checking storage capacity:', error);
-    return false;
-  }
-}
+
 
 // Export the functions
 export {
@@ -153,6 +130,5 @@ export {
   clearData,
   clearAllData,
   isStorageAvailable,
-  getStorageSize,
-  wouldFitInStorage
+  getStorageSize
 };

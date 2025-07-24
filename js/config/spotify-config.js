@@ -37,11 +37,13 @@ const spotifyConfig = {
   // - user-read-playback-state: Read access to user's playback state
   // - user-modify-playback-state: Write access to user's playback state
   // - user-read-email: Required for Web Playback SDK initialization
+  // - user-read-private: Required for Web Playback SDK initialization
   scopes: [
     'streaming',
     'user-read-playback-state',
     'user-modify-playback-state',
-    'user-read-email'
+    'user-read-email',
+    'user-read-private'
   ],
 
   // Spotify API endpoints

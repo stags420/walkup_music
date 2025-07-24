@@ -112,10 +112,21 @@ async function initAuthenticatedApp() {
         const { initializeWebPlaybackSDK } = await import('./components/web-playback-sdk.js');
         const spotifyAPI = await import('./components/spotify-api.js');
 
-        // Initialize components in order, passing dependencies
+        // Initialize Web Playback SDK first
+        await initializeWebPlaybackSDK();
+
+        // Initialize enhanced playback system
+        const enhancedResult = await spotifyAPI.initializeEnhancedPlayback();
+        if (enhancedResult.success && enhancedResult.sdkReady) {
+            spotifyAPI.setSDKPreference(true);
+            console.log('Enhanced playback system initialized with SDK support');
+        } else {
+            console.log('Enhanced playback system initialized in fallback mode');
+        }
+
+        // Initialize components with dependencies
         await initPlayerManagement(spotifyAPI);
         await initSongSegmentation(spotifyAPI);
-        await initializeWebPlaybackSDK();
 
         console.log('Authenticated application initialized successfully');
     } catch (error) {

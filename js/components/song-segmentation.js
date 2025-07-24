@@ -52,8 +52,7 @@ export function initSongSegmentation(spotifyAPIModule) {
     // Initialize mobile UX enhancements
     initializeMobileUX();
 
-    // Initialize enhanced playback with Web Playback SDK
-    initializeEnhancedPlaybackSystem();
+    // Enhanced playback system will be initialized by the app
 
     // Initialize empty state
     showEmptySegmentationState();
@@ -63,68 +62,8 @@ export function initSongSegmentation(spotifyAPIModule) {
  * Initialize the enhanced playback system with Web Playback SDK
  * Uses initialization manager to prevent multiple initializations
  */
-async function initializeEnhancedPlaybackSystem() {
-    try {
-        console.log('Song segmentation: Initializing enhanced playback system...');
-
-        // Use initialization manager to ensure single SDK initialization
-        if (!window.InitializationManager.isWebPlaybackSDKInitialized()) {
-            console.log('Song segmentation: Web Playback SDK not initialized, initializing via manager...');
-            const sdkResult = await window.InitializationManager.initializeWebPlaybackSDK();
-
-            if (!sdkResult.success) {
-                console.log('Song segmentation: SDK initialization failed, using fallback mode:', sdkResult.error);
-            }
-        } else {
-            console.log('Song segmentation: Web Playback SDK already initialized, skipping');
-        }
-
-        // Now initialize the enhanced playback system
-        const result = await spotifyAPI.initializeEnhancedPlayback();
-
-        if (result.success) {
-            if (result.sdkReady) {
-                console.log('Song segmentation: Web Playback SDK ready:', result.message);
-
-                // Set SDK as preferred method
-                spotifyAPI.setSDKPreference(true);
-
-                // Update device selection UI to show SDK device
-                updateDeviceSelectionUI(result.deviceId);
-            } else {
-                console.log('Song segmentation: Using fallback mode:', result.message || result.userMessage);
-
-                if (result.requiresReauth) {
-                    showPlaybackStatusNotification(
-                        result.userMessage + ' <button class="btn btn-sm btn-outline-light ms-2" onclick="handleReauthForSDK()">Re-authenticate</button>',
-                        'warning'
-                    );
-                } else if (result.requiresPremium) {
-                    showPlaybackStatusNotification(
-                        'Spotify Premium required for browser player. External devices still available.',
-                        'warning'
-                    );
-                } else {
-                    showPlaybackStatusNotification(
-                        result.userMessage || 'Using external device mode',
-                        'info'
-                    );
-                }
-
-                // Show device selection for external devices
-                showDeviceSelection();
-            }
-        } else {
-            console.error('Song segmentation: Failed to initialize enhanced playback:', result.error);
-            showPlaybackStatusNotification('Using external device mode', 'info');
-            showDeviceSelection();
-        }
-    } catch (error) {
-        console.error('Song segmentation: Error initializing enhanced playback:', error);
-        showPlaybackStatusNotification('Using external device mode', 'info');
-        showDeviceSelection();
-    }
-}
+// Enhanced playback system initialization removed - handled by app.js dependency injection
+// The Web Playback SDK is now initialized once in app.js and passed as a dependency
 
 /**
  * Initialize mobile UX enhancements

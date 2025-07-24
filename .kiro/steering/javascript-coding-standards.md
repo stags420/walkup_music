@@ -3,10 +3,11 @@
 ## Code Organization
 
 ### Module Structure
-- Use ES6 modules with explicit imports/exports
+- Use CommonJS modules (require/module.exports) for better Jest compatibility
 - Keep related functionality in dedicated files (auth, models, utils)
-- Use barrel exports sparingly - prefer explicit imports
+- Use explicit exports - avoid barrel exports
 - Group files by function: components/, utils/, models/, config/
+- Export functions and classes using `module.exports = { ... }` syntax
 
 ### File Naming
 - Use kebab-case for file names: `player-management.js`, `spotify-api.js`
@@ -14,6 +15,12 @@
 - Use descriptive names that indicate purpose
 
 ## Code Style
+
+### Import/Export Patterns
+- Use `const { functionName } = require('./module-name')` for imports
+- Use `module.exports = { functionName, ClassName }` for exports
+- Avoid mixing CommonJS and ES6 module syntax
+- Keep imports at the top of files, grouped by type (external, internal)
 
 ### Functions and Classes
 - Use descriptive function names that indicate action: `checkAuthentication()`, `handleAuthCallback()`
@@ -36,6 +43,14 @@
 
 ## Architecture Patterns
 
+### Dependency Injection
+- Pass dependencies as parameters instead of creating them internally
+- Use constructor injection for class-based components
+- Use function parameters for functional components
+- Avoid multiple initializations of the same service/component
+- Create dependencies at the application level and pass them down
+- Use factory functions or service locators for complex dependency graphs
+
 ### Data Models
 - Use class-based models with validation methods
 - Implement `validate()` method returning `{isValid, errors}` structure
@@ -49,10 +64,11 @@
 - Handle storage quota exceeded gracefully
 
 ### Component Structure
-- Initialize components with `init()` functions
+- Initialize components with `init()` functions that accept dependencies
 - Use event delegation for dynamic content
 - Separate DOM manipulation from business logic
-- Export functions that other modules need
+- Export functions using CommonJS: `module.exports = { init, cleanup }`
+- Accept service instances as parameters rather than creating them internally
 
 ## Documentation
 
@@ -75,6 +91,8 @@
 - Separate side effects from logic
 - Use dependency injection for external services
 - Return consistent data structures
+- Make dependencies explicit through function/constructor parameters
+- Avoid hidden dependencies that make testing difficult
 
 ### Error Scenarios
 - Handle network failures gracefully

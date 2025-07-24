@@ -153,6 +153,21 @@
     - Add user-friendly messaging for SDK requirements and limitations
     - _Requirements: 3.3, 3.4, 1.2_
 
+  - [x] 6.2.4 Refactor song segmentation initialization to prevent multiple initializations
+    - Problem: Song segmentation component is initialized multiple times from different places
+    - Current issues: app.js imports but never uses initSongSegmentation, player-management.js calls it dynamically
+    - The enhanced playback system (Web Playback SDK) is initialized multiple times unnecessarily
+    - Device selection UI and event listeners may be set up repeatedly
+    - Create a centralized initialization manager to ensure single initialization
+    - Implement initialization state tracking to prevent duplicate setup calls
+    - Refactor player-management.js to check if song segmentation is already initialized before calling init
+    - Remove unused import from app.js or properly integrate it into the main initialization flow
+    - Ensure enhanced playback system (SDK) is only initialized once per session
+    - Add proper cleanup methods for when components need to be re-initialized
+    - Implement lazy loading pattern where song segmentation initializes only when first needed
+    - Add initialization status logging to help debug initialization flow issues
+    - _Requirements: 3.4, 3.3_
+
   - [ ] 6.3 Write tests for song segmentation
     - Test segment selection
     - Test segment preview

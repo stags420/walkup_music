@@ -3,7 +3,6 @@ import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
 import { checkAuthentication, logout } from './components/auth.js';
 import { createUrl } from './utils/url-utils.js';
 import { initPlayerManagement } from './components/player-management.js';
-import { initSongSegmentation } from './components/song-segmentation.js';
 
 /**
  * Initialize the application
@@ -43,7 +42,7 @@ function initApp() {
     initPlayerManagement();
     
     // Note: Song segmentation (including playback system) will be initialized 
-    // only after authentication is confirmed via event handlers
+    // lazily when first needed via the initialization manager
 
     // Check if we're returning from successful authentication
     if (urlParams.has('auth_success') && urlParams.get('auth_success') === 'true') {

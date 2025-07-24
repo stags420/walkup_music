@@ -37,7 +37,7 @@ class PlayerModel {
    * @private
    */
   _generateId() {
-    return `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `player_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
@@ -129,15 +129,15 @@ class SongSelectionModel {
     if (!this.playerId) {
       errors.push('Player ID is required');
     }
-    
+
     if (!this.trackId) {
       errors.push('Track ID is required');
     }
-    
+
     if (!this.trackName) {
       errors.push('Track name is required');
     }
-    
+
     if (!this.artistName) {
       errors.push('Artist name is required');
     }
@@ -146,11 +146,11 @@ class SongSelectionModel {
     if (typeof this.startTime !== 'number' || this.startTime < 0) {
       errors.push('Start time must be a non-negative number');
     }
-    
+
     if (typeof this.endTime !== 'number' || this.endTime <= 0) {
       errors.push('End time must be a positive number');
     }
-    
+
     if (this.endTime <= this.startTime) {
       errors.push('End time must be greater than start time');
     }
@@ -160,7 +160,7 @@ class SongSelectionModel {
     if (duration < CONSTANTS.MIN_SEGMENT_DURATION) {
       errors.push(`Segment must be at least ${CONSTANTS.MIN_SEGMENT_DURATION} seconds long`);
     }
-    
+
     if (duration > CONSTANTS.MAX_SEGMENT_DURATION) {
       errors.push(`Segment cannot exceed ${CONSTANTS.MAX_SEGMENT_DURATION} seconds`);
     }
@@ -219,13 +219,13 @@ class BattingOrderModel {
   validate(players = []) {
     const errors = [];
     const playerIds = players.map(player => player.id);
-    
+
     // Check for duplicate player IDs
     const uniqueIds = new Set(this.order);
     if (uniqueIds.size !== this.order.length) {
       errors.push('Batting order contains duplicate players');
     }
-    
+
     // Check that all players in order exist in the provided players array
     const invalidIds = this.order.filter(id => !playerIds.includes(id));
     if (invalidIds.length > 0) {
@@ -291,7 +291,7 @@ class AppStateModel {
     if (typeof this.isPlaying !== 'boolean') {
       errors.push('isPlaying must be a boolean value');
     }
-    
+
     if (typeof this.gameMode !== 'boolean') {
       errors.push('gameMode must be a boolean value');
     }
@@ -328,15 +328,69 @@ class AppStateModel {
  * Data manager for handling models and storage
  */
 class DataManager {
+  // Local cache for players to avoid reading from storage every time
+  static _playersCache = null;
+  static _playersCacheInitialized = false;
+
   /**
-   * Get all players
+   * Initialize the players cache from storage
+   * @private
+   */
+  static _initializePlayersCache() {
+    if (!this._playersCacheInitialized) {
+      const playersData = this._getDataFromStorage(STORAGE_KEYS.PLAYERS, []);
+      this._playersCache = playersData.map(playerData => PlayerModel.fromObject(playerData));
+      this._playersCacheInitialized = true;
+      console.log('DataManager: Initialized players cache with', this._playersCache.length, 'players');
+    }
+  }
+
+  /**
+   * Update both cache and storage with new players data
+   * @param {PlayerModel[]} players - Array of player models
+   * @returns {Object} - Result {success: boolean, error: string}
+   * @private
+   */
+  static _updatePlayersCache(players) {
+    // Convert to plain objects for storage
+    const playersData = players.map(p => p.toObject());
+
+    // Check if data will fit in storage
+    if (!wouldFitInStorage(STORAGE_KEYS.PLAYERS, playersData)) {
+      return {
+        success: false,
+        error: 'Storage limit exceeded. Try removing some players or songs.'
+      };
+    }
+
+    // Save to storage
+    const result = this._saveDataToStorage(STORAGE_KEYS.PLAYERS, playersData);
+
+    if (result.success) {
+      // Update cache
+      this._playersCache = [...players];
+      console.log('DataManager: Updated players cache and storage with', players.length, 'players');
+    }
+
+    return result;
+  }
+
+  /**
+   * Clear the players cache (useful for testing or manual refresh)
+   */
+  static clearPlayersCache() {
+    this._playersCache = null;
+    this._playersCacheInitialized = false;
+    console.log('DataManager: Cleared players cache');
+  }
+
+  /**
+   * Get all players (from cache)
    * @returns {PlayerModel[]} - Array of player models
    */
   static getPlayers() {
-    const playersData = this._getDataFromStorage(STORAGE_KEYS.PLAYERS, []);
-    const playerModels = playersData.map(playerData => PlayerModel.fromObject(playerData));
-    console.log('DataManager: Loaded', playerModels.length, 'players from storage');
-    return playerModels;
+    this._initializePlayersCache();
+    return [...this._playersCache]; // Return a copy to prevent external modification
   }
 
   /**
@@ -354,12 +408,12 @@ class DataManager {
       };
     }
 
-    // Get existing players
+    // Get existing players from cache
     const players = this.getPlayers();
-    
+
     // Check if we're updating an existing player or adding a new one
     const existingIndex = players.findIndex(p => p.id === player.id);
-    
+
     if (existingIndex >= 0) {
       // Update existing player
       players[existingIndex] = player;
@@ -371,24 +425,13 @@ class DataManager {
           error: `Cannot add more than ${CONSTANTS.MAX_PLAYERS} players`
         };
       }
-      
+
       // Add new player
       players.push(player);
     }
 
-    // Convert to plain objects for storage
-    const playersData = players.map(p => p.toObject());
-    
-    // Check if data will fit in storage
-    if (!wouldFitInStorage(STORAGE_KEYS.PLAYERS, playersData)) {
-      return {
-        success: false,
-        error: 'Storage limit exceeded. Try removing some players or songs.'
-      };
-    }
-
-    // Save to storage
-    return this._saveDataToStorage(STORAGE_KEYS.PLAYERS, playersData);
+    // Update both cache and storage
+    return this._updatePlayersCache(players);
   }
 
   /**
@@ -397,12 +440,12 @@ class DataManager {
    * @returns {Object} - Result {success: boolean, error: string}
    */
   static deletePlayer(playerId) {
-    // Get existing players
+    // Get existing players from cache
     const players = this.getPlayers();
-    
+
     // Filter out the player to delete
     const filteredPlayers = players.filter(p => p.id !== playerId);
-    
+
     // If no players were removed, the ID was invalid
     if (filteredPlayers.length === players.length) {
       return {
@@ -411,18 +454,15 @@ class DataManager {
       };
     }
 
-    // Convert to plain objects for storage
-    const playersData = filteredPlayers.map(p => p.toObject());
-    
-    // Save to storage
-    const result = this._saveDataToStorage(STORAGE_KEYS.PLAYERS, playersData);
-    
+    // Update both cache and storage
+    const result = this._updatePlayersCache(filteredPlayers);
+
     // If successful, also delete any song selections for this player
     if (result.success) {
       this._deleteSongSelectionsForPlayer(playerId);
       this._removePlayerFromBattingOrder(playerId);
     }
-    
+
     return result;
   }
 
@@ -463,10 +503,10 @@ class DataManager {
 
     // Get existing song selections
     const selections = this.getSongSelections();
-    
+
     // Check if we're updating an existing selection or adding a new one
     const existingIndex = selections.findIndex(s => s.playerId === songSelection.playerId);
-    
+
     if (existingIndex >= 0) {
       // Update existing selection
       selections[existingIndex] = songSelection;
@@ -477,7 +517,7 @@ class DataManager {
 
     // Convert to plain objects for storage
     const selectionsData = selections.map(s => s.toObject());
-    
+
     // Check if data will fit in storage
     if (!wouldFitInStorage(STORAGE_KEYS.SONG_SELECTIONS, selectionsData)) {
       return {
@@ -499,13 +539,13 @@ class DataManager {
   static _deleteSongSelectionsForPlayer(playerId) {
     // Get existing song selections
     const selections = this.getSongSelections();
-    
+
     // Filter out selections for the specified player
     const filteredSelections = selections.filter(s => s.playerId !== playerId);
-    
+
     // Convert to plain objects for storage
     const selectionsData = filteredSelections.map(s => s.toObject());
-    
+
     // Save to storage
     return this._saveDataToStorage(STORAGE_KEYS.SONG_SELECTIONS, selectionsData);
   }
@@ -528,7 +568,7 @@ class DataManager {
     // Validate batting order against existing players
     const players = this.getPlayers();
     const validation = battingOrder.validate(players);
-    
+
     if (!validation.isValid) {
       return {
         success: false,
@@ -538,7 +578,7 @@ class DataManager {
 
     // Convert to plain object for storage
     const orderData = battingOrder.toObject();
-    
+
     // Check if data will fit in storage
     if (!wouldFitInStorage(STORAGE_KEYS.BATTING_ORDER, orderData)) {
       return {
@@ -560,10 +600,10 @@ class DataManager {
   static _removePlayerFromBattingOrder(playerId) {
     // Get current batting order
     const battingOrder = this.getBattingOrder();
-    
+
     // Remove player from order
     battingOrder.order = battingOrder.order.filter(id => id !== playerId);
-    
+
     // Save updated order
     return this.saveBattingOrder(battingOrder);
   }
@@ -594,7 +634,7 @@ class DataManager {
 
     // Convert to plain object for storage
     const stateData = appState.toObject();
-    
+
     // Check if data will fit in storage
     if (!wouldFitInStorage(STORAGE_KEYS.APP_STATE, stateData)) {
       return {
@@ -617,12 +657,12 @@ class DataManager {
   static _getDataFromStorage(key, defaultValue) {
     try {
       const serializedData = localStorage.getItem(key);
-      
+
       if (serializedData === null) {
         console.log(`DataManager: No data found for key ${key}, using default`);
         return defaultValue;
       }
-      
+
       const parsedData = JSON.parse(serializedData);
       return parsedData;
     } catch (error) {
@@ -648,7 +688,7 @@ class DataManager {
       };
     } catch (error) {
       console.error(`Error saving ${key} to storage:`, error);
-      
+
       // Handle storage quota exceeded error
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
         return {
@@ -656,7 +696,7 @@ class DataManager {
           error: 'Storage limit exceeded. Try removing some data.'
         };
       }
-      
+
       return {
         success: false,
         error: 'Failed to save data to storage.'

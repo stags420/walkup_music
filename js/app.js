@@ -42,8 +42,8 @@ function initApp() {
     // This ensures event listeners are set up before auth events are dispatched
     initPlayerManagement();
     
-    // Initialize song segmentation component
-    initSongSegmentation();
+    // Note: Song segmentation (including playback system) will be initialized 
+    // only after authentication is confirmed via event handlers
 
     // Check if we're returning from successful authentication
     if (urlParams.has('auth_success') && urlParams.get('auth_success') === 'true') {

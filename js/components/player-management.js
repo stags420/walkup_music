@@ -399,6 +399,18 @@ function showNotification(message, type = 'info') {
  * @param {PlayerModel} player - The player to select music for
  */
 function openSongSelectionForPlayer(player) {
+  // Ensure song segmentation is initialized first
+  if (!songSegmentationInitialized) {
+    console.log('Player management: Song segmentation not initialized, initializing now...');
+    initializeSongSegmentationIfNeeded();
+    
+    // Wait a moment for initialization, then try again
+    setTimeout(() => {
+      openSongSelectionForPlayer(player);
+    }, 500);
+    return;
+  }
+  
   // Import song segmentation component dynamically
   import('./song-segmentation.js').then(({ setCurrentPlayer }) => {
     // Set the current player in the song segmentation component
@@ -431,6 +443,9 @@ function handleAuthStateChange(event) {
     // User is authenticated, refresh the player list
     console.log('Player management: User is authenticated, triggering refresh...');
     refreshPlayerList();
+    
+    // Initialize song segmentation component now that user is authenticated
+    initializeSongSegmentationIfNeeded();
   } else {
     console.log('Player management: User is not authenticated, skipping refresh');
   }
@@ -444,6 +459,9 @@ function handleAuthSuccess(event) {
   console.log('Player management: Authentication successful, refreshing player list');
   // Refresh the player list after successful authentication
   refreshPlayerList();
+  
+  // Initialize song segmentation component now that user is authenticated
+  initializeSongSegmentationIfNeeded();
 }
 
 /**
@@ -469,6 +487,10 @@ function handleAuthLogout(event) {
   if (playerCountBadge) {
     playerCountBadge.textContent = '0';
   }
+  
+  // Reset song segmentation initialization flag so it can be re-initialized on next auth
+  songSegmentationInitialized = false;
+  console.log('Player management: Reset song segmentation initialization flag');
 }
 
 /**
@@ -483,6 +505,9 @@ function handleNavigatedToApp(event) {
   });
   // Refresh the player list when navigating to the app
   refreshPlayerList();
+  
+  // Initialize song segmentation component now that user is authenticated
+  initializeSongSegmentationIfNeeded();
 }
 
 /**
@@ -527,4 +552,29 @@ function escapeHtml(unsafe) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// Track whether song segmentation has been initialized
+let songSegmentationInitialized = false;
+
+/**
+ * Initialize song segmentation component if not already initialized
+ * This ensures the playback system is only initialized when user is authenticated
+ */
+function initializeSongSegmentationIfNeeded() {
+  if (songSegmentationInitialized) {
+    console.log('Player management: Song segmentation already initialized, skipping');
+    return;
+  }
+  
+  console.log('Player management: Initializing song segmentation component...');
+  
+  // Import and initialize song segmentation component
+  import('./song-segmentation.js').then(({ initSongSegmentation }) => {
+    initSongSegmentation();
+    songSegmentationInitialized = true;
+    console.log('Player management: Song segmentation component initialized successfully');
+  }).catch(error => {
+    console.error('Player management: Failed to initialize song segmentation component:', error);
+  });
 }

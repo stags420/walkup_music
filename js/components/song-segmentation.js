@@ -447,6 +447,7 @@ async function startSegmentMonitoring() {
             // Check if we've reached the end of the segment
             if (playbackState.progress_ms >= segmentEndMs) {
                 // Stop playback and monitoring
+                if (!spotifyAPI) return;
                 const pauseResult = await spotifyAPI.pauseEnhanced(selectedDeviceId);
                 stopSegmentMonitoring();
                 togglePlaybackButtons(false);
@@ -645,6 +646,13 @@ function handleSearchSubmit(event) {
     event.preventDefault();
 
     if (!songSearchInput) return;
+
+    // Check if component is properly initialized
+    if (!spotifyAPI) {
+        console.warn('Song segmentation component not fully initialized yet');
+        showSearchError('Please wait for the application to fully load before searching.');
+        return;
+    }
 
     const query = songSearchInput.value.trim();
     if (query) {
@@ -858,6 +866,9 @@ function clearSearchResults() {
  */
 async function selectTrack(track) {
     try {
+        if (!spotifyAPI) {
+            throw new Error('Spotify API not initialized');
+        }
         // Get detailed track information
         const detailedTrack = await spotifyAPI.getTrack(track.id);
         loadTrackForSegmentation(track.id, null, detailedTrack);
@@ -873,6 +884,9 @@ async function selectTrack(track) {
  */
 async function selectTrackWithPreview(track) {
     try {
+        if (!spotifyAPI) {
+            throw new Error('Spotify API not initialized');
+        }
         // Get detailed track information
         const detailedTrack = await spotifyAPI.getTrack(track.id);
         loadTrackForSegmentation(track.id, null, detailedTrack, true);
@@ -893,6 +907,9 @@ async function loadTrackForSegmentation(trackId, existingSelection = null, track
     try {
         // Get track data if not provided
         if (!trackData) {
+            if (!spotifyAPI) {
+                throw new Error('Spotify API not initialized');
+            }
             trackData = await spotifyAPI.getTrack(trackId);
         }
 
@@ -2243,6 +2260,9 @@ function addBrowserPlayerIndicator() {
  */
 async function showDeviceSelection() {
     try {
+        if (!spotifyAPI) {
+            throw new Error('Spotify API not initialized');
+        }
         const devices = await spotifyAPI.getAvailableDevicesEnhanced();
         displayDeviceSelection(devices);
     } catch (error) {
@@ -2352,7 +2372,9 @@ function selectDevice(deviceId, deviceName, isSDKDevice) {
     selectedDeviceId = deviceId;
 
     // Set SDK preference based on device selection
-    spotifyAPI.setSDKPreference(isSDKDevice);
+    if (spotifyAPI) {
+        spotifyAPI.setSDKPreference(isSDKDevice);
+    }
 
     // Hide device selection
     hideDeviceSelection();

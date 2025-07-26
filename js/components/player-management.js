@@ -397,7 +397,7 @@ async function openSongSelectionForPlayer(player) {
   if (!window.InitializationManager.isSongSegmentationInitialized()) {
     console.log('Player management: Song segmentation not initialized, initializing now...');
     
-    const result = await window.InitializationManager.initializeSongSegmentation();
+    const result = await window.InitializationManager.initializeSongSegmentation(spotifyAPI);
     if (!result.success) {
       console.error('Player management: Failed to initialize song segmentation:', result.error);
       showNotification('Failed to initialize song selection. Please try again.', 'danger');

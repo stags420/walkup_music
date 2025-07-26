@@ -100,14 +100,10 @@ async function initAuthenticatedApp() {
     }
 
     try {
-        // Initialize components with dependency injection FIRST (before showing UI)
+        // Initialize components using the centralized initialization manager
         const { initPlayerManagement } = await import('./components/player-management.js');
-        const { initSongSegmentation } = await import('./components/song-segmentation.js');
-        const { initializeWebPlaybackSDK } = await import('./components/web-playback-sdk.js');
+        const { initializeAuthenticatedComponents } = await import('./components/initialization-manager.js');
         const spotifyAPI = await import('./components/spotify-api.js');
-
-        // Initialize Web Playback SDK first
-        await initializeWebPlaybackSDK();
 
         // Initialize enhanced playback system
         const enhancedResult = await spotifyAPI.initializeEnhancedPlayback();
@@ -118,9 +114,21 @@ async function initAuthenticatedApp() {
             console.log('Enhanced playback system initialized in fallback mode');
         }
 
-        // Initialize components with dependencies
+        // Initialize player management with dependency injection
+        console.log('Initializing player management...');
         await initPlayerManagement(spotifyAPI);
-        await initSongSegmentation(spotifyAPI);
+        console.log('Player management initialized');
+
+        // Initialize all authenticated components through the initialization manager
+        console.log('Initializing authenticated components through initialization manager...');
+        const initResult = await initializeAuthenticatedComponents(spotifyAPI);
+
+        if (!initResult.success) {
+            console.error('Failed to initialize some components:', initResult.errors);
+            // Still continue to show UI, but log the errors
+        }
+
+        console.log('All components initialized successfully');
 
         // ONLY AFTER components are initialized, show the UI
         const authenticatedSections = document.querySelectorAll('.authenticated-content');

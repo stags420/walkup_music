@@ -29,10 +29,19 @@ describe('Initialization Manager', () => {
     let mockSongSegmentationInit;
     let mockWebPlaybackSDKInit;
     let mockDisconnectSDK;
+    let mockSpotifyAPI;
 
     beforeEach(() => {
         // Reset all mocks
         jest.clearAllMocks();
+        
+        // Create mock spotifyAPI
+        mockSpotifyAPI = {
+            searchSongs: jest.fn(),
+            getTrack: jest.fn(),
+            playTrackEnhanced: jest.fn(),
+            pauseEnhanced: jest.fn()
+        };
         
         // Get mock functions
         const songSegmentationModule = require('../../../js/components/song-segmentation.js');
@@ -55,22 +64,23 @@ describe('Initialization Manager', () => {
 
     describe('Song Segmentation Initialization', () => {
         test('should initialize song segmentation successfully', async () => {
-            const result = await initializeSongSegmentation();
+            const result = await initializeSongSegmentation(mockSpotifyAPI);
             
             expect(result.success).toBe(true);
             expect(result.justInitialized).toBe(true);
             expect(mockSongSegmentationInit).toHaveBeenCalledTimes(1);
+            expect(mockSongSegmentationInit).toHaveBeenCalledWith(mockSpotifyAPI);
             expect(isSongSegmentationInitialized()).toBe(true);
         });
 
         test('should not initialize song segmentation multiple times', async () => {
             // First initialization
-            const result1 = await initializeSongSegmentation();
+            const result1 = await initializeSongSegmentation(mockSpotifyAPI);
             expect(result1.success).toBe(true);
             expect(result1.justInitialized).toBe(true);
             
             // Second initialization should skip
-            const result2 = await initializeSongSegmentation();
+            const result2 = await initializeSongSegmentation(mockSpotifyAPI);
             expect(result2.success).toBe(true);
             expect(result2.alreadyInitialized).toBe(true);
             
@@ -81,9 +91,9 @@ describe('Initialization Manager', () => {
         test('should handle concurrent initialization requests', async () => {
             // Start multiple initializations simultaneously
             const promises = [
-                initializeSongSegmentation(),
-                initializeSongSegmentation(),
-                initializeSongSegmentation()
+                initializeSongSegmentation(mockSpotifyAPI),
+                initializeSongSegmentation(mockSpotifyAPI),
+                initializeSongSegmentation(mockSpotifyAPI)
             ];
             
             const results = await Promise.all(promises);
@@ -105,7 +115,7 @@ describe('Initialization Manager', () => {
             const errorMessage = 'Initialization failed';
             mockSongSegmentationInit.mockRejectedValue(new Error(errorMessage));
             
-            const result = await initializeSongSegmentation();
+            const result = await initializeSongSegmentation(mockSpotifyAPI);
             
             expect(result.success).toBe(false);
             expect(result.error).toBe(errorMessage);
@@ -118,9 +128,9 @@ describe('Initialization Manager', () => {
             
             // Start multiple initializations simultaneously
             const promises = [
-                initializeSongSegmentation(),
-                initializeSongSegmentation(),
-                initializeSongSegmentation()
+                initializeSongSegmentation(mockSpotifyAPI),
+                initializeSongSegmentation(mockSpotifyAPI),
+                initializeSongSegmentation(mockSpotifyAPI)
             ];
             
             const results = await Promise.all(promises);
@@ -188,7 +198,7 @@ describe('Initialization Manager', () => {
         });
 
         test('should update status after initialization', async () => {
-            await initializeSongSegmentation();
+            await initializeSongSegmentation(mockSpotifyAPI);
             await initializeWebPlaybackSDK();
             
             const status = getInitializationStatus();
@@ -201,7 +211,7 @@ describe('Initialization Manager', () => {
     describe('State Reset', () => {
         test('should reset individual component state', async () => {
             // Initialize both components
-            await initializeSongSegmentation();
+            await initializeSongSegmentation(mockSpotifyAPI);
             await initializeWebPlaybackSDK();
             
             expect(isSongSegmentationInitialized()).toBe(true);
@@ -216,7 +226,7 @@ describe('Initialization Manager', () => {
 
         test('should reset all component states', async () => {
             // Initialize both components
-            await initializeSongSegmentation();
+            await initializeSongSegmentation(mockSpotifyAPI);
             await initializeWebPlaybackSDK();
             
             expect(isSongSegmentationInitialized()).toBe(true);
@@ -233,7 +243,7 @@ describe('Initialization Manager', () => {
     describe('Component Cleanup', () => {
         test('should cleanup all components', async () => {
             // Initialize components
-            await initializeSongSegmentation();
+            await initializeSongSegmentation(mockSpotifyAPI);
             await initializeWebPlaybackSDK();
             
             expect(isSongSegmentationInitialized()).toBe(true);
@@ -263,7 +273,7 @@ describe('Initialization Manager', () => {
 
     describe('Authenticated Components Initialization', () => {
         test('should initialize authenticated components successfully', async () => {
-            const result = await initializeAuthenticatedComponents();
+            const result = await initializeAuthenticatedComponents(mockSpotifyAPI);
             
             expect(result.success).toBe(true);
             expect(result.songSegmentation.success).toBe(true);
@@ -274,7 +284,7 @@ describe('Initialization Manager', () => {
         test('should handle partial initialization failure', async () => {
             mockSongSegmentationInit.mockRejectedValue(new Error('Song segmentation failed'));
             
-            const result = await initializeAuthenticatedComponents();
+            const result = await initializeAuthenticatedComponents(mockSpotifyAPI);
             
             expect(result.success).toBe(false);
             expect(result.songSegmentation.success).toBe(false);
@@ -285,7 +295,7 @@ describe('Initialization Manager', () => {
     describe('Manual Cleanup', () => {
         test('should cleanup components manually', async () => {
             // Initialize components
-            await initializeSongSegmentation();
+            await initializeSongSegmentation(mockSpotifyAPI);
             await initializeWebPlaybackSDK();
             
             expect(isSongSegmentationInitialized()).toBe(true);

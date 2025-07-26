@@ -31,9 +31,10 @@ const componentReferences = {
 
 /**
  * Initialize song segmentation component with single initialization guarantee
+ * @param {Object} spotifyAPIModule - The Spotify API module dependency
  * @returns {Promise<Object>} Result object with success status
  */
-async function initializeSongSegmentation() {
+async function initializeSongSegmentation(spotifyAPIModule) {
     const state = initializationState.songSegmentation;
     
     console.log('InitManager: Song segmentation initialization requested', {
@@ -75,8 +76,8 @@ async function initializeSongSegmentation() {
             initSongSegmentation = importedInit;
         }
         
-        // Call the actual initialization
-        await initSongSegmentation();
+        // Call the actual initialization with dependency
+        await initSongSegmentation(spotifyAPIModule);
         
         // Mark as initialized
         state.initialized = true;
@@ -292,9 +293,10 @@ async function cleanupAllComponents() {
 /**
  * Initialize components in the correct order when user is authenticated
  * This is the main entry point for lazy initialization
+ * @param {Object} spotifyAPIModule - The Spotify API module dependency
  * @returns {Promise<Object>} Result object with initialization results
  */
-async function initializeAuthenticatedComponents() {
+async function initializeAuthenticatedComponents(spotifyAPIModule) {
     console.log('InitManager: Initializing authenticated components...');
     
     const results = {
@@ -306,7 +308,7 @@ async function initializeAuthenticatedComponents() {
     
     try {
         // Initialize song segmentation first (it will initialize SDK as needed)
-        results.songSegmentation = await initializeSongSegmentation();
+        results.songSegmentation = await initializeSongSegmentation(spotifyAPIModule);
         
         if (!results.songSegmentation.success) {
             results.success = false;

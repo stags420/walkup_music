@@ -99,14 +99,8 @@ async function initAuthenticatedApp() {
         loginSection.style.display = 'none';
     }
 
-    // Show authenticated sections
-    const authenticatedSections = document.querySelectorAll('.authenticated-content');
-    authenticatedSections.forEach(section => {
-        section.style.display = 'block';
-    });
-
     try {
-        // Initialize components with dependency injection
+        // Initialize components with dependency injection FIRST (before showing UI)
         const { initPlayerManagement } = await import('./components/player-management.js');
         const { initSongSegmentation } = await import('./components/song-segmentation.js');
         const { initializeWebPlaybackSDK } = await import('./components/web-playback-sdk.js');
@@ -127,6 +121,12 @@ async function initAuthenticatedApp() {
         // Initialize components with dependencies
         await initPlayerManagement(spotifyAPI);
         await initSongSegmentation(spotifyAPI);
+
+        // ONLY AFTER components are initialized, show the UI
+        const authenticatedSections = document.querySelectorAll('.authenticated-content');
+        authenticatedSections.forEach(section => {
+            section.style.display = 'block';
+        });
 
         console.log('Authenticated application initialized successfully');
     } catch (error) {

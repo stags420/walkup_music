@@ -16,6 +16,14 @@ let backToPlayersButton;
 // Dependencies
 let spotifyAPI;
 
+/**
+ * Check if the component is properly initialized
+ * @returns {boolean} Whether the component is initialized
+ */
+function isInitialized() {
+    return spotifyAPI !== undefined && spotifyAPI !== null;
+}
+
 // State
 let currentPlayer = null;
 let currentTrack = null;
@@ -337,6 +345,13 @@ export function setSegmentEndTime(endTime) {
  * @returns {Promise<Object>} - Result {success: boolean, error: string}
  */
 export async function previewSegment() {
+    if (!isInitialized()) {
+        return {
+            success: false,
+            error: 'Song segmentation not properly initialized. Please refresh the page and try again.'
+        };
+    }
+
     if (!currentTrack) {
         return {
             success: false,
@@ -436,6 +451,11 @@ async function startSegmentMonitoring() {
 
     previewMonitorInterval = setInterval(async () => {
         try {
+            if (!isInitialized()) {
+                stopSegmentMonitoring();
+                return;
+            }
+
             const playbackState = await spotifyAPI.getCurrentPlaybackStateEnhanced(selectedDeviceId);
 
             if (!playbackState || !playbackState.is_playing) {
@@ -659,6 +679,13 @@ function handleSearchSubmit(event) {
 async function performSearch(query) {
     if (isSearching) return;
 
+    // Check if component is properly initialized
+    if (!isInitialized()) {
+        console.error('Song segmentation not properly initialized - spotifyAPI is undefined');
+        showSearchError('Song search is not available. Please refresh the page and try again.');
+        return;
+    }
+
     isSearching = true;
     showSearchLoading();
 
@@ -857,6 +884,11 @@ function clearSearchResults() {
  * @param {Object} track - Selected track object
  */
 async function selectTrack(track) {
+    if (!isInitialized()) {
+        showNotification('Song segmentation not properly initialized. Please refresh the page and try again.', 'danger');
+        return;
+    }
+
     try {
         // Get detailed track information
         const detailedTrack = await spotifyAPI.getTrack(track.id);
@@ -872,6 +904,11 @@ async function selectTrack(track) {
  * @param {Object} track - Selected track object
  */
 async function selectTrackWithPreview(track) {
+    if (!isInitialized()) {
+        showNotification('Song segmentation not properly initialized. Please refresh the page and try again.', 'danger');
+        return;
+    }
+
     try {
         // Get detailed track information
         const detailedTrack = await spotifyAPI.getTrack(track.id);
@@ -890,6 +927,11 @@ async function selectTrackWithPreview(track) {
  * @param {boolean} usePreview - Whether to automatically use the Spotify preview segment
  */
 async function loadTrackForSegmentation(trackId, existingSelection = null, trackData = null, usePreview = false) {
+    if (!isInitialized()) {
+        showNotification('Song segmentation not properly initialized. Please refresh the page and try again.', 'danger');
+        return;
+    }
+
     try {
         // Get track data if not provided
         if (!trackData) {
@@ -2242,6 +2284,11 @@ function addBrowserPlayerIndicator() {
  * Show device selection interface
  */
 async function showDeviceSelection() {
+    if (!isInitialized()) {
+        showNotification('Song segmentation not properly initialized. Please refresh the page and try again.', 'danger');
+        return;
+    }
+
     try {
         const devices = await spotifyAPI.getAvailableDevicesEnhanced();
         displayDeviceSelection(devices);
@@ -2349,6 +2396,11 @@ function getDeviceIcon(type) {
  * @param {boolean} isSDKDevice - Whether this is the SDK device
  */
 function selectDevice(deviceId, deviceName, isSDKDevice) {
+    if (!isInitialized()) {
+        showNotification('Song segmentation not properly initialized. Please refresh the page and try again.', 'danger');
+        return;
+    }
+
     selectedDeviceId = deviceId;
 
     // Set SDK preference based on device selection

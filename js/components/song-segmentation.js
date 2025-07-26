@@ -225,6 +225,12 @@ function setupEventListeners() {
 
             if (query.length >= 2) {
                 searchTimeout = setTimeout(() => {
+                    // Check if component is properly initialized before searching
+                    if (!spotifyAPI) {
+                        console.warn('Song segmentation component not fully initialized yet');
+                        showSearchError('Please wait for the application to fully load before searching.');
+                        return;
+                    }
                     performSearch(query);
                 }, 500); // 500ms debounce
             } else if (query.length === 0) {
@@ -671,6 +677,9 @@ async function performSearch(query) {
     showSearchLoading();
 
     try {
+        if (!spotifyAPI) {
+            throw new Error('Spotify API not initialized. Please wait for the application to fully load.');
+        }
         const results = await spotifyAPI.searchSongs(query, { limit: 10 });
         displaySearchResults(results.tracks);
     } catch (error) {

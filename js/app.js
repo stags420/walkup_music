@@ -7,15 +7,9 @@ import { createUrl } from './utils/url-utils.js';
  * Initialize the application
  */
 async function initApp() {
-    console.log('Spotify Walk-up Music App initialized');
+    console.log('Initializing Spotify Walk-up Music App...');
 
-    // Initialize navigation and layout first
-    initNavigation();
-    handleResponsiveLayout();
-    initBootstrapComponents();
-    initLogoutButton();
-
-    // Handle special URL cases first
+    // Handle special URL cases first - these might redirect
     const urlParams = new URLSearchParams(window.location.search);
 
     // Check if we need to retry authentication with implicit flow
@@ -39,14 +33,19 @@ async function initApp() {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    // Initialize basic UI components needed for both authenticated and unauthenticated states
+    initNavigation();
+    handleResponsiveLayout();
+    initBootstrapComponents();
+    initLogoutButton();
+
     // Initialize auth component (sets up login button)
     initAuth();
 
-    // Check authentication status - this is synchronous and blocks everything else
+    // Check authentication status and route accordingly
     const authenticated = isAuthenticated();
 
     if (!authenticated) {
-        // Show login page - don't initialize anything else
         showLoginPage();
         return;
     }
@@ -102,7 +101,7 @@ async function initAuthenticatedApp() {
     try {
         // Initialize components using the centralized initialization manager
         const { initPlayerManagement } = await import('./components/player-management.js');
-        const { initializeAuthenticatedComponents } = await import('./components/initialization-manager.js');
+        await import('./components/initialization-manager.js'); // This sets up window.InitializationManager
         const spotifyAPI = await import('./components/spotify-api.js');
 
         // Initialize enhanced playback system
@@ -116,12 +115,12 @@ async function initAuthenticatedApp() {
 
         // Initialize player management with dependency injection
         console.log('Initializing player management...');
-        await initPlayerManagement(spotifyAPI);
+        initPlayerManagement(spotifyAPI);
         console.log('Player management initialized');
 
         // Initialize all authenticated components through the initialization manager
         console.log('Initializing authenticated components through initialization manager...');
-        const initResult = await initializeAuthenticatedComponents(spotifyAPI);
+        const initResult = await window.InitializationManager.initializeAuthenticatedComponents(spotifyAPI);
 
         if (!initResult.success) {
             console.error('Failed to initialize some components:', initResult.errors);
@@ -136,7 +135,7 @@ async function initAuthenticatedApp() {
             section.style.display = 'block';
         });
 
-        console.log('Authenticated application initialized successfully');
+        console.log('Spotify Walk-up Music App fully initialized');
     } catch (error) {
         console.error('Error initializing authenticated application:', error);
         // Could show an error message to user here

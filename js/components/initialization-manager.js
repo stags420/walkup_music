@@ -333,31 +333,24 @@ window.addEventListener('beforeunload', () => {
     cleanupAllComponents();
 });
 
+// Create the manager object
+const InitializationManager = {
+    initializeSongSegmentation,
+    initializeWebPlaybackSDK,
+    isSongSegmentationInitialized,
+    isWebPlaybackSDKInitialized,
+    getInitializationStatus,
+    resetInitializationState,
+    resetAllInitializationStates,
+    cleanupAllComponents,
+    initializeAuthenticatedComponents
+};
+
 // Export functions for both ES modules and CommonJS
 if (typeof module !== 'undefined' && module.exports) {
     // CommonJS exports for Jest testing
-    module.exports = {
-        initializeSongSegmentation,
-        initializeWebPlaybackSDK,
-        isSongSegmentationInitialized,
-        isWebPlaybackSDKInitialized,
-        getInitializationStatus,
-        resetInitializationState,
-        resetAllInitializationStates,
-        cleanupAllComponents,
-        initializeAuthenticatedComponents
-    };
+    module.exports = InitializationManager;
 } else {
-    // ES module exports for browser usage
-    window.InitializationManager = {
-        initializeSongSegmentation,
-        initializeWebPlaybackSDK,
-        isSongSegmentationInitialized,
-        isWebPlaybackSDKInitialized,
-        getInitializationStatus,
-        resetInitializationState,
-        resetAllInitializationStates,
-        cleanupAllComponents,
-        initializeAuthenticatedComponents
-    };
+    // Browser global exports
+    window.InitializationManager = InitializationManager;
 }

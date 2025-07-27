@@ -3,11 +3,11 @@
 ## Code Organization
 
 ### Module Structure
-- Use CommonJS modules (require/module.exports) for better Jest compatibility
+- Use ES modules (import/export) for modern JavaScript development
 - Keep related functionality in dedicated files (auth, models, utils)
 - Use explicit exports - avoid barrel exports
 - Group files by function: components/, utils/, models/, config/
-- Export functions and classes using `module.exports = { ... }` syntax
+- Export functions and classes using named exports: `export { functionName, ClassName }`
 
 ### File Naming
 - Use kebab-case for file names: `player-management.js`, `spotify-api.js`
@@ -17,10 +17,31 @@
 ## Code Style
 
 ### Import/Export Patterns
-- Use `const { functionName } = require('./module-name')` for imports
-- Use `module.exports = { functionName, ClassName }` for exports
-- Avoid mixing CommonJS and ES6 module syntax
+- Use `import { functionName } from './module-name.js'` for named imports
+- Use `export { functionName, ClassName }` for named exports
+- Use `export default ClassName` sparingly, prefer named exports for better tree-shaking
+- Always include `.js` extension in import paths for explicit module resolution
 - Keep imports at the top of files, grouped by type (external, internal)
+- Avoid mixing CommonJS and ES module syntax
+
+### ES Module Examples
+```javascript
+// Named exports (preferred)
+export function validateUser(user) { /* ... */ }
+export class UserManager { /* ... */ }
+
+// Import named exports
+import { validateUser, UserManager } from './user-utils.js';
+
+// Default export (use sparingly)
+export default class ApiService { /* ... */ }
+
+// Import default export
+import ApiService from './api-service.js';
+
+// Mixed imports
+import ApiService, { validateResponse } from './api-service.js';
+```
 
 ### Functions and Classes
 - Use descriptive function names that indicate action: `checkAuthentication()`, `handleAuthCallback()`
@@ -59,7 +80,7 @@
 - Initialize components with `init()` functions that accept dependencies
 - Use event delegation for dynamic content
 - Separate DOM manipulation from business logic
-- Export functions using CommonJS: `module.exports = { init, cleanup }`
+- Export functions using ES modules: `export { init, cleanup }`
 - Accept service instances as parameters rather than creating them internally
 
 ## Documentation

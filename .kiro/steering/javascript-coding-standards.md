@@ -43,14 +43,6 @@
 
 ## Architecture Patterns
 
-### Dependency Injection
-- Pass dependencies as parameters instead of creating them internally
-- Use constructor injection for class-based components
-- Use function parameters for functional components
-- Avoid multiple initializations of the same service/component
-- Create dependencies at the application level and pass them down
-- Use factory functions or service locators for complex dependency graphs
-
 ### Data Models
 - Use class-based models with validation methods
 - Implement `validate()` method returning `{isValid, errors}` structure

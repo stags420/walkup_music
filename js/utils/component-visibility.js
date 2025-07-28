@@ -114,14 +114,12 @@ export {
     batchVisibilityUpdate
 };
 
-// Also make available globally for backward compatibility
+// Make functions available globally for HTML onclick handlers and legacy code
 if (typeof window !== 'undefined') {
-    window.ComponentVisibility = {
-        showComponent,
-        hideComponent,
-        toggleComponent,
-        isComponentVisible,
-        showOnlyComponent,
-        batchVisibilityUpdate
-    };
+    window.showComponent = showComponent;
+    window.hideComponent = hideComponent;
+    window.toggleComponent = toggleComponent;
+    window.isComponentVisible = isComponentVisible;
+    window.showOnlyComponent = showOnlyComponent;
+    window.batchVisibilityUpdate = batchVisibilityUpdate;
 }

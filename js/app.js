@@ -91,7 +91,7 @@ async function initAuthenticatedApp() {
     try {
         // Initialize components using the centralized initialization manager
         const { initPlayerManagement } = await import('./components/player-management.js');
-        await import('./components/initialization-manager.js'); // This sets up window.InitializationManager
+        const InitializationManager = await import('./components/initialization-manager.js');
         const spotifyAPI = await import('./components/spotify-api.js');
 
         // Initialize enhanced playback system
@@ -110,7 +110,7 @@ async function initAuthenticatedApp() {
 
         // Initialize all authenticated components through the initialization manager
         console.log('Initializing authenticated components through initialization manager...');
-        const initResult = await window.InitializationManager.initializeAuthenticatedComponents(spotifyAPI);
+        const initResult = await InitializationManager.default.initializeAuthenticatedComponents(spotifyAPI);
 
         if (!initResult.success) {
             console.error('Failed to initialize some components:', initResult.errors);

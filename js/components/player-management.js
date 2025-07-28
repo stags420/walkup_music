@@ -5,6 +5,7 @@
 
 import { PlayerModel } from '../models/data-models.js';
 import playerManagementService from './player-management-service.js';
+import InitializationManager from './initialization-manager.js';
 
 // DOM Elements
 let playerNameInput;
@@ -394,10 +395,10 @@ function showNotification(message, type = 'info') {
  */
 async function openSongSelectionForPlayer(player) {
   // Ensure song segmentation is initialized first using the initialization manager
-  if (!window.InitializationManager.isSongSegmentationInitialized()) {
+  if (!InitializationManager.isSongSegmentationInitialized()) {
     console.log('Player management: Song segmentation not initialized, initializing now...');
     
-    const result = await window.InitializationManager.initializeSongSegmentation(spotifyAPI);
+    const result = await InitializationManager.initializeSongSegmentation(spotifyAPI);
     if (!result.success) {
       console.error('Player management: Failed to initialize song segmentation:', result.error);
       showNotification('Failed to initialize song selection. Please try again.', 'danger');

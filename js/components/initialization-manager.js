@@ -327,8 +327,3 @@ export {
 };
 
 export default InitializationManager;
-
-// Also make available globally for backward compatibility
-if (typeof window !== 'undefined') {
-    window.InitializationManager = InitializationManager;
-}

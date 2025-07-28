@@ -79,7 +79,7 @@ export async function initializeWebPlaybackSDK() {
 
         // Initialize the player
         const result = await initializePlayer();
-        
+        console.info('Web player initialized successfully');
         isSDKInitializing = false;
         return result;
 

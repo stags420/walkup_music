@@ -6,7 +6,7 @@ inclusion: always
 
 ## Test-Driven Development
 - Write tests as part of the initial coding task, not as separate work
-- Tests should be created alongside implementation code
+- Tests should be created as code is implemented
 - Don't defer testing to later iterations
 
 ## Unit Testing Standards
@@ -60,6 +60,8 @@ inclusion: always
 ## Testing Best Practices
 
 ### Test Organization
+- Tests go in a separate "test" directory
+- Unit tests should mimic the directory structure of the tested unit; e.g. a unit test for src/services/SomeService.tsx should go in test/services/SomeService.test.tsx
 - Group related tests in describe blocks
 - Use consistent naming conventions
 - Keep test files close to implementation code

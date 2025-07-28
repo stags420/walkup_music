@@ -23,11 +23,7 @@ const initializationState = {
     }
 };
 
-// Component references for cleanup
-const componentReferences = {
-    songSegmentation: null,
-    webPlaybackSDK: null
-};
+
 
 /**
  * Initialize song segmentation component with single initialization guarantee
@@ -63,21 +59,11 @@ async function initializeSongSegmentation(spotifyAPIModule) {
     console.log('InitManager: Starting song segmentation initialization...');
     
     try {
-        // Use different import strategy based on environment
-        let initSongSegmentation;
-        
-        if (typeof module !== 'undefined' && module.exports) {
-            // Jest/Node.js environment - use require
-            const songSegmentationModule = require('./song-segmentation.js');
-            initSongSegmentation = songSegmentationModule.initSongSegmentation;
-        } else {
-            // Browser environment - use dynamic import
-            const { initSongSegmentation: importedInit } = await import('./song-segmentation.js');
-            initSongSegmentation = importedInit;
-        }
+        // Use dynamic import for ES modules
+        const { initSongSegmentation: importedInit } = await import('./song-segmentation.js');
         
         // Call the actual initialization with dependency
-        await initSongSegmentation(spotifyAPIModule);
+        await importedInit(spotifyAPIModule);
         
         // Mark as initialized
         state.initialized = true;
@@ -141,21 +127,11 @@ async function initializeWebPlaybackSDK() {
     console.log('InitManager: Starting Web Playback SDK initialization...');
     
     try {
-        // Use different import strategy based on environment
-        let initializeWebPlaybackSDK;
-        
-        if (typeof module !== 'undefined' && module.exports) {
-            // Jest/Node.js environment - use require
-            const webPlaybackSDKModule = require('./web-playback-sdk.js');
-            initializeWebPlaybackSDK = webPlaybackSDKModule.initializeWebPlaybackSDK;
-        } else {
-            // Browser environment - use dynamic import
-            const { initializeWebPlaybackSDK: importedInit } = await import('./web-playback-sdk.js');
-            initializeWebPlaybackSDK = importedInit;
-        }
+        // Use dynamic import for ES modules
+        const { initializeWebPlaybackSDK: importedInit } = await import('./web-playback-sdk.js');
         
         // Call the actual initialization
-        const result = await initializeWebPlaybackSDK();
+        const result = await importedInit();
         
         if (result.success) {
             // Mark as initialized
@@ -267,17 +243,8 @@ async function cleanupAllComponents() {
     // Cleanup Web Playback SDK if initialized
     if (initializationState.webPlaybackSDK.initialized) {
         try {
-            let disconnectSDK;
-            
-            if (typeof module !== 'undefined' && module.exports) {
-                // Jest/Node.js environment - use require
-                const webPlaybackSDKModule = require('./web-playback-sdk.js');
-                disconnectSDK = webPlaybackSDKModule.disconnectSDK;
-            } else {
-                // Browser environment - use dynamic import
-                const { disconnectSDK: importedDisconnect } = await import('./web-playback-sdk.js');
-                disconnectSDK = importedDisconnect;
-            }
+            // Use dynamic import for ES modules
+            const { disconnectSDK } = await import('./web-playback-sdk.js');
             
             await disconnectSDK();
             console.log('InitManager: Web Playback SDK cleaned up');
@@ -346,11 +313,22 @@ const InitializationManager = {
     initializeAuthenticatedComponents
 };
 
-// Export functions for both ES modules and CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    // CommonJS exports for Jest testing
-    module.exports = InitializationManager;
-} else {
-    // Browser global exports
+// Export as ES module
+export {
+    initializeSongSegmentation,
+    initializeWebPlaybackSDK,
+    isSongSegmentationInitialized,
+    isWebPlaybackSDKInitialized,
+    getInitializationStatus,
+    resetInitializationState,
+    resetAllInitializationStates,
+    cleanupAllComponents,
+    initializeAuthenticatedComponents
+};
+
+export default InitializationManager;
+
+// Also make available globally for backward compatibility
+if (typeof window !== 'undefined') {
     window.InitializationManager = InitializationManager;
 }

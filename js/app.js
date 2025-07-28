@@ -2,6 +2,7 @@
 import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
 import { isAuthenticated, logout, initAuth } from './components/auth.js';
 import { createUrl } from './utils/url-utils.js';
+// Component visibility utility will be loaded as a script tag
 
 /**
  * Initialize the application
@@ -37,10 +38,6 @@ async function initApp() {
     initNavigation();
     handleResponsiveLayout();
     initBootstrapComponents();
-    initLogoutButton();
-
-    // Initialize auth component (sets up login button)
-    initAuth();
 
     // Check authentication status and route accordingly
     const authenticated = isAuthenticated();
@@ -71,17 +68,11 @@ function initLogoutButton() {
  * Show the login page by hiding authenticated content and showing login UI
  */
 function showLoginPage() {
-    // Hide authenticated sections
-    const authenticatedSections = document.querySelectorAll('.authenticated-content');
-    authenticatedSections.forEach(section => {
-        section.style.display = 'none';
-    });
+    // Initialize auth component (sets up login button)
+    initAuth();
 
-    // Show login section
-    const loginSection = document.querySelector('.login-section');
-    if (loginSection) {
-        loginSection.style.display = 'block';
-    }
+    // Use the new utility to show only the login section
+    showOnlyComponent('.login-section', '.login-section, .authenticated-content');
 
     console.log('Showing login page - user not authenticated');
 }
@@ -92,11 +83,10 @@ function showLoginPage() {
 async function initAuthenticatedApp() {
     console.log('Initializing authenticated application...');
 
+    initLogoutButton();
+
     // Hide login section
-    const loginSection = document.querySelector('.login-section');
-    if (loginSection) {
-        loginSection.style.display = 'none';
-    }
+    hideComponent('.login-section');
 
     try {
         // Initialize components using the centralized initialization manager
@@ -132,7 +122,7 @@ async function initAuthenticatedApp() {
         // ONLY AFTER components are initialized, show the UI
         const authenticatedSections = document.querySelectorAll('.authenticated-content');
         authenticatedSections.forEach(section => {
-            section.style.display = 'block';
+            showComponent(section);
         });
 
         console.log('Spotify Walk-up Music App fully initialized');

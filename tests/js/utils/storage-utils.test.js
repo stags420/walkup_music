@@ -140,7 +140,7 @@ describe('Storage Utilities', () => {
     isStorageAvailable,
     getStorageSize,
     wouldFitInStorage
-  } = require('../../../js/utils/storage-utils');
+  } = require('../../../js/utils/storage-utils.js');
 
   beforeEach(() => {
     // Clear all mocks before each test

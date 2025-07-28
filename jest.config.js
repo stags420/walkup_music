@@ -4,9 +4,10 @@ module.exports = {
   moduleNameMapper: {
     '\\.(css|less)': '<rootDir>/tests/mocks/styleMock.js'
   },
-  transform: {}, // No transform needed for our tests
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
   testMatch: ['**/tests/**/*.test.js'],
-  setupFiles: ['<rootDir>/tests/setup.js'],
   transformIgnorePatterns: [
     '/node_modules/'
   ]

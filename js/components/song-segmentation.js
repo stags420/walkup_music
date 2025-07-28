@@ -4,6 +4,7 @@
  */
 
 import { DataManager, SongSelectionModel } from '../models/data-models.js';
+// Component visibility utility will be loaded as a script tag
 
 // DOM Elements
 let selectedPlayerInfo;
@@ -1129,7 +1130,7 @@ function showSegmentationInterface() {
                         <button class="btn btn-outline-secondary" id="play-full-song">
                             <i class="bi bi-play-circle me-2"></i>Play Full Song
                         </button>
-                        <button class="btn btn-outline-secondary" id="pause-playback" style="display: none;">
+                        <button class="btn btn-outline-secondary hidden" id="pause-playback">
                             <i class="bi bi-pause-fill me-2"></i>Pause
                         </button>
                     </div>
@@ -1245,7 +1246,7 @@ function showSegmentationInterface() {
             <button class="btn btn-outline-secondary" id="play-full-song">
                 <i class="bi bi-play-circle me-2"></i>Play Full Song
             </button>
-            <button class="btn btn-outline-secondary" id="pause-playback" style="display: none;">
+            <button class="btn btn-outline-secondary hidden" id="pause-playback">
                 <i class="bi bi-pause-fill me-2"></i>Pause
             </button>
         </div>
@@ -1919,9 +1920,9 @@ function togglePlaybackButtons(isPlaying) {
     const playFullButton = document.getElementById('play-full-song');
     const pauseButton = document.getElementById('pause-playback');
 
-    if (previewButton) previewButton.style.display = isPlaying ? 'none' : 'inline-block';
-    if (playFullButton) playFullButton.style.display = isPlaying ? 'none' : 'inline-block';
-    if (pauseButton) pauseButton.style.display = isPlaying ? 'inline-block' : 'none';
+    toggleComponent(previewButton, !isPlaying, 'inline-block');
+    toggleComponent(playFullButton, !isPlaying, 'inline-block');
+    toggleComponent(pauseButton, isPlaying, 'inline-block');
 }
 
 /**
@@ -2052,15 +2053,11 @@ function updateSearchResultsLayout() {
         if (isMobile) {
             // Ensure mobile layout is applied
             const header = document.querySelector('.search-results-header');
-            if (header) {
-                header.style.display = 'flex';
-            }
+            toggleComponent(header, true, 'flex');
         } else {
             // Ensure desktop layout is applied
             const header = document.querySelector('.search-results-header');
-            if (header) {
-                header.style.display = 'none';
-            }
+            hideComponent(header);
             searchResultsContent.classList.remove('collapsed');
             searchResultsContent.style.maxHeight = 'none';
         }
@@ -2243,9 +2240,7 @@ function updateDeviceSelectionUI(sdkDeviceId) {
 
     // Hide device selection since SDK handles it automatically
     const deviceSelection = document.getElementById('device-selection');
-    if (deviceSelection) {
-        deviceSelection.style.display = 'none';
-    }
+    hideComponent(deviceSelection);
 
     // Add a small indicator showing browser player is active
     addBrowserPlayerIndicator();

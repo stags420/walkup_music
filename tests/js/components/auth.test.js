@@ -8,10 +8,15 @@
  * 3. Token refresh mechanism
  */
 
-// Mock the dependencies
-const setCookie = jest.fn();
-const getCookie = jest.fn();
-const deleteCookie = jest.fn();
+// Mock cookie utils module
+jest.mock('../../../js/utils/cookie-utils.js', () => ({
+    setCookie: jest.fn(),
+    getCookie: jest.fn(),
+    deleteCookie: jest.fn()
+}));
+
+// Get the mock functions
+const { setCookie, getCookie, deleteCookie } = require('../../../js/utils/cookie-utils.js');
 
 // Constants used in auth.js
 const ACCESS_TOKEN_COOKIE = 'spotify_access_token';
@@ -214,7 +219,9 @@ describe('Authentication Component', () => {
         window.localStorage.removeItem(REFRESH_TOKEN_COOKIE);
 
         // Reload the page to restart the app flow
-        window.location.reload = jest.fn();
+        const mockReload = jest.fn();
+        delete window.location;
+        window.location = { reload: mockReload };
         window.location.reload();
       };
 

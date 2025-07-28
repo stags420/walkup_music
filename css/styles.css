@@ -47,12 +47,48 @@ main {
     padding: 2rem 0;
 }
 
+/* Hide all components by default */
 .view {
     display: none;
 }
 
 .view.active {
     display: block;
+}
+
+/* Hide authenticated content by default */
+.authenticated-content {
+    display: none;
+}
+
+.authenticated-content.active {
+    display: block;
+}
+
+/* Hide login section by default */
+.login-section {
+    display: none;
+}
+
+.login-section.active {
+    display: block;
+}
+
+/* Utility classes for component visibility */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+.visible-inline {
+    display: inline-block !important;
+}
+
+.visible-flex {
+    display: flex !important;
 }
 
 /* Custom Button Styling */

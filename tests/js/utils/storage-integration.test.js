@@ -14,10 +14,17 @@ jest.mock('../../../js/utils/storage-utils', () => {
     APP_STATE: 'walkup_app_state'
   };
 
+  const mockLocalStorage = {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn()
+  };
+
   const saveData = jest.fn((key, data) => {
     try {
       const serializedData = JSON.stringify(data);
-      localStorage.setItem(key, serializedData);
+      mockLocalStorage.setItem(key, serializedData);
       return true;
     } catch (error) {
       console.error('Error saving data to local storage:', error);
@@ -27,7 +34,7 @@ jest.mock('../../../js/utils/storage-utils', () => {
 
   const getData = jest.fn((key, defaultValue = null) => {
     try {
-      const serializedData = localStorage.getItem(key);
+      const serializedData = mockLocalStorage.getItem(key);
       if (serializedData === null) {
         return defaultValue;
       }
@@ -40,7 +47,7 @@ jest.mock('../../../js/utils/storage-utils', () => {
 
   const clearData = jest.fn((key) => {
     try {
-      localStorage.removeItem(key);
+      mockLocalStorage.removeItem(key);
       return true;
     } catch (error) {
       console.error('Error clearing data from local storage:', error);
@@ -51,7 +58,7 @@ jest.mock('../../../js/utils/storage-utils', () => {
   const clearAllData = jest.fn(() => {
     try {
       Object.values(STORAGE_KEYS).forEach(key => {
-        localStorage.removeItem(key);
+        mockLocalStorage.removeItem(key);
       });
       return true;
     } catch (error) {
@@ -63,8 +70,8 @@ jest.mock('../../../js/utils/storage-utils', () => {
   const isStorageAvailable = jest.fn(() => {
     try {
       const testKey = '__storage_test__';
-      localStorage.setItem(testKey, testKey);
-      localStorage.removeItem(testKey);
+      mockLocalStorage.setItem(testKey, testKey);
+      mockLocalStorage.removeItem(testKey);
       return true;
     } catch (e) {
       return false;
@@ -73,7 +80,7 @@ jest.mock('../../../js/utils/storage-utils', () => {
 
   const getStorageSize = jest.fn((key) => {
     try {
-      const data = localStorage.getItem(key);
+      const data = mockLocalStorage.getItem(key);
       if (!data) return 0;
       return data.length * 2;
     } catch (error) {

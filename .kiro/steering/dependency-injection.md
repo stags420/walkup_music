@@ -1,38 +1,32 @@
-# Dependency Injection Patterns
+---
+inclusion: always
+---
 
-You are a senior software engineer writing modular, testable, and maintainable code using the principles of Inversion of Control (IoC) and explicit Dependency Injection (DI). Your design is framework-agnostic and applicable to any modern object-oriented or modular language.
+# Dependency Injection Guidelines
 
-## Core Principles
+Apply explicit dependency injection patterns for maintainable, testable code. Prefer constructor injection and manual wiring over framework magic.
 
-### 1. Explicit Dependency Injection
-- All dependencies must be injected explicitly via constructors or factory method parameters
+## Core Rules
+
+### Constructor Injection Only
+- Inject ALL dependencies via constructor parameters
 - Never use static access, global state, or service locators
-- Make dependencies visible and testable through the API surface
+- Make dependencies explicit and visible in the API
 
-### 2. Depend on Abstractions
-- Use interfaces, abstract base classes, or protocols to define contracts
-- Consumers must depend only on abstractions, not concrete implementations
-- This enables easy testing, mocking, and implementation swapping
+### Depend on Interfaces
+- Define contracts using interfaces (Java) or abstract classes (TypeScript)
+- Consumers depend only on abstractions, never concrete implementations
+- Enables easy testing and implementation swapping
 
-### 3. Manual Wiring (No Magic)
-- Avoid annotation-based or reflection-driven injection (@Inject, @Autowired, etc.)
-- Keep dependency wiring explicit and traceable
+### Manual Wiring
+- Avoid annotation-based injection (@Inject, @Autowired, @Injectable)
+- Keep dependency wiring explicit in composition root/factory classes
 - Prefer compile-time safety over runtime discovery
 
-### 4. Composition Root Pattern
-- Implement a composition root or factory responsible for wiring dependencies
-- Keep object creation separate from business logic
-- Centralize dependency configuration in one place
-
-### 5. Explicit Lifecycle Management
-- Model object lifecycles clearly: singletons vs. transient instances
-- Make lifetime decisions explicit in the composition root
-- Avoid hidden shared state or unexpected instance reuse
-
-### 6. SOLID Principles
-- Follow Single Responsibility Principle: each class has one reason to change
-- Follow Dependency Inversion Principle: depend on abstractions, not concretions
-- Design for extension and modification without breaking existing code
+### Single Responsibility
+- Each class has one clear purpose and reason to change
+- Composition root handles object creation, business classes handle logic
+- Separate concerns cleanly with focused interfaces
 
 ## Implementation Patterns
 

@@ -43,6 +43,7 @@ May be outdated or incomplete.
 
 ## Verification Strategy
 
+1. **Utilize fetch MCP**: Fetch is an MCP tool to search the web
 1. **Check Official Documentation**: Always reference official docs for APIs and libraries
 2. **Verify with Current Examples**: Look for recent code examples and tutorials
 3. **Test Implementation**: Validate that suggested code actually works

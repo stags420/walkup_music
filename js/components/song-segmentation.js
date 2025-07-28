@@ -4,7 +4,7 @@
  */
 
 import { DataManager, SongSelectionModel } from '../models/data-models.js';
-// Component visibility utility will be loaded as a script tag
+import { hideComponent } from '../utils/component-visibility.js';
 
 // DOM Elements
 let selectedPlayerInfo;

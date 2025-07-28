@@ -2,7 +2,7 @@
 import { initNavigation, handleResponsiveLayout } from './utils/navigation.js';
 import { isAuthenticated, logout, initAuth } from './components/auth.js';
 import { createUrl } from './utils/url-utils.js';
-// Component visibility utility will be loaded as a script tag
+import { showComponent, hideComponent, showOnlyComponent } from './utils/component-visibility.js';
 
 /**
  * Initialize the application

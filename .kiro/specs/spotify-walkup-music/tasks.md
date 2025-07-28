@@ -281,7 +281,20 @@
     - Fix: Create proper integration tests that test the actual player management UI component
     - _Requirements: 2.6_
 
-  - [ ] 11.4 Verify test consistency with actual implementation
+  - [ ] 11.4 Fix Spotify refresh token handling for proper session management
+    - Issue: Application shows isAuthenticated as true but Spotify API requests fail with 401 Unauthorized after being away for a while
+    - Root cause: Current refresh token implementation is mocked and doesn't use actual Spotify refresh tokens from Authorization Code flow
+    - The refreshToken() function simulates token refresh instead of making actual API calls to Spotify's token endpoint
+    - When tokens expire, the app thinks it's authenticated but Spotify rejects API requests
+    - Fix: Implement proper refresh token flow using the refresh_token from Authorization Code with PKCE flow
+    - Make actual POST requests to https://accounts.spotify.com/api/token with grant_type=refresh_token
+    - Handle refresh token expiration by prompting for re-authentication
+    - Ensure isAuthenticated() validates tokens against actual Spotify API responses, not just local expiration times
+    - Add proper error handling for expired refresh tokens and network failures
+    - Test token refresh flow with actual expired tokens to ensure it works correctly
+    - _Requirements: 1.3, 1.4_
+
+  - [ ] 11.5 Verify test consistency with actual implementation
     - File: tests/js/components/player-management.test.js
     - The test file creates a mock implementation of playerManagementService but doesn't verify it matches the actual service
     - Risk of tests passing while actual implementation has bugs

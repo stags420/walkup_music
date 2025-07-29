@@ -29,56 +29,28 @@
   - Write unit tests for authentication flow and token management
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 5. Build Spotify API integration
-  - Create Spotify Web API client with search functionality
-  - Implement song search with proper error handling and rate limiting
-  - Add track metadata parsing and preview URL handling
-  - Create unit tests for API integration with mocked responses
-  - _Requirements: 2.2, 2.3_
-
-- [ ] 6. Implement player management service
-  - Create PlayerService class with CRUD operations for players
-  - Add song selection and segment timing functionality
-  - Implement player data persistence using storage service
-  - Write unit tests for player management operations
-  - _Requirements: 2.1, 2.5, 2.6, 2.7_
-
-- [ ] 7. Create Spotify Web Playback SDK integration
-  - Initialize Spotify Web Playback SDK with proper error handling
-  - Implement music playback with precise segment timing control
-  - Add device selection and playback state management
-  - Create unit tests for playback functionality with SDK mocking
-  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
-
-- [ ] 8. Implement game control service
-  - Create GameService class for batting order management
-  - Add current batter tracking and position advancement
-  - Integrate music playback with batter transitions
-  - Write unit tests for game state management and music integration
-  - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
-
-- [ ] 9. Build configuration management
-  - Create ConfigService for managing application settings
-  - Implement configurable segment duration with validation
-  - Add Spotify client ID and redirect URI configuration
-  - Write unit tests for configuration management
-  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
-
-- [ ] 10. Create data export/import functionality
-  - Add export functionality to storage service that creates downloadable JSON
-  - Implement import functionality with file validation and conflict resolution
-  - Add user interface for export/import operations
-  - Write unit tests for export/import with various data scenarios
-  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
-
-- [ ] 11. Build authentication UI components
+- [ ] 5. Build authentication UI components
   - Create LoginPage component with Spotify login button
   - Add authentication state management with React Context
   - Implement loading states and error handling for auth flow
   - Write component tests for authentication UI
   - _Requirements: 1.1, 1.4_
 
-- [ ] 12. Create player management UI
+- [ ] 6. Build Spotify API integration
+  - Create Spotify Web API client with search functionality
+  - Implement song search with proper error handling and rate limiting
+  - Add track metadata parsing and preview URL handling
+  - Create unit tests for API integration with mocked responses
+  - _Requirements: 2.2, 2.3_
+
+- [ ] 7. Implement player management service
+  - Create PlayerService class with CRUD operations for players
+  - Add song selection and segment timing functionality
+  - Implement player data persistence using storage service
+  - Write unit tests for player management operations
+  - _Requirements: 2.1, 2.5, 2.6, 2.7_
+
+- [ ] 8. Create player management UI
   - Build PlayerList component to display all saved players
   - Create PlayerForm component for adding/editing players
   - Implement SongSelector component with search and preview functionality
@@ -86,14 +58,28 @@
   - Write component tests for player management interface
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.6, 2.7_
 
-- [ ] 13. Build batting order management UI
+- [ ] 9. Implement game control service
+  - Create GameService class for batting order management
+  - Add current batter tracking and position advancement
+  - Integrate music playback with batter transitions
+  - Write unit tests for game state management and music integration
+  - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
+
+- [ ] 10. Build batting order management UI
   - Create BattingOrderManager component for creating and editing orders
   - Implement OrderBuilder with drag-and-drop player arrangement
   - Add current position tracking and modification controls
   - Write component tests for batting order interface
   - _Requirements: 3.1, 3.2, 3.4, 3.5_
 
-- [ ] 14. Create game mode interface
+- [ ] 11. Create Spotify Web Playback SDK integration
+  - Initialize Spotify Web Playback SDK with proper error handling
+  - Implement music playback with precise segment timing control
+  - Add device selection and playback state management
+  - Create unit tests for playback functionality with SDK mocking
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+
+- [ ] 12. Create game mode interface
   - Build CurrentBatterDisplay showing current, on-deck, and in-the-hole batters
   - Create GameControls component with "Next Batter" button
   - Add visual feedback for music playback state
@@ -101,12 +87,26 @@
   - Write component tests for game mode interface
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [ ] 15. Implement settings and data management UI
+- [ ] 13. Build configuration management
+  - Create ConfigService for managing application settings
+  - Implement configurable segment duration with validation
+  - Add Spotify client ID and redirect URI configuration
+  - Write unit tests for configuration management
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+
+- [ ] 14. Implement settings and data management UI
   - Create SettingsPage with configuration options
   - Build DataManager component for export/import functionality
   - Add file upload handling and validation feedback
   - Write component tests for settings interface
   - _Requirements: 7.1, 7.3, 8.1, 8.2, 8.4, 8.5_
+
+- [ ] 15. Create data export/import functionality
+  - Add export functionality to storage service that creates downloadable JSON
+  - Implement import functionality with file validation and conflict resolution
+  - Add user interface for export/import operations
+  - Write unit tests for export/import with various data scenarios
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
 - [ ] 16. Add comprehensive error handling
   - Implement error boundaries for React components

@@ -34,7 +34,7 @@ cd walk-up-music-manager
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) to view the app.
+4. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
 
 ### Available Scripts
 

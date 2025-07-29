@@ -33,6 +33,7 @@ describe('Service Interfaces', () => {
       getAccessToken: jest.fn(),
       isAuthenticated: jest.fn(),
       refreshToken: jest.fn(),
+      handleCallback: jest.fn(),
     };
 
     expect(typeof mockAuth.login).toBe('function');

@@ -1,2 +1,2 @@
-// Component exports will be added as components are created
-export {};
+export { CallbackPage } from './CallbackPage';
+export { LoginPage } from './LoginPage';

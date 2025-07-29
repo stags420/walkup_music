@@ -73,7 +73,7 @@ describe('Data Types', () => {
     const config: AppConfig = {
       maxSegmentDuration: 10,
       spotifyClientId: 'client123',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://127.0.0.1:8000/callback',
     };
 
     expect(typeof config.maxSegmentDuration).toBe('number');
@@ -588,7 +588,7 @@ describe('AppConfig Validation', () => {
     const config = {
       maxSegmentDuration: 10,
       spotifyClientId: 'client123',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://127.0.0.1:8000/callback',
     };
 
     expect(() => AppConfig.fromExternalData(config)).not.toThrow();
@@ -597,7 +597,7 @@ describe('AppConfig Validation', () => {
   test('rejects config with invalid segment duration', () => {
     const baseConfig = {
       spotifyClientId: 'client123',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://127.0.0.1:8000/callback',
     };
 
     expect(() =>
@@ -624,7 +624,7 @@ describe('AppConfig Validation', () => {
       AppConfig.fromExternalData({
         maxSegmentDuration: 10,
         spotifyClientId: '',
-        redirectUri: 'http://localhost:3000/callback',
+        redirectUri: 'http://127.0.0.1:8000/callback',
       })
     ).toThrow(
       'Invalid app config data: spotifyClientId must be a non-empty string'

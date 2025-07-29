@@ -31,7 +31,7 @@ describe('SpotifyAuthService', () => {
 
     mockConfig = {
       spotifyClientId: 'test-client-id',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://127.0.0.1:8000/callback',
       maxSegmentDuration: 10,
     };
 

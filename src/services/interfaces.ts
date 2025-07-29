@@ -17,6 +17,7 @@ export interface AuthService {
   getAccessToken(): Promise<string | null>;
   isAuthenticated(): boolean;
   refreshToken(): Promise<void>;
+  handleCallback(code: string, state: string): Promise<void>;
 }
 
 // Player management interface

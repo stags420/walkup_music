@@ -24,7 +24,7 @@ export const AppConfig = {
     // Set defaults for missing values
     const maxSegmentDuration = obj.maxSegmentDuration ?? 10;
     const spotifyClientId = obj.spotifyClientId ?? '';
-    const redirectUri = obj.redirectUri ?? 'http://localhost:3000/callback';
+    const redirectUri = obj.redirectUri ?? 'http://127.0.0.1:8000/callback';
 
     if (
       typeof maxSegmentDuration !== 'number' ||

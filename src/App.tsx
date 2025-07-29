@@ -46,7 +46,7 @@ function AppContent() {
 function App() {
   return (
     <Router
-      basename="/walk-up-music-manager"
+      basename="/"
       future={{
         v7_startTransition: true,
         v7_relativeSplatPath: true,

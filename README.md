@@ -19,7 +19,7 @@ A single-page web application that integrates with Spotify Premium accounts to m
 
 ```bash
 git clone <repository-url>
-cd walk-up-music-manager
+cd walkup_music
 ```
 
 2. Run the setup script:

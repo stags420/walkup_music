@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CallbackPage } from '@/components/CallbackPage';
 import { AuthProvider } from '@/components/AuthProvider';
@@ -61,15 +61,19 @@ function renderCallbackPage(
   authService?: MockAuthService
 ) {
   const service = authService || new MockAuthService();
-  return {
-    service,
-    ...render(
+  let result;
+  act(() => {
+    result = render(
       <MemoryRouter initialEntries={[`/callback${searchParams}`]}>
         <AuthProvider authService={service} config={mockConfig}>
           <CallbackPage />
         </AuthProvider>
       </MemoryRouter>
-    ),
+    );
+  });
+  return {
+    service,
+    ...result,
   };
 }
 
@@ -93,8 +97,10 @@ describe('CallbackPage', () => {
   it('should handle successful callback', async () => {
     const { service } = renderCallbackPage('?code=test-code&state=test-state');
 
-    await waitFor(() => {
-      expect(service.wasCallbackCalled()).toBe(true);
+    await act(async () => {
+      await waitFor(() => {
+        expect(service.wasCallbackCalled()).toBe(true);
+      });
     });
 
     expect(service.getCallbackParams()).toEqual({
@@ -108,28 +114,34 @@ describe('CallbackPage', () => {
   it('should handle OAuth error parameter', async () => {
     renderCallbackPage('?error=access_denied');
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/?error=access_denied');
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/?error=access_denied');
+      });
     });
   });
 
   it('should handle missing code parameter', async () => {
     renderCallbackPage('?state=test-state');
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/?error=Invalid%20callback%20parameters'
-      );
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/?error=Invalid%20callback%20parameters'
+        );
+      });
     });
   });
 
   it('should handle missing state parameter', async () => {
     renderCallbackPage('?code=test-code');
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/?error=Invalid%20callback%20parameters'
-      );
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/?error=Invalid%20callback%20parameters'
+        );
+      });
     });
   });
 
@@ -139,10 +151,12 @@ describe('CallbackPage', () => {
 
     renderCallbackPage('?code=test-code&state=test-state', mockService);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/?error=Invalid%20state%20parameter.%20Possible%20CSRF%20attack.'
-      );
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/?error=Invalid%20state%20parameter.%20Possible%20CSRF%20attack.'
+        );
+      });
     });
   });
 
@@ -154,8 +168,10 @@ describe('CallbackPage', () => {
 
     renderCallbackPage('?code=test-code&state=test-state', mockService);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/?error=Network%20error');
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/?error=Network%20error');
+      });
     });
   });
 
@@ -165,10 +181,12 @@ describe('CallbackPage', () => {
 
     renderCallbackPage('?code=test-code&state=test-state', mockService);
 
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/?error=Authentication%20failed'
-      );
+    await act(async () => {
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/?error=Authentication%20failed'
+        );
+      });
     });
   });
 

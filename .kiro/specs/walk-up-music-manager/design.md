@@ -5,6 +5,7 @@
 The Walk-Up Music Manager is a single-page React application that integrates with Spotify's Web API and Web Playback SDK to manage baseball walk-up music. The application uses a clean architecture with dependency injection, separating concerns between authentication, data management, music playback, and user interface components.
 
 The system is designed around three core domains:
+
 - **Authentication**: Handles Spotify PKCE OAuth flow and token management
 - **Player Management**: Manages player profiles and song selections
 - **Game Control**: Handles batting orders and game-time music playback
@@ -21,14 +22,14 @@ graph TB
     Storage --> LocalStorage[Local Storage Implementation]
     Spotify --> WebAPI[Spotify Web API]
     Spotify --> WebSDK[Spotify Web Playback SDK]
-    
+
     subgraph "Core Services"
         AuthService[Authentication Service]
         PlayerService[Player Management Service]
         GameService[Game Control Service]
         ConfigService[Configuration Service]
     end
-    
+
     Services --> AuthService
     Services --> PlayerService
     Services --> GameService
@@ -150,24 +151,28 @@ interface AppConfig {
 ### Service Implementations
 
 #### Authentication Service
+
 - Implements PKCE OAuth flow with code verifier/challenge generation
 - Manages access/refresh tokens in secure HTTP-only cookies
 - Handles token refresh automatically
 - Validates Spotify Premium subscription
 
 #### Player Service
+
 - CRUD operations for player management
 - Integrates with Spotify Search API
 - Handles song segment selection and validation
 - Manages player data persistence
 
 #### Game Service
+
 - Manages batting order creation and modification
 - Tracks current game state (current batter position)
 - Integrates with Spotify Web Playback SDK
 - Handles music playback with precise timing control
 
 #### Storage Service
+
 - Abstracts storage operations behind interface
 - Local Storage implementation for initial version
 - Export/import functionality for data portability
@@ -203,35 +208,42 @@ App
 ## Data Models
 
 ### Player Data Structure
+
 Players are stored with their basic information and optional song selection. The song data includes Spotify metadata and user-defined segment timing.
 
 ### Batting Order Structure
+
 Batting orders maintain references to player IDs rather than embedding player data, allowing for efficient updates when player information changes.
 
 ### Configuration Structure
+
 Application configuration is stored separately and includes customizable settings like maximum segment duration and Spotify app credentials.
 
 ## Error Handling
 
 ### Authentication Errors
+
 - Invalid credentials: Redirect to login with error message
 - Token expiration: Automatic refresh attempt, fallback to re-login
 - Premium subscription required: Clear error message with upgrade link
 - Network errors: Retry mechanism with exponential backoff
 
 ### Playback Errors
+
 - Device not available: Prompt user to select active Spotify device
 - Track not playable: Skip to next batter with notification
 - Network interruption: Graceful degradation with retry
 - SDK initialization failure: Fallback to preview URLs where available
 
 ### Data Errors
+
 - Storage quota exceeded: Prompt for data cleanup or export
 - Corrupted data: Attempt recovery, fallback to fresh start
 - Import validation errors: Detailed error messages with correction guidance
 - Sync conflicts: User-guided conflict resolution
 
 ### Network Errors
+
 - API rate limiting: Implement exponential backoff
 - Offline mode: Cache critical data, queue operations
 - CORS issues: Clear documentation for GitHub Pages deployment
@@ -240,36 +252,42 @@ Application configuration is stored separately and includes customizable setting
 ## Testing Strategy
 
 ### Unit Testing
+
 - Service layer methods with mocked dependencies
 - React component rendering and user interactions
 - Data model validation and transformation
 - Utility functions (PKCE generation, time calculations)
 
 ### Integration Testing
+
 - Spotify API integration with test credentials
 - Storage service implementations
 - Authentication flow end-to-end
 - Music playback functionality
 
 ### End-to-End Testing
+
 - Complete user workflows (login → create player → set order → play music)
 - Cross-browser compatibility testing
 - Mobile responsiveness testing
 - GitHub Pages deployment validation
 
 ### Testing Tools
+
 - **Unit Tests**: Jest + React Testing Library
 - **Integration Tests**: Jest with MSW for API mocking
 - **E2E Tests**: Playwright for cross-browser testing
 - **Visual Testing**: Storybook for component documentation
 
 ### Test Data Strategy
+
 - Mock Spotify API responses for consistent testing
 - Test player data factories for various scenarios
 - Automated test data cleanup
 - Separate test environment configuration
 
 ### Performance Testing
+
 - Bundle size analysis and optimization
 - Spotify API response time monitoring
 - Local storage performance with large datasets

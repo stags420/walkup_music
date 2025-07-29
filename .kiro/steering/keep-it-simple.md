@@ -5,23 +5,27 @@ inclusion: always
 # Keep It Simple
 
 ## Core Principle
+
 Choose the simplest solution that solves the problem completely. Elegant simplicity beats complex abstractions.
 
 ## When to Keep It Simple
 
 ### Architecture Decisions
+
 - Start with straightforward implementations before adding layers
 - Avoid premature abstractions until patterns emerge
 - Choose boring, proven technologies over cutting-edge alternatives
 - Prefer composition over inheritance hierarchies
 
 ### Code Implementation
+
 - Write clear, readable code over clever optimizations
 - Use standard library functions instead of custom utilities
 - Avoid unnecessary design patterns when direct approaches work
 - Keep function signatures simple with minimal parameters
 
 ### Problem Solving
+
 - Solve the actual problem, not the imagined future problem
 - Build incrementally rather than designing comprehensive systems upfront
 - Use existing solutions before building custom ones
@@ -30,6 +34,7 @@ Choose the simplest solution that solves the problem completely. Elegant simplic
 ## Simple vs Simplistic
 
 ### Good Simplicity
+
 - Clear naming that explains intent
 - Straightforward control flow
 - Minimal dependencies
@@ -37,6 +42,7 @@ Choose the simplest solution that solves the problem completely. Elegant simplic
 - Easy to test and debug
 
 ### Avoid Simplistic Solutions
+
 - Hardcoded values that should be configurable
 - Copy-paste code instead of proper abstractions
 - Ignoring error handling or edge cases
@@ -44,6 +50,7 @@ Choose the simplest solution that solves the problem completely. Elegant simplic
 - Technical debt that creates future maintenance burden
 
 ## Red Flags for Over-Engineering
+
 - Multiple layers of abstraction for simple operations
 - Configuration systems for values that never change
 - Generic solutions for specific, well-defined problems
@@ -51,6 +58,7 @@ Choose the simplest solution that solves the problem completely. Elegant simplic
 - Frameworks or libraries added for single-use functionality
 
 ## Implementation Guidelines
+
 - Start with the most direct implementation
 - Refactor to patterns only when complexity justifies it
 - Measure actual performance before optimizing

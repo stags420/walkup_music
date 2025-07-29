@@ -16,17 +16,20 @@ A single-page web application that integrates with Spotify Premium accounts to m
 ### Quick Start
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd walk-up-music-manager
 ```
 
 2. Run the setup script:
+
 ```bash
 ./scripts/setup.sh
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -55,6 +58,7 @@ This project uses git hooks to maintain code quality:
   - Verify code formatting with Prettier
 
 If any check fails, the commit will be blocked. To bypass hooks in emergency situations:
+
 ```bash
 git commit --no-verify
 ```

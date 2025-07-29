@@ -5,6 +5,7 @@ inclusion: always
 # Third-Party Library Guidelines
 
 ## Library-First Approach
+
 Before implementing complex functionality from scratch, research existing libraries that solve the problem. Common areas where libraries should be preferred:
 
 - Date/time manipulation (moment.js, date-fns)
@@ -18,14 +19,18 @@ Before implementing complex functionality from scratch, research existing librar
 ## Library Selection Criteria
 
 ### Trusted Sources
+
 Only use libraries from well-established sources:
+
 - Official framework libraries (React, Angular, Vue ecosystems)
 - Major tech companies (Google, Microsoft, Facebook, etc.)
 - Established open-source organizations
 - Libraries with significant community adoption (high GitHub stars, npm downloads)
 
 ### Quality Indicators
+
 Evaluate libraries based on:
+
 - **Maintenance**: Recent commits and active issue resolution
 - **Documentation**: Clear API docs and usage examples
 - **Testing**: Comprehensive test coverage
@@ -36,6 +41,7 @@ Evaluate libraries based on:
 ## Implementation Requirements
 
 ### Library Introduction Protocol
+
 When adding a new library dependency:
 
 1. **Announce the addition**: Clearly state you're introducing a new library
@@ -44,8 +50,9 @@ When adding a new library dependency:
 4. **Note any trade-offs**: Bundle size, learning curve, or architectural implications
 
 ### Example Announcement
+
 ```
-Adding 'date-fns' library for date manipulation instead of implementing custom date utilities. 
+Adding 'date-fns' library for date manipulation instead of implementing custom date utilities.
 This provides battle-tested date operations with better tree-shaking than moment.js.
 Bundle impact: ~15KB for the functions we'll use.
 ```
@@ -61,6 +68,7 @@ Bundle impact: ~15KB for the functions we'll use.
 ## Custom Implementation Scenarios
 
 Prefer custom implementation when:
+
 - The required functionality is simple and well-understood
 - Existing libraries are overkill for the specific use case
 - Bundle size constraints are critical

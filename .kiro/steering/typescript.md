@@ -165,6 +165,108 @@ async load<T>(key: string): Promise<T | null> {
 }
 ```
 
+## Type Organization
+
+### File Structure
+
+- **Types go in their own files**: Each type should be defined in its own dedicated file
+- **Static methods with types**: "Static" methods to create, validate, or manipulate a type should go in the same file as the type, using ES2015 module syntax
+- **No separate Model classes**: Do not create separate \*Model classes for types - keep type definitions and their related functions together
+- **Use ES2015 modules over namespaces**: Export const objects instead of using namespace syntax
+
+### External Data Validation
+
+- **Validate within creation methods**: When reading external data, validate it within the method that creates the type - don't separate validation and creation
+- **Single dictionary parameter**: Create methods for external data should take a generic dictionary and validate all fields within that method
+- **Throw exceptions directly**: Just throw exceptions for invalid data - no need for separate validation methods
+- **No named parameter create methods**: For interfaces, you can create them using object literals with brackets - named parameter create methods aren't necessary
+
+### Example Type Organization
+
+```typescript
+// src/types/User.ts
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+}
+
+// Use ES2015 module syntax instead of namespaces
+export const User = {
+  // For external data - takes generic dictionary and validates everything
+  fromExternalData(data: unknown): User {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid user data: must be an object');
+    }
+
+    const obj = data as Record<string, unknown>;
+
+    if (typeof obj.id !== 'string' || !obj.id.trim()) {
+      throw new Error('Invalid user data: id must be a non-empty string');
+    }
+
+    if (typeof obj.email !== 'string' || !obj.email.includes('@')) {
+      throw new Error('Invalid user data: email must be a valid email address');
+    }
+
+    if (typeof obj.name !== 'string' || !obj.name.trim()) {
+      throw new Error('Invalid user data: name must be a non-empty string');
+    }
+
+    const createdAt = obj.createdAt
+      ? new Date(obj.createdAt as string)
+      : new Date();
+    if (isNaN(createdAt.getTime())) {
+      throw new Error('Invalid user data: createdAt must be a valid date');
+    }
+
+    return {
+      id: obj.id,
+      email: obj.email,
+      name: obj.name,
+      createdAt,
+    };
+  },
+
+  isActive(user: User): boolean {
+    const daysSinceCreation =
+      (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceCreation <= 365;
+  },
+};
+
+// For internal data, just use object literals
+const newUser: User = {
+  id: crypto.randomUUID(),
+  email: 'user@example.com',
+  name: 'John Doe',
+  createdAt: new Date(),
+};
+```
+
+### Anti-Pattern: Separate Model Classes
+
+```typescript
+// Bad: Don't create separate model classes
+class UserModel {
+  constructor(private user: User) {}
+
+  static create(email: string, name: string): UserModel {
+    return new UserModel({
+      id: crypto.randomUUID(),
+      email,
+      name,
+      createdAt: new Date(),
+    });
+  }
+
+  isActive(): boolean {
+    // Implementation
+  }
+}
+```
+
 ## Key Principles
 
 1. **Compile-time safety over runtime checks**: Use TypeScript's type system
@@ -172,5 +274,6 @@ async load<T>(key: string): Promise<T | null> {
 3. **Fail fast**: Let TypeScript catch errors during development
 4. **Clean interfaces**: Use proper types instead of runtime validation
 5. **Trust but verify**: Trust internal types, verify external data
+6. **Organize types clearly**: One type per file with related functions in ES2015 module objects
 
 This approach reduces code complexity, improves performance, and leverages TypeScript's strengths while maintaining appropriate safety at system boundaries.

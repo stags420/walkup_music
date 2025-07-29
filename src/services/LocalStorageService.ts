@@ -110,12 +110,12 @@ export class LocalStorageService implements StorageService {
       for (let i = 0; i < localStorage.length; i++) {
         const fullKey = localStorage.key(i);
         if (fullKey && fullKey.startsWith(this.keyPrefix)) {
-          const appKey = fullKey.substring(this.keyPrefix.length);
+          const appKey = fullKey.slice(this.keyPrefix.length);
           const data = localStorage.getItem(fullKey);
           if (data) {
             try {
               exportData[appKey] = JSON.parse(data);
-            } catch (parseError) {
+            } catch {
               // Skip corrupted data
               console.warn(`Skipping corrupted data for key: ${appKey}`);
             }

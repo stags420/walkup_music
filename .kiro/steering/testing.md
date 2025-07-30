@@ -18,6 +18,8 @@ inclusion: always
 - Cover edge cases, error conditions, and boundary values
 - Test behavior, not implementation details
 - Each test should verify one specific behavior
+- **Never test interfaces** - interfaces have no implementation to test
+- **Only test code with logic** - don't test simple assignments or getters/setters
 
 ### Test Structure
 
@@ -65,6 +67,61 @@ inclusion: always
 - Test user interactions and state changes
 - Mock external dependencies and API calls
 
+## What NOT to Test
+
+### Interfaces and Type Definitions
+
+- **Never test interfaces** - they have no implementation
+- **Don't test type structures** - TypeScript handles this at compile time
+- **Avoid testing object shape** - focus on behavior instead
+
+### Simple Operations and Setters
+
+- **Don't test basic object construction** - creating objects and checking field values
+- **Don't test simple getters/setters** - no logic to verify
+- **Don't test trivial assignments** - TypeScript ensures type safety
+
+```typescript
+// Bad: Testing basic object construction
+test('Player interface has correct structure', () => {
+  const player: Player = {
+    id: '1',
+    name: 'Test Player',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  expect(player.id).toBe('1'); // Pointless - we just set it
+  expect(player.name).toBe('Test Player'); // No logic being tested
+  expect(typeof player.createdAt).toBe('object'); // TypeScript ensures this
+});
+
+// Bad: Testing simple setters
+test('should set player name', () => {
+  const player = new Player();
+  player.setName('John');
+  expect(player.getName()).toBe('John'); // No logic, just assignment
+});
+
+// Good: Test actual behavior with logic
+test('should create player with generated ID', () => {
+  const player = PlayerService.create('Test Player');
+  expect(player.id).toMatch(/^[a-f0-9-]{36}$/); // Tests UUID generation logic
+});
+
+// Good: Test business logic
+test('should calculate player age from birthdate', () => {
+  const player = new Player('John', new Date('1990-01-01'));
+  expect(player.getAge()).toBe(34); // Tests calculation logic
+});
+```
+
+### TypeScript Compiler Features
+
+- Don't test that TypeScript prevents invalid assignments
+- Don't test that required properties are enforced
+- Don't test generic type constraints
+
 ## Testing Best Practices
 
 ### Test Organization
@@ -90,6 +147,46 @@ inclusion: always
 - Prefer real implementations for internal components
 - Keep mocks simple and focused
 
+### What TO Test Instead
+
+Focus on testing code that contains actual logic, not simple assignments:
+
+- **External data validation**: Test `fromExternalData` methods that validate API responses
+- **Business logic**: Test calculations, transformations, and decision-making
+- **Side effects**: Test that services call dependencies correctly
+- **Error handling**: Test how code responds to invalid inputs or failures
+- **Complex operations**: Test methods that perform multiple steps or have conditional logic
+- **State changes**: Test that operations correctly modify object state over time
+
+```typescript
+// Good: Test validation logic (has actual logic)
+test('should validate external player data', () => {
+  expect(() => Player.fromExternalData({})).toThrow('Invalid player data');
+  expect(() => Player.fromExternalData({ id: '', name: 'Test' })).toThrow(
+    'id must be non-empty'
+  );
+});
+
+// Good: Test business calculations (has logic)
+test('should calculate batting average correctly', () => {
+  const stats = new BattingStats(10, 3); // 10 at-bats, 3 hits
+  expect(stats.average()).toBe(0.3);
+});
+
+// Good: Test complex state changes (has logic)
+test('should advance batting order correctly', () => {
+  const order = new BattingOrder(['player1', 'player2', 'player3']);
+  expect(order.getCurrentBatter()).toBe('player1');
+
+  order.nextBatter();
+  expect(order.getCurrentBatter()).toBe('player2');
+
+  order.nextBatter();
+  order.nextBatter(); // Should wrap around
+  expect(order.getCurrentBatter()).toBe('player1');
+});
+```
+
 ## Framework-Specific Guidelines
 
 ### Java Testing
@@ -104,7 +201,8 @@ inclusion: always
 - Use Jest as the primary testing framework
 - Use React Testing Library for component tests
 - Mock HTTP requests with MSW or similar tools
-- Test TypeScript types with type-level tests when needed
+- **Don't test interface structures** - TypeScript ensures compile-time correctness
+- Test implementations and behavior, not type definitions
 
 ## Performance and Reliability
 

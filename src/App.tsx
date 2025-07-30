@@ -1,7 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './components/AuthProvider';
-import { useAuth } from './hooks/AuthHook';
-import { LoginPage, CallbackPage } from '@/components';
+import { AuthProvider, useAuth, LoginPage, CallbackPage } from '@/modules/auth';
 import './App.css';
 
 function AppContent() {
@@ -43,15 +41,9 @@ function AppContent() {
   );
 }
 
-function App() {
+export function App() {
   return (
-    <Router
-      basename="/"
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <Router basename="/">
       <AuthProvider>
         <AppContent />
       </AuthProvider>

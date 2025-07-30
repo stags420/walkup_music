@@ -15,13 +15,7 @@ const AppContent = () => (
 
 // Create a test wrapper that provides the router context
 const TestApp = () => (
-  <MemoryRouter
-    initialEntries={['/']}
-    future={{
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    }}
-  >
+  <MemoryRouter initialEntries={['/']}>
     <AppContent />
   </MemoryRouter>
 );

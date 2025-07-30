@@ -89,8 +89,11 @@ describe('CallbackPage', () => {
   });
 
   it('should render loading state initially', async () => {
+    // Given I have a callback page with valid parameters
+    // When I render the callback page
     await renderCallbackPage('?code=test-code&state=test-state');
 
+    // Then it should show a loading state
     expect(
       screen.getByText(/connecting to spotify\.\.\./i)
     ).toBeInTheDocument();
@@ -101,14 +104,17 @@ describe('CallbackPage', () => {
   });
 
   it('should handle successful callback', async () => {
+    // Given I have a callback page with valid parameters
     const { service } = await renderCallbackPage(
       '?code=test-code&state=test-state'
     );
 
+    // When the callback is processed
     await waitFor(() => {
       expect(service.wasCallbackCalled()).toBe(true);
     });
 
+    // Then the user should be redirected to the home page
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
@@ -120,16 +126,22 @@ describe('CallbackPage', () => {
   });
 
   it('should handle OAuth error parameter', async () => {
+    // Given I have a callback page with an OAuth error parameter
+    // When I render the callback page
     await renderCallbackPage('?error=access_denied');
 
+    // Then the user should be redirected with the error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/?error=access_denied');
     });
   });
 
   it('should handle missing code parameter', async () => {
+    // Given I have a callback page with missing code parameter
+    // When I render the callback page
     await renderCallbackPage('?state=test-state');
 
+    // Then the user should be redirected with an error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/?error=Invalid%20callback%20parameters'
@@ -138,8 +150,11 @@ describe('CallbackPage', () => {
   });
 
   it('should handle missing state parameter', async () => {
+    // Given I have a callback page with missing state parameter
+    // When I render the callback page
     await renderCallbackPage('?code=test-code');
 
+    // Then the user should be redirected with an error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/?error=Invalid%20callback%20parameters'
@@ -148,11 +163,14 @@ describe('CallbackPage', () => {
   });
 
   it('should handle callback failure', async () => {
+    // Given I have an auth service that will fail the callback
     const mockService = new MockAuthService();
     mockService.setShouldFailCallback(true);
 
+    // When I render the callback page
     await renderCallbackPage('?code=test-code&state=test-state', mockService);
 
+    // Then the user should be redirected with the error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/?error=Invalid%20state%20parameter.%20Possible%20CSRF%20attack.'
@@ -161,24 +179,30 @@ describe('CallbackPage', () => {
   });
 
   it('should handle callback with generic error', async () => {
+    // Given I have an auth service that will throw a generic error
     const mockService = new MockAuthService();
     mockService.handleCallback = jest
       .fn()
       .mockRejectedValue(new Error('Network error'));
 
+    // When I render the callback page
     await renderCallbackPage('?code=test-code&state=test-state', mockService);
 
+    // Then the user should be redirected with the error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/?error=Network%20error');
     });
   });
 
   it('should handle callback with non-Error exception', async () => {
+    // Given I have an auth service that will throw a non-Error exception
     const mockService = new MockAuthService();
     mockService.handleCallback = jest.fn().mockRejectedValue('String error');
 
+    // When I render the callback page
     await renderCallbackPage('?code=test-code&state=test-state', mockService);
 
+    // Then the user should be redirected with a generic error
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/?error=Authentication%20failed'
@@ -187,11 +211,11 @@ describe('CallbackPage', () => {
   });
 
   it('should display error if present in auth state', async () => {
-    // This test would require a way to inject error state into the auth context
-    // For now, we'll test the error display structure
+    // Given I have a callback page with valid parameters
+    // When I render the callback page
     await renderCallbackPage('?code=test-code&state=test-state');
 
-    // The error message container should be present in the DOM structure
+    // Then the error message container should be present in the DOM structure
     // even if not currently showing an error
     expect(
       screen.getByText(/connecting to spotify\.\.\./i)

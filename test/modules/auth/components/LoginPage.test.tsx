@@ -53,8 +53,11 @@ function renderLoginPage(authService?: MockAuthService) {
 
 describe('LoginPage', () => {
   it('should render login page with Spotify button', () => {
+    // Given I have a login page
+    // When I render the login page
     renderLoginPage();
 
+    // Then it should display the login page elements
     expect(
       screen.getByRole('heading', { name: /walk-up music manager/i })
     ).toBeInTheDocument();
@@ -67,8 +70,11 @@ describe('LoginPage', () => {
   });
 
   it('should display premium benefits information', () => {
+    // Given I have a login page
+    // When I render the login page
     renderLoginPage();
 
+    // Then it should display premium benefits information
     expect(screen.getByText(/why spotify premium\?/i)).toBeInTheDocument();
     expect(
       screen.getByText(/full track playback during games/i)
@@ -83,8 +89,11 @@ describe('LoginPage', () => {
   });
 
   it('should display upgrade link for non-premium users', () => {
+    // Given I have a login page
+    // When I render the login page
     renderLoginPage();
 
+    // Then it should display an upgrade link with correct attributes
     const upgradeLink = screen.getByRole('link', {
       name: /upgrade your account/i,
     });
@@ -98,19 +107,23 @@ describe('LoginPage', () => {
   });
 
   it('should call login when Spotify button is clicked', async () => {
+    // Given I have a login page with a mock auth service
     const { service } = renderLoginPage();
 
+    // When I click the login button
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
     fireEvent.click(loginButton);
 
+    // Then the login method should be called
     await waitFor(() => {
       expect(service.wasLoginCalled()).toBe(true);
     });
   });
 
   it('should show loading state during login', async () => {
+    // Given I have a login page with a service that never resolves
     const mockService = new MockAuthService();
     // Make login hang to test loading state
     mockService.login = jest
@@ -119,11 +132,13 @@ describe('LoginPage', () => {
 
     renderLoginPage(mockService);
 
+    // When I click the login button
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
     fireEvent.click(loginButton);
 
+    // Then it should show a loading state
     await waitFor(() => {
       expect(screen.getByText(/connecting\.\.\./i)).toBeInTheDocument();
       expect(screen.getByRole('button')).toBeDisabled();
@@ -134,16 +149,19 @@ describe('LoginPage', () => {
   });
 
   it('should display error message when login fails', async () => {
+    // Given I have a login page with a service that will fail
     const mockService = new MockAuthService();
     mockService.setShouldFailLogin(true);
 
     renderLoginPage(mockService);
 
+    // When I click the login button
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
     fireEvent.click(loginButton);
 
+    // Then an error message should be displayed
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
       expect(
@@ -153,12 +171,13 @@ describe('LoginPage', () => {
   });
 
   it('should clear error when dismiss button is clicked', async () => {
+    // Given I have a login page with a service that will fail
     const mockService = new MockAuthService();
     mockService.setShouldFailLogin(true);
 
     renderLoginPage(mockService);
 
-    // Trigger error
+    // When I trigger an error and then dismiss it
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
@@ -168,7 +187,7 @@ describe('LoginPage', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
-    // Dismiss error
+    // Then dismissing the error should remove it
     const dismissButton = screen.getByRole('button', {
       name: /dismiss error/i,
     });
@@ -178,12 +197,13 @@ describe('LoginPage', () => {
   });
 
   it('should clear error before attempting new login', async () => {
+    // Given I have a login page with a service that will fail initially
     const mockService = new MockAuthService();
     mockService.setShouldFailLogin(true);
 
     renderLoginPage(mockService);
 
-    // First login attempt (fails)
+    // When I attempt a login that fails, then attempt another login
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
@@ -193,7 +213,7 @@ describe('LoginPage', () => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
-    // Second login attempt should clear error first
+    // Then the error should be cleared when starting a new login attempt
     mockService.setShouldFailLogin(false);
     fireEvent.click(loginButton);
 
@@ -202,8 +222,11 @@ describe('LoginPage', () => {
   });
 
   it('should have proper accessibility attributes', () => {
+    // Given I have a login page
+    // When I render the login page
     renderLoginPage();
 
+    // Then it should have proper accessibility attributes
     const loginButton = screen.getByRole('button', {
       name: /connect with spotify/i,
     });
@@ -214,8 +237,11 @@ describe('LoginPage', () => {
   });
 
   it('should display proper help text', () => {
+    // Given I have a login page
+    // When I render the login page
     renderLoginPage();
 
+    // Then it should display helpful text about the login process
     expect(
       screen.getByText(
         /you'll be redirected to spotify to authorize this application/i

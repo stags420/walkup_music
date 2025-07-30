@@ -110,12 +110,15 @@ describe('AuthContext', () => {
   });
 
   it('should provide initial unauthenticated state', () => {
+    // Given I have an AuthProvider with a mock auth service
+    // When I render the component
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
       </AuthProvider>
     );
 
+    // Then the initial state should be unauthenticated
     expect(screen.getByTestId('auth-status')).toHaveTextContent(
       'not-authenticated'
     );
@@ -127,14 +130,17 @@ describe('AuthContext', () => {
   });
 
   it('should detect existing authentication on mount', async () => {
+    // Given I have an auth service that is already authenticated
     mockAuthService.setAuthenticated(true);
 
+    // When I render the AuthProvider
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
       </AuthProvider>
     );
 
+    // Then the component should detect the existing authentication
     await waitFor(() => {
       expect(screen.getByTestId('auth-status')).toHaveTextContent(
         'authenticated'
@@ -147,22 +153,27 @@ describe('AuthContext', () => {
   });
 
   it('should handle login success', async () => {
+    // Given I have an AuthProvider with a mock auth service
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
       </AuthProvider>
     );
 
+    // When I click the login button
     fireEvent.click(screen.getByTestId('login-button'));
 
+    // Then the loading state should be shown
     await waitFor(() => {
       expect(screen.getByTestId('loading-status')).toHaveTextContent('loading');
     });
   });
 
   it('should handle login failure', async () => {
+    // Given I have an auth service that will fail login
     mockAuthService.setShouldFailLogin(true);
 
+    // When I render the AuthProvider and click login
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
@@ -171,6 +182,7 @@ describe('AuthContext', () => {
 
     fireEvent.click(screen.getByTestId('login-button'));
 
+    // Then an error should be displayed and the user should remain unauthenticated
     await waitFor(() => {
       expect(screen.getByTestId('error-status')).toHaveTextContent(
         'Login failed'
@@ -186,6 +198,7 @@ describe('AuthContext', () => {
   });
 
   it('should handle logout', async () => {
+    // Given I have an authenticated auth service
     mockAuthService.setAuthenticated(true);
 
     render(
@@ -201,8 +214,10 @@ describe('AuthContext', () => {
       );
     });
 
+    // When I click the logout button
     fireEvent.click(screen.getByTestId('logout-button'));
 
+    // Then the user should be logged out
     await waitFor(() => {
       expect(screen.getByTestId('auth-status')).toHaveTextContent(
         'not-authenticated'
@@ -213,14 +228,17 @@ describe('AuthContext', () => {
   });
 
   it('should handle callback success', async () => {
+    // Given I have an AuthProvider with a mock auth service
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
       </AuthProvider>
     );
 
+    // When I handle a successful callback
     fireEvent.click(screen.getByTestId('handle-callback-button'));
 
+    // Then the user should be authenticated
     await waitFor(() => {
       expect(screen.getByTestId('auth-status')).toHaveTextContent(
         'authenticated'
@@ -233,8 +251,10 @@ describe('AuthContext', () => {
   });
 
   it('should handle callback failure', async () => {
+    // Given I have an auth service that will fail callback
     mockAuthService.setShouldFailCallback(true);
 
+    // When I render the AuthProvider and handle a callback
     render(
       <AuthProvider authService={mockAuthService} config={mockConfig}>
         <TestComponent />
@@ -243,6 +263,7 @@ describe('AuthContext', () => {
 
     fireEvent.click(screen.getByTestId('handle-callback-button'));
 
+    // Then an error should be displayed and the user should remain unauthenticated
     await waitFor(() => {
       expect(screen.getByTestId('error-status')).toHaveTextContent(
         'Callback failed'
@@ -255,6 +276,7 @@ describe('AuthContext', () => {
   });
 
   it('should clear errors', async () => {
+    // Given I have an auth service that will fail login
     mockAuthService.setShouldFailLogin(true);
 
     render(
@@ -263,7 +285,7 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    // Trigger an error
+    // When I trigger an error and then clear it
     fireEvent.click(screen.getByTestId('login-button'));
 
     await waitFor(() => {
@@ -272,14 +294,16 @@ describe('AuthContext', () => {
       );
     });
 
-    // Clear the error
+    // Then clearing the error should remove it
     fireEvent.click(screen.getByTestId('clear-error-button'));
 
     expect(screen.getByTestId('error-status')).toHaveTextContent('no-error');
   });
 
   it('should throw error when used outside provider', () => {
-    // Suppress console.error for this test
+    // Given I have a component that uses the auth context
+    // When I render it without an AuthProvider
+    // Then it should throw an error
     const consoleSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {});

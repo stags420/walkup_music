@@ -51,10 +51,12 @@ describe('PlayerList', () => {
   });
 
   it('should display loading state initially', async () => {
+    // Given I have a player service that never resolves
     mockPlayerService.getAllPlayers.mockImplementation(
       () => new Promise(() => {})
     ); // Never resolves
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -63,13 +65,16 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should show a loading state
     expect(screen.getByText('Loading players...')).toBeInTheDocument();
     expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
   });
 
   it('should display players when loaded successfully', async () => {
+    // Given I have a player service that returns players
     mockPlayerService.getAllPlayers.mockResolvedValue(mockPlayers);
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -78,6 +83,7 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should display the players
     await waitFor(() => {
       expect(screen.getByText('Players (2)')).toBeInTheDocument();
     });
@@ -87,8 +93,10 @@ describe('PlayerList', () => {
   });
 
   it('should display empty state when no players exist', async () => {
+    // Given I have a player service that returns no players
     mockPlayerService.getAllPlayers.mockResolvedValue([]);
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -97,6 +105,7 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should display an empty state message
     await waitFor(() => {
       expect(
         screen.getByText(
@@ -107,10 +116,12 @@ describe('PlayerList', () => {
   });
 
   it('should display error state when loading fails', async () => {
+    // Given I have a player service that will fail to load
     mockPlayerService.getAllPlayers.mockRejectedValue(
       new Error('Failed to load')
     );
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -119,6 +130,7 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should display an error message
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();
     });
@@ -127,8 +139,10 @@ describe('PlayerList', () => {
   });
 
   it('should display player without song correctly', async () => {
+    // Given I have a player without a song
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -137,6 +151,7 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should display the player with a no song message
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
@@ -145,8 +160,10 @@ describe('PlayerList', () => {
   });
 
   it('should display player with song correctly', async () => {
+    // Given I have a player with a song
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[1]]);
 
+    // When I render the player list
     render(
       <PlayerList
         playerService={mockPlayerService}
@@ -155,6 +172,7 @@ describe('PlayerList', () => {
       />
     );
 
+    // Then it should display the player with song information
     await waitFor(() => {
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     });
@@ -165,6 +183,7 @@ describe('PlayerList', () => {
   });
 
   it('should call onEditPlayer when edit button is clicked', async () => {
+    // Given I have a player list with a player
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
     render(
@@ -179,13 +198,16 @@ describe('PlayerList', () => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
+    // When I click the edit button
     const editButton = screen.getByLabelText('Edit John Doe');
     fireEvent.click(editButton);
 
+    // Then the onEditPlayer callback should be called with the player
     expect(mockOnEditPlayer).toHaveBeenCalledWith(mockPlayers[0]);
   });
 
   it('should show confirmation dialog when delete button is clicked', async () => {
+    // Given I have a player list with a player and a mock confirm dialog
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
     // Mock window.confirm
@@ -203,9 +225,11 @@ describe('PlayerList', () => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
+    // When I click the delete button
     const deleteButton = screen.getByLabelText('Delete John Doe');
     fireEvent.click(deleteButton);
 
+    // Then a confirmation dialog should be shown
     expect(mockConfirm).toHaveBeenCalledWith(
       'Are you sure you want to delete this player?'
     );
@@ -214,6 +238,7 @@ describe('PlayerList', () => {
   });
 
   it('should call onDeletePlayer when deletion is confirmed', async () => {
+    // Given I have a player list with a player and confirmed deletion
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
     mockOnDeletePlayer.mockResolvedValue(undefined);
 
@@ -231,9 +256,11 @@ describe('PlayerList', () => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
+    // When I click the delete button and confirm
     const deleteButton = screen.getByLabelText('Delete John Doe');
     fireEvent.click(deleteButton);
 
+    // Then the onDeletePlayer callback should be called
     await waitFor(() => {
       expect(mockOnDeletePlayer).toHaveBeenCalledWith('1');
     });
@@ -242,6 +269,7 @@ describe('PlayerList', () => {
   });
 
   it('should not call onDeletePlayer when deletion is cancelled', async () => {
+    // Given I have a player list with a player and cancelled deletion
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
     const mockConfirm = jest
@@ -260,15 +288,18 @@ describe('PlayerList', () => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
+    // When I click the delete button but cancel
     const deleteButton = screen.getByLabelText('Delete John Doe');
     fireEvent.click(deleteButton);
 
+    // Then the onDeletePlayer callback should not be called
     expect(mockOnDeletePlayer).not.toHaveBeenCalled();
 
     mockConfirm.mockRestore();
   });
 
   it('should retry loading when retry button is clicked', async () => {
+    // Given I have a player service that fails first then succeeds
     mockPlayerService.getAllPlayers
       .mockRejectedValueOnce(new Error('Failed to load'))
       .mockResolvedValueOnce(mockPlayers);
@@ -285,9 +316,11 @@ describe('PlayerList', () => {
       expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();
     });
 
+    // When I click the retry button
     const retryButton = screen.getByText('Retry');
     fireEvent.click(retryButton);
 
+    // Then it should retry loading and display the players
     await waitFor(() => {
       expect(screen.getByText('Players (2)')).toBeInTheDocument();
     });

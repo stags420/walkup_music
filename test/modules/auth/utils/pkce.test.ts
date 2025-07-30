@@ -40,13 +40,15 @@ describe('PKCE Utilities', () => {
 
   describe('generateCodeVerifier', () => {
     it('should generate a code verifier with default length', () => {
-      // Mock random values - fill the array that gets passed in
+      // Given I have crypto utilities that return predictable values
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         array.fill(65); // Fill with 'A' character
       });
 
+      // When I generate a code verifier
       const verifier = generateCodeVerifier();
 
+      // Then it should have the correct properties
       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint8Array));
       expect(verifier).toBeDefined();
       expect(typeof verifier).toBe('string');
@@ -55,12 +57,15 @@ describe('PKCE Utilities', () => {
     });
 
     it('should generate a code verifier with custom length', () => {
+      // Given I have crypto utilities that return predictable values
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         array.fill(65); // Fill with 'A' character
       });
 
+      // When I generate a code verifier with custom length
       const verifier = generateCodeVerifier(64);
 
+      // Then it should have the correct length
       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint8Array));
       expect(verifier).toBeDefined();
       expect(verifier.length).toBeLessThanOrEqual(64);
@@ -68,6 +73,9 @@ describe('PKCE Utilities', () => {
     });
 
     it('should throw error for invalid length', () => {
+      // Given I have invalid length parameters
+      // When I try to generate a code verifier with invalid length
+      // Then it should throw an error
       expect(() => generateCodeVerifier(42)).toThrow(
         'Code verifier length must be between 43 and 128 characters'
       );
@@ -77,6 +85,7 @@ describe('PKCE Utilities', () => {
     });
 
     it('should generate different verifiers on multiple calls', () => {
+      // Given I have crypto utilities that return different values for each call
       let callCount = 0;
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         // Generate different values for each call
@@ -84,21 +93,27 @@ describe('PKCE Utilities', () => {
         callCount++;
       });
 
+      // When I generate multiple code verifiers
       const verifier1 = generateCodeVerifier(43);
       const verifier2 = generateCodeVerifier(43);
 
+      // Then they should be different
       expect(verifier1).not.toBe(verifier2);
     });
   });
 
   describe('generateCodeChallenge', () => {
     it('should generate a code challenge from verifier', async () => {
+      // Given I have a code verifier and mock hash result
       const mockHash = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
       mockDigest.mockResolvedValue(mockHash.buffer);
 
       const verifier = 'test-code-verifier';
+
+      // When I generate a code challenge
       const challenge = await generateCodeChallenge(verifier);
 
+      // Then it should call the digest function and return a challenge
       expect(mockDigest).toHaveBeenCalledWith(
         'SHA-256',
         expect.any(Uint8Array)
@@ -109,13 +124,16 @@ describe('PKCE Utilities', () => {
     });
 
     it('should use TextEncoder to encode the verifier', async () => {
+      // Given I have a code verifier and mock hash result
       const mockHash = new Uint8Array([1, 2, 3, 4]);
       mockDigest.mockResolvedValue(mockHash.buffer);
 
       const verifier = 'test-verifier';
+
+      // When I generate a code challenge
       await generateCodeChallenge(verifier);
 
-      // Verify that digest was called with encoded data
+      // Then it should call digest with encoded data
       expect(mockDigest).toHaveBeenCalledWith(
         'SHA-256',
         expect.any(Uint8Array)
@@ -123,10 +141,13 @@ describe('PKCE Utilities', () => {
     });
 
     it('should handle digest errors', async () => {
+      // Given I have a code verifier and digest will fail
       mockDigest.mockRejectedValue(new Error('Digest failed'));
 
       const verifier = 'test-verifier';
 
+      // When I try to generate a code challenge
+      // Then it should throw an error
       await expect(generateCodeChallenge(verifier)).rejects.toThrow(
         'Digest failed'
       );
@@ -135,14 +156,17 @@ describe('PKCE Utilities', () => {
 
   describe('generateState', () => {
     it('should generate a state parameter', () => {
+      // Given I have crypto utilities that return predictable values
       const mockArray = new Uint8Array(32);
       mockArray.fill(65);
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         array.set(mockArray.slice(0, array.length));
       });
 
+      // When I generate a state parameter
       const state = generateState();
 
+      // Then it should call crypto and return a state
       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint8Array));
       expect(state).toBeDefined();
       expect(typeof state).toBe('string');
@@ -150,29 +174,34 @@ describe('PKCE Utilities', () => {
     });
 
     it('should generate different states on multiple calls', () => {
+      // Given I have crypto utilities that return different values for each call
       let callCount = 0;
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         array.fill(65 + callCount);
         callCount++;
       });
 
+      // When I generate multiple state parameters
       const state1 = generateState();
       const state2 = generateState();
 
+      // Then they should be different
       expect(state1).not.toBe(state2);
     });
   });
 
   describe('Base64URL encoding', () => {
     it('should produce URL-safe base64 encoding', () => {
+      // Given I have crypto utilities that return characters that need URL encoding
       const mockArray = new Uint8Array([62, 63, 255]); // Characters that need URL encoding
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
         array.set(mockArray.slice(0, array.length));
       });
 
+      // When I generate a code verifier
       const result = generateCodeVerifier(43);
 
-      // Should not contain +, /, or = characters
+      // Then it should not contain URL-unsafe characters
       expect(result).not.toMatch(/[+/=]/);
     });
   });

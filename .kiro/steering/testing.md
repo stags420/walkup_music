@@ -24,9 +24,32 @@ inclusion: always
 ### Test Structure
 
 - Use descriptive test names that explain the scenario being tested
-- Follow Given-When-Then pattern
+- Follow Given-When-Then pattern with explicit comments
 - Keep tests focused and independent
 - Use meaningful assertions with clear failure messages
+
+#### Given-When-Then Format
+
+All tests must follow the Given-When-Then structure with clear comment sections:
+
+```typescript
+test('should remove player from storage when deleted', async () => {
+  // Given we have players in storage
+  const players = [
+    { id: '1', name: 'Player 1' },
+    { id: '2', name: 'Player 2' }
+  ];
+  await storage.saveAll(players);
+
+  // When I delete a player from storage
+  await playerService.deletePlayer('1');
+
+  // Then storage does not contain that player
+  const remainingPlayers = await storage.loadAll();
+  expect(remainingPlayers).toHaveLength(1);
+  expect(remainingPlayers[0].id).toBe('2');
+});
+```
 
 ### Coverage Requirements
 

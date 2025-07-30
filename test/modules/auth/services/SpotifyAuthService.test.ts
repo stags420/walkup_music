@@ -46,15 +46,21 @@ describe('SpotifyAuthService', () => {
 
   describe('constructor', () => {
     it('should initialize with config', () => {
+      // Given I have a valid config
+      // When I create a SpotifyAuthService
+      // Then it should be initialized correctly
       expect(authService).toBeInstanceOf(SpotifyAuthService);
     });
 
     it('should warn when cookies are not available', () => {
+      // Given cookies are not available
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
       mockCookies.areCookiesAvailable.mockReturnValue(false);
 
+      // When I create a SpotifyAuthService
       new SpotifyAuthService(mockConfig);
 
+      // Then a warning should be logged
       expect(consoleSpy).toHaveBeenCalledWith(
         'Cookies are not available. Authentication may not work properly.'
       );
@@ -63,32 +69,39 @@ describe('SpotifyAuthService', () => {
     });
 
     it('should load existing tokens from cookies', () => {
+      // Given I have existing tokens in cookies
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
         .mockReturnValueOnce((Date.now() + 3600000).toString())
         .mockReturnValueOnce('streaming user-read-email');
 
+      // When I create a SpotifyAuthService
       const service = new SpotifyAuthService(mockConfig);
 
+      // Then it should be authenticated
       expect(service.isAuthenticated()).toBe(true);
     });
   });
 
   describe('login', () => {
     it('should initiate OAuth flow with correct parameters', async () => {
+      // Given I have PKCE utilities that return test values
       mockPkce.generateCodeVerifier.mockReturnValue('test-verifier');
       mockPkce.generateCodeChallenge.mockResolvedValue('test-challenge');
       mockPkce.generateState.mockReturnValue('test-state');
 
+      // When I call login
       await authService.login();
 
+      // Then PKCE utilities should be called
       expect(mockPkce.generateCodeVerifier).toHaveBeenCalled();
       expect(mockPkce.generateCodeChallenge).toHaveBeenCalledWith(
         'test-verifier'
       );
       expect(mockPkce.generateState).toHaveBeenCalled();
 
+      // And cookies should be set
       expect(mockCookies.setCookie).toHaveBeenCalledWith(
         'spotify_code_verifier',
         'test-verifier',
@@ -101,6 +114,7 @@ describe('SpotifyAuthService', () => {
         expect.objectContaining({ maxAge: 600, sameSite: 'lax' })
       );
 
+      // And the user should be redirected to Spotify
       expect(globalThis.location.href).toContain(
         'https://accounts.spotify.com/authorize'
       );
@@ -114,6 +128,7 @@ describe('SpotifyAuthService', () => {
 
   describe('handleCallback', () => {
     it('should handle successful callback', async () => {
+      // Given I have stored state and code verifier in cookies
       mockCookies.getCookie
         .mockReturnValueOnce('test-state') // stored state
         .mockReturnValueOnce('test-verifier'); // code verifier
@@ -143,8 +158,10 @@ describe('SpotifyAuthService', () => {
           json: () => Promise.resolve(mockUserProfile),
         } as Response);
 
+      // When I handle a successful callback
       await authService.handleCallback('auth-code', 'test-state');
 
+      // Then cookies should be cleaned up and the user should be authenticated
       expect(mockCookies.deleteCookie).toHaveBeenCalledWith(
         'spotify_code_verifier'
       );
@@ -153,18 +170,24 @@ describe('SpotifyAuthService', () => {
     });
 
     it('should throw error for invalid state', async () => {
+      // Given I have a different state stored than what was received
       mockCookies.getCookie.mockReturnValueOnce('different-state');
 
+      // When I handle a callback with mismatched state
+      // Then it should throw a CSRF error
       await expect(
         authService.handleCallback('auth-code', 'test-state')
       ).rejects.toThrow('Invalid state parameter. Possible CSRF attack.');
     });
 
     it('should throw error when code verifier is missing', async () => {
+      // Given I have state but no code verifier
       mockCookies.getCookie
         .mockReturnValueOnce('test-state')
         .mockReturnValueOnce(null); // no code verifier
 
+      // When I handle a callback without code verifier
+      // Then it should throw an error
       await expect(
         authService.handleCallback('auth-code', 'test-state')
       ).rejects.toThrow(
@@ -173,6 +196,7 @@ describe('SpotifyAuthService', () => {
     });
 
     it('should throw error for non-premium users', async () => {
+      // Given I have valid state and code verifier, but user is not premium
       mockCookies.getCookie
         .mockReturnValueOnce('test-state')
         .mockReturnValueOnce('test-verifier');
@@ -201,6 +225,8 @@ describe('SpotifyAuthService', () => {
           json: () => Promise.resolve(mockUserProfile),
         } as Response);
 
+      // When I handle a callback for a non-premium user
+      // Then it should throw a premium requirement error
       await expect(
         authService.handleCallback('auth-code', 'test-state')
       ).rejects.toThrow(
@@ -211,8 +237,11 @@ describe('SpotifyAuthService', () => {
 
   describe('logout', () => {
     it('should clear all tokens and cookies', async () => {
+      // Given I have an authenticated service
+      // When I call logout
       await authService.logout();
 
+      // Then all cookies should be deleted and the user should be unauthenticated
       expect(mockCookies.deleteCookie).toHaveBeenCalledTimes(6); // All cookie names
       expect(authService.isAuthenticated()).toBe(false);
     });
@@ -220,12 +249,16 @@ describe('SpotifyAuthService', () => {
 
   describe('getAccessToken', () => {
     it('should return null when not authenticated', async () => {
+      // Given I have an unauthenticated service
+      // When I get the access token
       const token = await authService.getAccessToken();
+
+      // Then it should return null
       expect(token).toBeNull();
     });
 
     it('should return valid token when authenticated', async () => {
-      // Set up authenticated state
+      // Given I have an authenticated service with valid tokens
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
@@ -233,13 +266,16 @@ describe('SpotifyAuthService', () => {
         .mockReturnValueOnce('streaming user-read-email');
 
       const service = new SpotifyAuthService(mockConfig);
+
+      // When I get the access token
       const token = await service.getAccessToken();
 
+      // Then it should return the access token
       expect(token).toBe('access-token');
     });
 
     it('should refresh token when expired', async () => {
-      // Set up expired token
+      // Given I have an expired token
       mockCookies.getCookie
         .mockReturnValueOnce('old-access-token')
         .mockReturnValueOnce('refresh-token')
@@ -260,8 +296,10 @@ describe('SpotifyAuthService', () => {
         json: () => Promise.resolve(mockRefreshResponse),
       } as Response);
 
+      // When I get the access token
       const token = await service.getAccessToken();
 
+      // Then it should refresh the token and return the new one
       expect(token).toBe('new-access-token');
       expect(mockFetch).toHaveBeenCalledWith(
         'https://accounts.spotify.com/api/token',
@@ -273,7 +311,7 @@ describe('SpotifyAuthService', () => {
     });
 
     it('should logout on refresh failure', async () => {
-      // Set up expired token
+      // Given I have an expired token and refresh will fail
       mockCookies.getCookie
         .mockReturnValueOnce('old-access-token')
         .mockReturnValueOnce('refresh-token')
@@ -288,8 +326,10 @@ describe('SpotifyAuthService', () => {
         text: () => Promise.resolve('Invalid refresh token'),
       } as Response);
 
+      // When I get the access token
       const token = await service.getAccessToken();
 
+      // Then it should return null and logout the user
       expect(token).toBeNull();
       expect(service.isAuthenticated()).toBe(false);
     });
@@ -297,10 +337,14 @@ describe('SpotifyAuthService', () => {
 
   describe('isAuthenticated', () => {
     it('should return false when no tokens', () => {
+      // Given I have no tokens
+      // When I check if authenticated
+      // Then it should return false
       expect(authService.isAuthenticated()).toBe(false);
     });
 
     it('should return true when tokens are valid', () => {
+      // Given I have valid tokens
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
@@ -309,10 +353,13 @@ describe('SpotifyAuthService', () => {
 
       const service = new SpotifyAuthService(mockConfig);
 
+      // When I check if authenticated
+      // Then it should return true
       expect(service.isAuthenticated()).toBe(true);
     });
 
     it('should return false when tokens are expired', () => {
+      // Given I have expired tokens
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
@@ -321,13 +368,15 @@ describe('SpotifyAuthService', () => {
 
       const service = new SpotifyAuthService(mockConfig);
 
+      // When I check if authenticated
+      // Then it should return false
       expect(service.isAuthenticated()).toBe(false);
     });
   });
 
   describe('refreshToken', () => {
     it('should refresh tokens successfully', async () => {
-      // Set up service with refresh token
+      // Given I have a service with refresh token
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
@@ -348,8 +397,10 @@ describe('SpotifyAuthService', () => {
         json: () => Promise.resolve(mockRefreshResponse),
       } as Response);
 
+      // When I refresh the token
       await service.refreshToken();
 
+      // Then it should call the token endpoint with refresh token
       expect(mockFetch).toHaveBeenCalledWith(
         'https://accounts.spotify.com/api/token',
         expect.objectContaining({
@@ -361,12 +412,16 @@ describe('SpotifyAuthService', () => {
     });
 
     it('should throw error when no refresh token', async () => {
+      // Given I have no refresh token
+      // When I try to refresh the token
+      // Then it should throw an error
       await expect(authService.refreshToken()).rejects.toThrow(
         'No refresh token available'
       );
     });
 
     it('should throw error on refresh failure', async () => {
+      // Given I have a refresh token but the refresh will fail
       mockCookies.getCookie
         .mockReturnValueOnce('access-token')
         .mockReturnValueOnce('refresh-token')
@@ -381,6 +436,8 @@ describe('SpotifyAuthService', () => {
         text: () => Promise.resolve('Invalid refresh token'),
       } as Response);
 
+      // When I try to refresh the token
+      // Then it should throw an error
       await expect(service.refreshToken()).rejects.toThrow(
         'Token refresh failed: 400 Invalid refresh token'
       );

@@ -86,3 +86,5 @@ pids
 
 # Spotify API credentials (if applicable)
 spotify-credentials.json
+
+.cursor/

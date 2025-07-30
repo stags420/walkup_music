@@ -36,7 +36,7 @@
   - Write component tests for authentication UI
   - _Requirements: 1.1, 1.4_
 
-- [ ] 6. Create basic player management UI
+- [x] 6. Create basic player management UI
   - Build PlayerList component to display all saved players with mock data
   - Create PlayerForm component for adding/editing players (without Spotify integration initially)
   - Add basic player CRUD operations with local storage

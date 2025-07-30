@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth, LoginPage, CallbackPage } from '@/modules/auth';
+import { PlayerManager, PlayerServiceFactory } from '@/modules/game';
 import './App.css';
 
 function AppContent() {
@@ -28,7 +29,9 @@ function AppContent() {
                   <p>Welcome, {auth.user?.displayName}!</p>
                 </header>
                 <main>
-                  <div>Dashboard coming soon...</div>
+                  <PlayerManager
+                    playerService={PlayerServiceFactory.getInstance()}
+                  />
                 </main>
               </div>
             ) : (

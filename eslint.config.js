@@ -75,6 +75,7 @@ export default [
       'unicorn/prefer-optional-catch-binding': 'off', // Allow named catch parameters
       'unicorn/no-array-for-each': 'off', // Allow forEach in some contexts
       'unicorn/prefer-number-properties': 'off', // Allow global isNaN
+      'unicorn/no-nested-ternary': 'off', // Allow nested ternary (conflicts with Prettier)
       'no-redeclare': 'off', // TypeScript handles this better
     },
   },

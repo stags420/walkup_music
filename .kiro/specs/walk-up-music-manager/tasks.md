@@ -44,24 +44,26 @@
   - Write component tests for player management interface
   - _Requirements: 2.1, 2.4, 2.6, 2.7_
 
-- [ ] 7. Implement player management service
-  - Create PlayerService class with CRUD operations for players
-  - Add song selection and segment timing functionality
-  - Implement player data persistence using storage service
-  - Write unit tests for player management operations
-  - _Requirements: 2.1, 2.5, 2.6, 2.7_
+- [ ] 7. Build complete player management UI with mocked Spotify integration
+  - Create SongSelector component with mocked search functionality and fake results
+  - Add song preview UI (without actual playback) and segment selection interface
+  - Implement drag-and-drop or intuitive selection for song segments
+  - Update PlayerForm to work with mocked Spotify track data
+  - Add comprehensive player CRUD operations with local storage persistence
+  - Create PlayerService class with mocked song search and segment timing
+  - Write component tests for complete player management interface
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
 
-- [ ] 8. Build Spotify API integration
+- [ ] 8. Build real Spotify API integration
   - Create Spotify Web API client with search functionality
   - Implement song search with proper error handling and rate limiting
   - Add track metadata parsing and preview URL handling
   - Create unit tests for API integration with mocked responses
   - _Requirements: 2.2, 2.3_
 
-- [ ] 9. Integrate Spotify functionality into player management UI
-  - Connect SongSelector component with Spotify API search
-  - Add song preview functionality and segment selection
-  - Implement drag-and-drop or intuitive selection for song segments
+- [ ] 9. Replace mocked functionality with real Spotify integration
+  - Connect SongSelector component with real Spotify API search
+  - Add actual song preview functionality and segment selection
   - Update PlayerForm to work with real Spotify track data
   - Write integration tests for Spotify-enabled player management
   - _Requirements: 2.2, 2.3, 2.4, 2.6, 2.7_

@@ -40,11 +40,9 @@ describe('PKCE Utilities', () => {
 
   describe('generateCodeVerifier', () => {
     it('should generate a code verifier with default length', () => {
-      // Mock random values
-      const mockArray = new Uint8Array(128);
-      mockArray.fill(65); // Fill with 'A' character
+      // Mock random values - fill the array that gets passed in
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
-        array.set(mockArray);
+        array.fill(65); // Fill with 'A' character
       });
 
       const verifier = generateCodeVerifier();
@@ -52,20 +50,21 @@ describe('PKCE Utilities', () => {
       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint8Array));
       expect(verifier).toBeDefined();
       expect(typeof verifier).toBe('string');
-      expect(verifier.length).toBeGreaterThan(0);
+      expect(verifier.length).toBeGreaterThanOrEqual(43);
+      expect(verifier.length).toBeLessThanOrEqual(128);
     });
 
     it('should generate a code verifier with custom length', () => {
-      const mockArray = new Uint8Array(64);
-      mockArray.fill(65);
       mockGetRandomValues.mockImplementation((array: Uint8Array) => {
-        array.set(mockArray.slice(0, array.length));
+        array.fill(65); // Fill with 'A' character
       });
 
       const verifier = generateCodeVerifier(64);
 
       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint8Array));
       expect(verifier).toBeDefined();
+      expect(verifier.length).toBeLessThanOrEqual(64);
+      expect(verifier.length).toBeGreaterThanOrEqual(43);
     });
 
     it('should throw error for invalid length', () => {

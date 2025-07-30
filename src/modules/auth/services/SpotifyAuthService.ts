@@ -62,15 +62,17 @@ export class SpotifyAuthService implements AuthService {
     const state = generateState();
 
     // Store PKCE parameters in cookies for the callback
+    const isSecure = globalThis.location.protocol === 'https:';
+
     setCookie(SpotifyAuthService.COOKIE_NAMES.CODE_VERIFIER, codeVerifier, {
       maxAge: 600, // 10 minutes
-      secure: true,
+      secure: isSecure,
       sameSite: 'lax', // Allow cross-site for OAuth callback
     });
 
     setCookie(SpotifyAuthService.COOKIE_NAMES.STATE, state, {
       maxAge: 600, // 10 minutes
-      secure: true,
+      secure: isSecure,
       sameSite: 'lax',
     });
 
@@ -271,8 +273,9 @@ export class SpotifyAuthService implements AuthService {
   private saveTokensToCookies(): void {
     if (!this.tokens) return;
 
+    const isSecure = globalThis.location.protocol === 'https:';
     const cookieOptions = {
-      secure: true,
+      secure: isSecure,
       sameSite: 'strict' as const,
       maxAge: 3600, // 1 hour
     };

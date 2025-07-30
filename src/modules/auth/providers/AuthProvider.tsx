@@ -89,7 +89,7 @@ export function AuthProvider({
     // Get the current origin and convert localhost to 127.0.0.1 for Spotify compatibility
     const getRedirectUri = () => {
       if (globalThis.window === undefined) {
-        return 'http://127.0.0.1:3000/callback';
+        return 'http://127.0.0.1:8000/callback';
       }
 
       const origin = globalThis.location.origin;

@@ -149,15 +149,16 @@ export class SpotifyAuthService implements AuthService {
       return null;
     }
 
-    // Check if token is expired (with 5-minute buffer)
+    // Check if token is expired (with configurable buffer)
     const now = Date.now();
-    const bufferMs = 5 * 60 * 1000; // 5 minutes
+    const bufferMs = this.config.tokenRefreshBufferMinutes * 60 * 1000; // Convert minutes to milliseconds
 
     if (now >= this.tokens.expiresAt - bufferMs) {
       try {
         await this.refreshToken();
       } catch (error) {
         console.info('Failed to refresh token:', error);
+        // Clear invalid tokens and logout
         await this.logout();
         return null;
       }
@@ -168,15 +169,17 @@ export class SpotifyAuthService implements AuthService {
 
   /**
    * Checks if the user is currently authenticated
+   * Uses the same expiration logic as getAccessToken for consistency
    */
   isAuthenticated(): boolean {
     if (!this.tokens) {
       return false;
     }
 
-    // Check if token is not expired
+    // Check if token is not expired (with configurable buffer for consistency)
     const now = Date.now();
-    return now < this.tokens.expiresAt;
+    const bufferMs = this.config.tokenRefreshBufferMinutes * 60 * 1000; // Convert minutes to milliseconds
+    return now < this.tokens.expiresAt - bufferMs;
   }
 
   /**
@@ -203,6 +206,13 @@ export class SpotifyAuthService implements AuthService {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`Token refresh failed: ${response.status} ${errorText}`);
+
+      // If it's a 400 or 401 error, the refresh token is invalid
+      if (response.status === 400 || response.status === 401) {
+        throw new Error('Refresh token is invalid or expired');
+      }
+
       throw new Error(`Token refresh failed: ${response.status} ${errorText}`);
     }
 
@@ -389,6 +399,13 @@ export class SpotifyAuthService implements AuthService {
       });
 
       if (!response.ok) {
+        // If we get a 401, the token is invalid
+        if (response.status === 401) {
+          console.error('Access token is invalid, clearing authentication');
+          await this.logout();
+          return null;
+        }
+
         throw new Error(`Failed to fetch user profile: ${response.status}`);
       }
 
@@ -402,6 +419,8 @@ export class SpotifyAuthService implements AuthService {
       };
     } catch (error) {
       console.error('Failed to get user info:', error);
+      // If there's an error getting user info, clear authentication
+      await this.logout();
       return null;
     }
   }

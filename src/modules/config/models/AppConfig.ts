@@ -2,6 +2,7 @@ export interface AppConfig {
   maxSegmentDuration: number; // seconds, default 10
   spotifyClientId: string;
   redirectUri: string;
+  tokenRefreshBufferMinutes: number; // minutes, default 15
 }
 
 function isValidUrl(url: string): boolean {
@@ -25,6 +26,7 @@ export const AppConfig = {
     const maxSegmentDuration = obj.maxSegmentDuration ?? 10;
     const spotifyClientId = obj.spotifyClientId ?? '';
     const redirectUri = obj.redirectUri ?? 'http://127.0.0.1:8000/callback';
+    const tokenRefreshBufferMinutes = obj.tokenRefreshBufferMinutes ?? 15;
 
     if (
       typeof maxSegmentDuration !== 'number' ||
@@ -54,10 +56,21 @@ export const AppConfig = {
       );
     }
 
+    if (
+      typeof tokenRefreshBufferMinutes !== 'number' ||
+      tokenRefreshBufferMinutes < 1 ||
+      tokenRefreshBufferMinutes > 60
+    ) {
+      throw new Error(
+        'Invalid app config data: tokenRefreshBufferMinutes must be a number between 1 and 60'
+      );
+    }
+
     return {
       maxSegmentDuration,
       spotifyClientId: spotifyClientId.trim(),
       redirectUri: redirectUri.trim(),
+      tokenRefreshBufferMinutes,
     };
   },
 };

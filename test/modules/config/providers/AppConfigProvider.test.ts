@@ -5,6 +5,7 @@ describe('AppConfigProvider', () => {
     maxSegmentDuration: 15,
     spotifyClientId: 'test-client-id',
     redirectUri: 'http://test.example.com/callback',
+    tokenRefreshBufferMinutes: 15,
   };
 
   beforeEach(() => {

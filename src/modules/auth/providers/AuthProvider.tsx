@@ -66,10 +66,17 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
               type: 'LOGIN_SUCCESS',
               user: userInfo,
             });
+          } else {
+            // If getUserInfo returns null, the token might be invalid
+            // Clear the authentication state
+            dispatch({ type: 'LOGOUT' });
           }
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+        // If there's an error checking auth status, clear the state
+        // This handles cases where tokens are invalid
+        dispatch({ type: 'LOGOUT' });
       }
     };
 

@@ -33,6 +33,7 @@ describe('SpotifyAuthService', () => {
       spotifyClientId: 'test-client-id',
       redirectUri: 'http://127.0.0.1:8000/callback',
       maxSegmentDuration: 10,
+      tokenRefreshBufferMinutes: 15,
     };
 
     // Mock cookie utilities
@@ -439,7 +440,7 @@ describe('SpotifyAuthService', () => {
       // When I try to refresh the token
       // Then it should throw an error
       await expect(service.refreshToken()).rejects.toThrow(
-        'Token refresh failed: 400 Invalid refresh token'
+        'Refresh token is invalid or expired'
       );
     });
   });

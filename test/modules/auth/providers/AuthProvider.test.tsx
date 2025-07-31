@@ -51,21 +51,32 @@ class MockAuthService implements AuthService {
     }
     this.authenticated = true;
   }
+
+  async getUserInfo(): Promise<{
+    id: string;
+    email: string;
+    displayName: string;
+  } | null> {
+    if (!this.authenticated) {
+      return null;
+    }
+    return {
+      id: 'test-user-id',
+      email: 'user@spotify.com',
+      displayName: 'Spotify User',
+    };
+  }
 }
 
 // Test component that uses the auth context
 function TestComponent() {
-  const { state, login, logout, clearError, handleCallback } = useAuth();
+  const { state, login, logout, handleCallback } = useAuth();
 
   return (
     <div>
       <div data-testid="auth-status">
         {state.isAuthenticated ? 'authenticated' : 'not-authenticated'}
       </div>
-      <div data-testid="loading-status">
-        {state.isLoading ? 'loading' : 'not-loading'}
-      </div>
-      <div data-testid="error-status">{state.error || 'no-error'}</div>
       <div data-testid="user-info">
         {state.user
           ? `${state.user.displayName} (${state.user.email})`
@@ -76,9 +87,6 @@ function TestComponent() {
       </button>
       <button onClick={logout} data-testid="logout-button">
         Logout
-      </button>
-      <button onClick={clearError} data-testid="clear-error-button">
-        Clear Error
       </button>
       <button
         onClick={async () => {
@@ -130,10 +138,6 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('auth-status')).toHaveTextContent(
       'not-authenticated'
     );
-    expect(screen.getByTestId('loading-status')).toHaveTextContent(
-      'not-loading'
-    );
-    expect(screen.getByTestId('error-status')).toHaveTextContent('no-error');
     expect(screen.getByTestId('user-info')).toHaveTextContent('no-user');
   });
 
@@ -155,54 +159,12 @@ describe('AuthContext', () => {
       );
     });
 
-    expect(screen.getByTestId('user-info')).toHaveTextContent(
-      'Spotify User (user@spotify.com)'
-    );
-  });
-
-  it('should handle login success', async () => {
-    // Given I have an AuthProvider with a mock auth service
-    render(
-      <AuthProvider authService={mockAuthService}>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    // When I click the login button
-    fireEvent.click(screen.getByTestId('login-button'));
-
-    // Then the loading state should be shown
+    // And the user info should be loaded
     await waitFor(() => {
-      expect(screen.getByTestId('loading-status')).toHaveTextContent('loading');
-    });
-  });
-
-  it('should handle login failure', async () => {
-    // Given I have an auth service that will fail login
-    mockAuthService.setShouldFailLogin(true);
-
-    // When I render the AuthProvider and click login
-    render(
-      <AuthProvider authService={mockAuthService}>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    fireEvent.click(screen.getByTestId('login-button'));
-
-    // Then an error should be displayed and the user should remain unauthenticated
-    await waitFor(() => {
-      expect(screen.getByTestId('error-status')).toHaveTextContent(
-        'Login failed'
+      expect(screen.getByTestId('user-info')).toHaveTextContent(
+        'Spotify User (user@spotify.com)'
       );
     });
-
-    expect(screen.getByTestId('auth-status')).toHaveTextContent(
-      'not-authenticated'
-    );
-    expect(screen.getByTestId('loading-status')).toHaveTextContent(
-      'not-loading'
-    );
   });
 
   it('should handle logout', async () => {
@@ -253,59 +215,12 @@ describe('AuthContext', () => {
       );
     });
 
-    expect(screen.getByTestId('user-info')).toHaveTextContent(
-      'Spotify User (user@spotify.com)'
-    );
-  });
-
-  it('should handle callback failure', async () => {
-    // Given I have an auth service that will fail callback
-    mockAuthService.setShouldFailCallback(true);
-
-    // When I render the AuthProvider and handle a callback
-    render(
-      <AuthProvider authService={mockAuthService}>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    fireEvent.click(screen.getByTestId('handle-callback-button'));
-
-    // Then an error should be displayed and the user should remain unauthenticated
+    // And the user info should be loaded
     await waitFor(() => {
-      expect(screen.getByTestId('error-status')).toHaveTextContent(
-        'Callback failed'
+      expect(screen.getByTestId('user-info')).toHaveTextContent(
+        'Spotify User (user@spotify.com)'
       );
     });
-
-    expect(screen.getByTestId('auth-status')).toHaveTextContent(
-      'not-authenticated'
-    );
-  });
-
-  it('should clear errors', async () => {
-    // Given I have an auth service that will fail login
-    mockAuthService.setShouldFailLogin(true);
-
-    render(
-      <AuthProvider authService={mockAuthService}>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    // When I trigger an error and then clear it
-    fireEvent.click(screen.getByTestId('login-button'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error-status')).toHaveTextContent(
-        'Login failed'
-      );
-    });
-
-    // Then clearing the error should remove it
-    fireEvent.click(screen.getByTestId('clear-error-button'));
-
-    expect(screen.getByTestId('error-status')).toHaveTextContent('no-error');
   });
 
   it('should throw error when used outside provider', () => {

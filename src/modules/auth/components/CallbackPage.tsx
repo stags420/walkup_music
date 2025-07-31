@@ -9,7 +9,7 @@ interface CallbackPageProps {
 export function CallbackPage({ auth }: CallbackPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { handleCallback, state } = auth;
+  const { handleCallback } = auth;
   const processedRef = useRef(false);
 
   useEffect(() => {
@@ -61,12 +61,6 @@ export function CallbackPage({ auth }: CallbackPageProps) {
         <div className="loading-spinner" aria-hidden="true"></div>
         <h2>Connecting to Spotify...</h2>
         <p>Please wait while we complete your authentication.</p>
-
-        {state.error && (
-          <div className="error-message" role="alert">
-            <strong>Error:</strong> {state.error}
-          </div>
-        )}
       </div>
     </div>
   );

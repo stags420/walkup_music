@@ -363,4 +363,46 @@ export class SpotifyAuthService implements AuthService {
       );
     }
   }
+
+  /**
+   * Gets user information from Spotify API
+   */
+  async getUserInfo(): Promise<{
+    id: string;
+    email: string;
+    displayName: string;
+  } | null> {
+    if (!this.isAuthenticated()) {
+      return null;
+    }
+
+    try {
+      const accessToken = await this.getAccessToken();
+      if (!accessToken) {
+        return null;
+      }
+
+      const response = await fetch(SpotifyAuthService.SPOTIFY_PROFILE_URL, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.status}`);
+      }
+
+      const profileData = await response.json();
+      const profile = SpotifyUserProfile.fromExternalData(profileData);
+
+      return {
+        id: profile.id,
+        email: profile.email,
+        displayName: profile.display_name,
+      };
+    } catch (error) {
+      console.error('Failed to get user info:', error);
+      return null;
+    }
+  }
 }

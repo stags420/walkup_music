@@ -7,4 +7,9 @@ export interface AuthService {
   isAuthenticated(): boolean;
   refreshToken(): Promise<void>;
   handleCallback(code: string, state: string): Promise<void>;
+  getUserInfo(): Promise<{
+    id: string;
+    email: string;
+    displayName: string;
+  } | null>;
 }

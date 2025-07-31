@@ -6,10 +6,9 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ auth }: LoginPageProps) {
-  const { state, login, clearError } = auth;
+  const { login } = auth;
 
   const handleLogin = async () => {
-    clearError();
     await login();
   };
 
@@ -23,20 +22,6 @@ export function LoginPage({ auth }: LoginPageProps) {
             your team
           </p>
         </div>
-
-        {state.error && (
-          <div className="error-message" role="alert">
-            <strong>Error:</strong> {state.error}
-            <button
-              type="button"
-              className="error-dismiss"
-              onClick={clearError}
-              aria-label="Dismiss error"
-            >
-              ×
-            </button>
-          </div>
-        )}
 
         <div className="login-content">
           <div className="spotify-info">
@@ -54,22 +39,12 @@ export function LoginPage({ auth }: LoginPageProps) {
               type="button"
               className="spotify-login-button"
               onClick={handleLogin}
-              disabled={state.isLoading}
               aria-describedby="login-help"
             >
-              {state.isLoading ? (
-                <>
-                  <span className="loading-spinner" aria-hidden="true"></span>
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <span className="spotify-icon" aria-hidden="true">
-                    ♪
-                  </span>
-                  Connect with Spotify
-                </>
-              )}
+              <span className="spotify-icon" aria-hidden="true">
+                ♪
+              </span>
+              Connect with Spotify
             </button>
 
             <p id="login-help" className="login-help">

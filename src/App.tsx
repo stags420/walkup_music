@@ -16,15 +16,6 @@ interface AppContentProps {
 }
 
 function AppContent({ auth }: AppContentProps) {
-  if (auth.state.isLoading) {
-    return (
-      <div className="app-loading">
-        <div className="loading-spinner" aria-hidden="true"></div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="App">
       <Routes>

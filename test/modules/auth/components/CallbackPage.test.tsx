@@ -56,6 +56,13 @@ class MockAuthService implements AuthService {
     return false;
   }
   async refreshToken(): Promise<void> {}
+  async getUserInfo(): Promise<{
+    id: string;
+    email: string;
+    displayName: string;
+  } | null> {
+    return null;
+  }
 }
 
 function createMockAuthContext(
@@ -66,9 +73,7 @@ function createMockAuthContext(
 
   const defaultState: AuthState = {
     isAuthenticated: false,
-    isLoading: false,
     user: null,
-    error: null,
     ...overrides,
   };
 
@@ -76,7 +81,6 @@ function createMockAuthContext(
     state: defaultState,
     login: service.login.bind(service),
     logout: service.logout.bind(service),
-    clearError: jest.fn(),
     handleCallback: service.handleCallback.bind(service),
   };
 
@@ -231,16 +235,5 @@ describe('CallbackPage', () => {
         '/?error=Authentication%20failed'
       );
     });
-  });
-
-  it('should display error if present in auth state', async () => {
-    // Given I have a callback page with an error in auth state
-    await renderCallbackPage('?code=test-code&state=test-state', undefined, {
-      error: 'Test error message',
-    });
-
-    // Then the error message should be displayed
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByText(/test error message/i)).toBeInTheDocument();
   });
 });

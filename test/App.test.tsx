@@ -73,12 +73,11 @@ describe('App Component Rendering', () => {
     mockAuth = {
       state: {
         isAuthenticated: false,
-        isLoading: false,
         user: null,
-        error: null,
       },
       login: jest.fn(),
       logout: jest.fn(),
+      handleCallback: jest.fn(),
     };
   });
 
@@ -89,23 +88,6 @@ describe('App Component Rendering', () => {
   });
 
   describe('AppContent', () => {
-    test('should render loading state when authentication is in progress', () => {
-      // Given I have authentication in loading state
-      const loadingAuth = {
-        ...mockAuth,
-        state: { ...mockAuth.state, isLoading: true },
-      };
-
-      // When I render AppContent with loading auth
-      render(<AppContent auth={loadingAuth} />);
-
-      // Then it should display the loading UI
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
-      expect(screen.getByText('Loading...').previousElementSibling).toHaveClass(
-        'loading-spinner'
-      );
-    });
-
     test('should render login page when user is not authenticated', () => {
       // Given I have an unauthenticated user
       const unauthenticatedAuth = {
@@ -134,7 +116,11 @@ describe('App Component Rendering', () => {
         state: {
           ...mockAuth.state,
           isAuthenticated: true,
-          user: { displayName: 'Test User' },
+          user: {
+            id: 'test-user',
+            email: 'test@example.com',
+            displayName: 'Test User',
+          },
         },
       };
 
@@ -177,24 +163,17 @@ describe('App Component Rendering', () => {
       // Then it should show login page
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
 
-      // When authentication becomes loading
-      const loadingAuth = {
-        ...mockAuth,
-        state: { ...mockAuth.state, isLoading: true },
-      };
-      rerender(<AppContent auth={loadingAuth} />);
-
-      // Then it should show loading state
-      expect(screen.getByText('Loading...')).toBeInTheDocument();
-
       // When user becomes authenticated
       const authenticatedAuth = {
         ...mockAuth,
         state: {
           ...mockAuth.state,
           isAuthenticated: true,
-          isLoading: false,
-          user: { displayName: 'Test User' },
+          user: {
+            id: 'test-user',
+            email: 'test@example.com',
+            displayName: 'Test User',
+          },
         },
       };
       rerender(
@@ -216,7 +195,11 @@ describe('App Component Rendering', () => {
         state: {
           ...mockAuth.state,
           isAuthenticated: true,
-          user: { displayName: 'John Doe' },
+          user: {
+            id: 'john-doe',
+            email: 'john@example.com',
+            displayName: 'John Doe',
+          },
         },
       };
 
@@ -238,7 +221,11 @@ describe('App Component Rendering', () => {
         state: {
           ...mockAuth.state,
           isAuthenticated: true,
-          user: { displayName: 'Jane Smith' },
+          user: {
+            id: 'jane-smith',
+            email: 'jane@example.com',
+            displayName: 'Jane Smith',
+          },
         },
       };
 

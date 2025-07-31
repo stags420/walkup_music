@@ -35,6 +35,13 @@ class MockAuthService implements AuthService {
   }
   async refreshToken(): Promise<void> {}
   async handleCallback(): Promise<void> {}
+  async getUserInfo(): Promise<{
+    id: string;
+    email: string;
+    displayName: string;
+  } | null> {
+    return null;
+  }
 }
 
 function createMockAuthContext(
@@ -45,9 +52,7 @@ function createMockAuthContext(
 
   const defaultState: AuthState = {
     isAuthenticated: false,
-    isLoading: false,
     user: null,
-    error: null,
     ...overrides,
   };
 
@@ -55,7 +60,6 @@ function createMockAuthContext(
     state: defaultState,
     login: jest.fn().mockImplementation(service.login.bind(service)),
     logout: jest.fn().mockImplementation(service.logout.bind(service)),
-    clearError: jest.fn(),
     handleCallback: jest
       .fn()
       .mockImplementation(service.handleCallback.bind(service)),
@@ -145,64 +149,6 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(service.wasLoginCalled()).toBe(true);
     });
-  });
-
-  it('should show loading state during login', async () => {
-    // Given I have a login page in loading state
-    renderLoginPage(undefined, { isLoading: true });
-
-    // Then it should show a loading state
-    expect(screen.getByText(/connecting\.\.\./i)).toBeInTheDocument();
-    expect(screen.getByRole('button')).toBeDisabled();
-
-    // Check for loading spinner
-    expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
-  });
-
-  it('should display error message when login fails', async () => {
-    // Given I have a login page with an error state
-    renderLoginPage(undefined, {
-      error: 'Spotify Premium subscription is required',
-    });
-
-    // Then an error message should be displayed
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(
-      screen.getByText(/spotify premium subscription is required/i)
-    ).toBeInTheDocument();
-  });
-
-  it('should clear error when dismiss button is clicked', async () => {
-    // Given I have a login page with an error state
-    const { auth } = renderLoginPage(undefined, {
-      error: 'Test error message',
-    });
-
-    // When I click the dismiss button
-    const dismissButton = screen.getByRole('button', {
-      name: /dismiss error/i,
-    });
-    fireEvent.click(dismissButton);
-
-    // Then the clearError function should be called
-    expect(auth.clearError).toHaveBeenCalled();
-  });
-
-  it('should clear error before attempting new login', async () => {
-    // Given I have a login page with an error state
-    const { auth } = renderLoginPage(undefined, {
-      error: 'Test error message',
-    });
-
-    // When I click the login button
-    const loginButton = screen.getByRole('button', {
-      name: /connect with spotify/i,
-    });
-    fireEvent.click(loginButton);
-
-    // Then clearError should be called before login
-    expect(auth.clearError).toHaveBeenCalled();
-    expect(auth.login).toHaveBeenCalled();
   });
 
   it('should have proper accessibility attributes', () => {

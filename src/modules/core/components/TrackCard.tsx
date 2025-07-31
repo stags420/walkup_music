@@ -1,4 +1,3 @@
-import React from 'react';
 import './TrackCard.css';
 
 interface Track {

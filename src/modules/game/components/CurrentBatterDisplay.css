@@ -1,0 +1,285 @@
+.current-batter-display {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Current batter - prominent display */
+.current-batter-card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid #007bff;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.current-batter-header {
+  margin-bottom: 20px;
+}
+
+.current-batter-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #007bff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.player-name {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.current-batter-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.album-art-section {
+  margin-bottom: 15px;
+}
+
+.album-art {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  object-fit: cover;
+}
+
+.song-info {
+  text-align: center;
+  max-width: 400px;
+}
+
+.song-title {
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.song-artist {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.song-timing {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #888;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.playback-controls {
+  margin-top: 20px;
+}
+
+.control-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.play-button,
+.stop-button {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.play-button {
+  background: #28a745;
+  color: white;
+}
+
+.play-button:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.stop-button {
+  background: #dc3545;
+  color: white;
+}
+
+.stop-button:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+.play-button:disabled,
+.stop-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary batters */
+.secondary-batters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.secondary-batter-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.secondary-batter-card.on-deck {
+  border-color: #28a745;
+  background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+}
+
+.secondary-batter-card.in-the-hole {
+  border-color: #6c757d;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.secondary-batter-card h4 {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  color: #333;
+}
+
+.secondary-batter-card.on-deck h4 {
+  color: #28a745;
+}
+
+.secondary-batter-card.in-the-hole h4 {
+  color: #6c757d;
+}
+
+.secondary-player-info {
+  text-align: center;
+}
+
+.secondary-player-info h5 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.secondary-song-info {
+  margin-top: 10px;
+}
+
+.secondary-song-info .song-title {
+  font-weight: 600;
+  margin: 5px 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.secondary-song-info .song-artist {
+  margin: 5px 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.no-player,
+.no-song {
+  font-style: italic;
+  opacity: 0.7;
+  text-align: center;
+  margin: 10px 0;
+  color: #666;
+}
+
+.no-song-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  color: #856404;
+  margin-top: 20px;
+}
+
+.no-song-warning p {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .current-batter-card {
+    padding: 20px;
+  }
+
+  .album-art {
+    width: 150px;
+    height: 150px;
+  }
+
+  .player-name {
+    font-size: 1.5rem;
+  }
+
+  .song-title {
+    font-size: 1.1rem;
+  }
+
+  .secondary-batters {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .control-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .play-button,
+  .stop-button {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .current-batter-display {
+    padding: 15px;
+  }
+
+  .current-batter-card {
+    padding: 15px;
+  }
+
+  .album-art {
+    width: 120px;
+    height: 120px;
+  }
+
+  .player-name {
+    font-size: 1.3rem;
+  }
+}

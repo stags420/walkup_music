@@ -1,115 +1,158 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { appConfigProvider } from '@/modules/config';
-import { AuthContextType } from '@/modules/auth';
 import { AppContent, AuthenticatedApp } from '@/App';
-import { PlayerServiceProvider } from '@/modules/game';
-import { MusicServiceProvider } from '@/modules/music';
+import { AuthContextType } from '@/modules/auth';
+import { PlayerServiceProvider } from '@/modules/game/providers/PlayerServiceProvider';
+import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
 
-// Mock config for tests
-const mockConfig = {
-  maxSegmentDuration: 10,
-  spotifyClientId: 'test-client-id',
-  redirectUri: 'http://test.example.com/callback',
-};
-
-// Create singleton instances for mocking
-const mockPlayerService = {
-  getAllPlayers: jest.fn().mockResolvedValue([]),
-  createPlayer: jest.fn(),
-  updatePlayer: jest.fn(),
-  deletePlayer: jest.fn(),
-};
-
-const mockMusicService = {
-  searchTracks: jest.fn().mockResolvedValue([]),
-};
-
-// Mock the service providers to avoid side effects in tests
-jest.mock('@/modules/game', () => ({
-  ...jest.requireActual('@/modules/game'),
+// Mock the service providers
+jest.mock('@/modules/game/providers/PlayerServiceProvider', () => ({
   PlayerServiceProvider: {
-    getOrCreate: jest.fn(() => mockPlayerService),
-  },
-  PlayerManager: ({
-    playerService: _playerService,
-    musicService: _musicService,
-  }: {
-    playerService: unknown;
-    musicService: unknown;
-  }) => <div data-testid="player-manager">Player Manager with services</div>,
-}));
-
-jest.mock('@/modules/music', () => ({
-  ...jest.requireActual('@/modules/music'),
-  MusicServiceProvider: {
-    getOrCreate: jest.fn(() => mockMusicService),
+    getOrCreate: jest.fn(() => ({
+      getAllPlayers: jest.fn().mockResolvedValue([]),
+      createPlayer: jest.fn(),
+      updatePlayer: jest.fn(),
+      deletePlayer: jest.fn(),
+      getPlayer: jest.fn(),
+    })),
   },
 }));
 
-// Mock auth components to avoid complex dependencies
-jest.mock('@/modules/auth', () => ({
-  ...jest.requireActual('@/modules/auth'),
-  LoginPage: ({ auth: _auth }: { auth: unknown }) => (
-    <div data-testid="login-page">
-      <h1>Connect your Spotify Premium account</h1>
-      <button>Connect with Spotify</button>
-    </div>
-  ),
-  CallbackPage: ({ auth: _auth }: { auth: unknown }) => (
-    <div data-testid="callback-page">Processing authentication...</div>
-  ),
-}));
-
-describe('App Component Rendering', () => {
-  let mockAuth: AuthContextType;
-
-  beforeEach(() => {
-    // Initialize global config before each test
-    appConfigProvider.reset();
-    appConfigProvider.initialize(mockConfig);
-
-    // Create base mock auth context
-    mockAuth = {
-      state: {
-        isAuthenticated: false,
-        user: null,
-      },
+jest.mock('@/modules/auth/providers/AuthServiceProvider', () => ({
+  AuthServiceProvider: {
+    getOrCreate: jest.fn(() => ({
       login: jest.fn(),
       logout: jest.fn(),
+      getAccessToken: jest.fn(),
+      isAuthenticated: jest.fn(),
+      refreshToken: jest.fn(),
       handleCallback: jest.fn(),
-    };
-  });
+      getUserInfo: jest.fn(),
+    })),
+  },
+}));
 
-  afterEach(() => {
-    // Clean up after each test
-    appConfigProvider.reset();
+jest.mock('@/modules/music/providers/MusicServiceProvider', () => ({
+  MusicServiceProvider: {
+    getOrCreate: jest.fn(() => ({
+      searchTracks: jest.fn(),
+      playTrack: jest.fn(),
+      previewTrack: jest.fn(),
+      pause: jest.fn(),
+      resume: jest.fn(),
+      seek: jest.fn(),
+      getCurrentTrack: jest.fn(),
+      isPlaybackReady: jest.fn(),
+      getCurrentState: jest.fn(),
+      isPlaybackConnected: jest.fn(),
+    })),
+  },
+}));
+
+jest.mock('@/modules/storage', () => ({
+  StorageServiceProvider: {
+    getOrCreate: jest.fn(() => ({
+      save: jest.fn(),
+      load: jest.fn(),
+      delete: jest.fn(),
+      clear: jest.fn(),
+      export: jest.fn(),
+      import: jest.fn(),
+    })),
+  },
+}));
+
+jest.mock('@/modules/game/providers/LineupServiceProvider', () => ({
+  __esModule: true,
+  default: {
+    getOrCreate: jest.fn(() => ({
+      createBattingOrder: jest.fn(),
+      updateBattingOrder: jest.fn(),
+      getCurrentBatter: jest.fn(),
+      getOnDeckBatter: jest.fn(),
+      getInTheHoleBatter: jest.fn(),
+      nextBatter: jest.fn(),
+      playWalkUpMusic: jest.fn(),
+      stopMusic: jest.fn(),
+      startGame: jest.fn(),
+      endGame: jest.fn(),
+      isGameInProgress: jest.fn().mockReturnValue(false),
+      getCurrentBattingOrder: jest.fn(),
+      loadGameState: jest.fn().mockResolvedValue(undefined),
+    })),
+  },
+}));
+
+// Mock the components
+jest.mock('@/modules/auth/components/LoginPage', () => ({
+  LoginPage: ({ auth }: { auth: AuthContextType }) => (
+    <div data-testid="login-page">
+      <h1>Login Page</h1>
+      <p>
+        Auth state:{' '}
+        {auth.state.isAuthenticated ? 'authenticated' : 'unauthenticated'}
+      </p>
+    </div>
+  ),
+}));
+
+jest.mock('@/modules/auth/components/CallbackPage', () => ({
+  CallbackPage: () => (
+    <div data-testid="callback-page">
+      <h1>Callback Page</h1>
+      <p>Processing authentication...</p>
+    </div>
+  ),
+}));
+
+jest.mock('@/modules/game/components/PlayerManager', () => ({
+  PlayerManager: () => <div data-testid="player-manager">Player Manager</div>,
+}));
+
+jest.mock('@/modules/game/components/GameMode', () => ({
+  GameMode: () => <div data-testid="game-mode">Game Mode</div>,
+}));
+
+// Mock the auth hook
+jest.mock('@/modules/auth', () => ({
+  ...jest.requireActual('@/modules/auth'),
+  useAuth: jest.fn(),
+}));
+
+// Import the mocked useAuth
+import { useAuth } from '@/modules/auth';
+
+describe('App Component Rendering', () => {
+  const mockAuth: AuthContextType = {
+    state: {
+      isAuthenticated: false,
+      user: null,
+    },
+    login: jest.fn(),
+    logout: jest.fn(),
+    handleCallback: jest.fn(),
+  };
+
+  beforeEach(() => {
     jest.clearAllMocks();
+    (useAuth as jest.Mock).mockReturnValue(mockAuth);
   });
 
   describe('AppContent', () => {
     test('should render login page when user is not authenticated', () => {
       // Given I have an unauthenticated user
-      const unauthenticatedAuth = {
-        ...mockAuth,
-        state: { ...mockAuth.state, isAuthenticated: false },
-      };
-
-      // When I render AppContent wrapped in router
+      // When I render AppContent
       render(
         <MemoryRouter initialEntries={['/']}>
-          <AppContent auth={unauthenticatedAuth} />
+          <AppContent auth={mockAuth} />
         </MemoryRouter>
       );
 
       // Then it should display the login page
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
-      expect(
-        screen.getByText('Connect your Spotify Premium account')
-      ).toBeInTheDocument();
     });
 
-    test('should render authenticated app when user is logged in', () => {
+    test('should render authenticated app when user is logged in', async () => {
       // Given I have an authenticated user
       const authenticatedAuth = {
         ...mockAuth,
@@ -124,7 +167,7 @@ describe('App Component Rendering', () => {
         },
       };
 
-      // When I render AppContent wrapped in router
+      // When I render AppContent
       render(
         <MemoryRouter initialEntries={['/']}>
           <AppContent auth={authenticatedAuth} />
@@ -133,7 +176,11 @@ describe('App Component Rendering', () => {
 
       // Then it should display the authenticated app
       expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
-      expect(screen.getByText('Welcome, Test User!')).toBeInTheDocument();
+
+      // Wait for loading to complete and then check for welcome message
+      await waitFor(() => {
+        expect(screen.getByText('Welcome, Test User!')).toBeInTheDocument();
+      });
     });
 
     test('should render callback page when navigating to callback route', () => {
@@ -152,7 +199,7 @@ describe('App Component Rendering', () => {
       ).toBeInTheDocument();
     });
 
-    test('should handle authentication state transitions correctly', () => {
+    test('should handle authentication state transitions correctly', async () => {
       // Given I start with unauthenticated state
       const { rerender } = render(
         <MemoryRouter initialEntries={['/']}>
@@ -183,12 +230,14 @@ describe('App Component Rendering', () => {
       );
 
       // Then it should show authenticated content
-      expect(screen.getByText('Welcome, Test User!')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Welcome, Test User!')).toBeInTheDocument();
+      });
     });
   });
 
   describe('AuthenticatedApp', () => {
-    test('should render authenticated app with user information', () => {
+    test('should render authenticated app with user information', async () => {
       // Given I have an authenticated user
       const authenticatedAuth = {
         ...mockAuth,
@@ -208,7 +257,12 @@ describe('App Component Rendering', () => {
 
       // Then it should display the app header and user welcome
       expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
-      expect(screen.getByText('Welcome, John Doe!')).toBeInTheDocument();
+
+      // Wait for loading to complete and then check for welcome message
+      await waitFor(() => {
+        expect(screen.getByText('Welcome, John Doe!')).toBeInTheDocument();
+      });
+
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
         'Walk-Up Music Manager'
       );
@@ -243,7 +297,7 @@ describe('App Component Rendering', () => {
       });
     });
 
-    test('should handle missing user display name gracefully', () => {
+    test('should handle missing user display name gracefully', async () => {
       // Given I have an authenticated user without display name
       const authenticatedAuth = {
         ...mockAuth,
@@ -259,7 +313,11 @@ describe('App Component Rendering', () => {
 
       // Then it should still render without crashing
       expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
-      expect(screen.getByText('Welcome, !')).toBeInTheDocument(); // Empty display name
+
+      // Wait for loading to complete and then check for welcome message
+      await waitFor(() => {
+        expect(screen.getByText('Welcome, !')).toBeInTheDocument(); // Empty display name
+      });
     });
   });
 });

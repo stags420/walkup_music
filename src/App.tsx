@@ -7,8 +7,15 @@ import {
   AuthContextType,
   AuthServiceProvider,
 } from '@/modules/auth';
-import { PlayerManager, PlayerServiceProvider } from '@/modules/game';
+import {
+  PlayerManager,
+  PlayerServiceProvider,
+  GameMode,
+  LineupServiceProvider,
+} from '@/modules/game';
 import { MusicServiceProvider } from '@/modules/music';
+import { StorageServiceProvider } from '@/modules/storage';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 interface AppContentProps {
@@ -37,11 +44,57 @@ function AppContent({ auth }: AppContentProps) {
 
 // Authenticated portion of the app with dependencies injected as props
 function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
+  const [isGameMode, setIsGameMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Get services from singleton providers and pass as props
   // This follows the guidance: use singleton providers for stateless services
   const playerService = PlayerServiceProvider.getOrCreate();
   const authService = AuthServiceProvider.getOrCreate();
+  const storageService = StorageServiceProvider.getOrCreate();
   const musicService = MusicServiceProvider.getOrCreate(authService, false); // Use real Spotify integration
+  const lineupService = LineupServiceProvider.getOrCreate(
+    playerService,
+    musicService,
+    storageService
+  );
+
+  // Check for existing game state on component mount
+  useEffect(() => {
+    const checkGameState = async () => {
+      try {
+        await lineupService.loadGameState();
+        if (lineupService.isGameInProgress()) {
+          setIsGameMode(true);
+        }
+      } catch (error) {
+        console.error('Failed to load game state:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkGameState();
+  }, [lineupService]);
+
+  const handleStartGame = () => {
+    setIsGameMode(true);
+  };
+
+  const handleEndGame = () => {
+    setIsGameMode(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>Walk-Up Music Manager</h1>
+          <p>Loading...</p>
+        </header>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -50,10 +103,16 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
         <p>Welcome, {auth.state.user?.displayName}!</p>
       </header>
       <main>
-        <PlayerManager
-          playerService={playerService}
-          musicService={musicService}
-        />
+        {isGameMode ? (
+          <GameMode lineupService={lineupService} onEndGame={handleEndGame} />
+        ) : (
+          <PlayerManager
+            playerService={playerService}
+            musicService={musicService}
+            lineupService={lineupService}
+            onStartGame={handleStartGame}
+          />
+        )}
       </main>
     </div>
   );

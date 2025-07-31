@@ -21,6 +21,34 @@
   }
 }
 
+.start-game-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+}
+
+.start-game-section .start-game-button {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.start-game-section .start-game-button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.6);
+}
+
 .player-manager-header {
   display: flex;
   flex-direction: column;
@@ -81,9 +109,8 @@
   }
 }
 
-.add-player-button {
-  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
-  color: white;
+.add-player-button,
+.start-game-button {
   border: none;
   border-radius: 6px;
   padding: 0.75rem 1rem;
@@ -91,10 +118,21 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   width: 100%;
+}
+
+.add-player-button {
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+}
+
+.start-game-button {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .add-player-button:hover {
@@ -103,8 +141,15 @@
   box-shadow: 0 6px 20px rgba(29, 185, 84, 0.6);
 }
 
+.start-game-button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
+}
+
 @media (min-width: 768px) {
-  .add-player-button {
+  .add-player-button,
+  .start-game-button {
     padding: 0.875rem 1.75rem;
     font-size: 1rem;
     width: auto;
@@ -113,6 +158,11 @@
   .add-player-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(29, 185, 84, 0.6);
+  }
+
+  .start-game-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.6);
   }
 }
 

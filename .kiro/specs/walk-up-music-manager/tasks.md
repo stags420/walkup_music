@@ -74,10 +74,12 @@
   - Add song preview functionality to segment selection UI using player
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
-- [ ] 11. Create game mode interface
-  - Start and End Game buttons. Start is in player management view and transitions 
+- [-] 11. Create game mode interface
+  - Create LineupService class for lineup management/storage. Store lineup and current position 
+    as separate state. For now, just use the current list of players as the lineup, don't store 
+    anything new. We will build a UI later to modify it.
+  - Add Start and End Game buttons. Start is in player management view and transitions 
     to game view, End is in game view and goes back to player management. 
-  - Assume lineup is just the existing list of players
   - Build CurrentBatterDisplay showing current, on-deck, and in-the-hole batters. Also
     has playback controls, the song is paused until the user hits play.
   - Track state of current position in lineup.
@@ -86,7 +88,6 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
 - [ ] 12. Build batting order management UI
-  - Create LineupService class for lineup management
   - Create BattingOrderManager component for editing lineup. Lineup starts as current player list.
   - Implement OrderBuilder. Left column is lineup. Right column is players that are not in lineup.
     You can drag and drop players anywhere.

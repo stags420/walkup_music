@@ -75,28 +75,23 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 11. Create game mode interface
-  - Assume lineup is just the existing list of players
   - Start and End Game buttons. Start is in player management view and transitions 
     to game view, End is in game view and goes back to player management. 
+  - Assume lineup is just the existing list of players
   - Build CurrentBatterDisplay showing current, on-deck, and in-the-hole batters. Also
     has playback controls, the song is paused until the user hits play.
+  - Track state of current position in lineup.
   - Create GameControls component with "Next Batter" button
   - Write component tests for game mode interface
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
 - [ ] 12. Build batting order management UI
-  - Create BattingOrderManager component for creating and editing orders
-  - Implement OrderBuilder with drag-and-drop player arrangement
-  - Add current position tracking and modification controls
+  - Create LineupService class for lineup management
+  - Create BattingOrderManager component for editing lineup. Lineup starts as current player list.
+  - Implement OrderBuilder. Left column is lineup. Right column is players that are not in lineup.
+    You can drag and drop players anywhere.
   - Write component tests for batting order interface
-  - _Requirements: 3.1, 3.2, 3.4, 3.5_
-
-- [ ] 13. Implement game control service
-  - Create GameService class for batting order management
-  - Add current batter tracking and position advancement
-  - Integrate music playback with batter transitions
-  - Write unit tests for game state management and music integration
-  - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
 
 - [ ] 14. Build configuration management
   - Create ConfigService for managing application settings

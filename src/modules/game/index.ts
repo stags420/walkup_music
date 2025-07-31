@@ -1,9 +1,9 @@
 // Game module exports
 export { Player } from './models/Player';
 export { BattingOrder } from './models/BattingOrder';
-export type { GameService } from './services/GameService';
+
 export { PlayerService } from './services/PlayerService';
-export { PlayerServiceFactory } from './services/PlayerServiceFactory';
+export { PlayerServiceProvider } from './providers/PlayerServiceProvider';
 
 // Components
 export { PlayerManager } from './components/PlayerManager';

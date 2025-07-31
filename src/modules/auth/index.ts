@@ -21,3 +21,6 @@ export {
   generateCodeChallenge,
   generateState,
 } from './utils/pkce';
+// Singleton service provider for stateless AuthService
+export { default as authServiceProvider } from './providers/AuthServiceProvider';
+export { AuthServiceProvider } from './providers/AuthServiceProvider';

@@ -1,6 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { LoginPage, AuthProvider, AuthService } from '@/modules/auth';
-import { AppConfig } from '@/modules/config';
+import {
+  LoginPage,
+  AuthService,
+  AuthContextType,
+  AuthState,
+} from '@/modules/auth';
 
 // Mock auth service for testing
 class MockAuthService implements AuthService {
@@ -33,21 +37,42 @@ class MockAuthService implements AuthService {
   async handleCallback(): Promise<void> {}
 }
 
-const mockConfig: AppConfig = {
-  maxSegmentDuration: 10,
-  spotifyClientId: 'test-client-id',
-  redirectUri: 'http://127.0.0.1:8000/callback',
-};
-
-function renderLoginPage(authService?: MockAuthService) {
+function createMockAuthContext(
+  authService?: MockAuthService,
+  overrides?: Partial<AuthState>
+): { auth: AuthContextType; service: MockAuthService } {
   const service = authService || new MockAuthService();
+
+  const defaultState: AuthState = {
+    isAuthenticated: false,
+    isLoading: false,
+    user: null,
+    error: null,
+    ...overrides,
+  };
+
+  const auth: AuthContextType = {
+    state: defaultState,
+    login: jest.fn().mockImplementation(service.login.bind(service)),
+    logout: jest.fn().mockImplementation(service.logout.bind(service)),
+    clearError: jest.fn(),
+    handleCallback: jest
+      .fn()
+      .mockImplementation(service.handleCallback.bind(service)),
+  };
+
+  return { auth, service };
+}
+
+function renderLoginPage(
+  authService?: MockAuthService,
+  stateOverrides?: Partial<AuthState>
+) {
+  const { auth, service } = createMockAuthContext(authService, stateOverrides);
   return {
     service,
-    ...render(
-      <AuthProvider authService={service} config={mockConfig}>
-        <LoginPage />
-      </AuthProvider>
-    ),
+    auth,
+    ...render(<LoginPage auth={auth} />),
   };
 }
 
@@ -123,37 +148,51 @@ describe('LoginPage', () => {
   });
 
   it('should show loading state during login', async () => {
-    // Given I have a login page with a service that never resolves
-    const mockService = new MockAuthService();
-    // Make login hang to test loading state
-    mockService.login = jest
-      .fn()
-      .mockImplementation(() => new Promise(() => {}));
-
-    renderLoginPage(mockService);
-
-    // When I click the login button
-    const loginButton = screen.getByRole('button', {
-      name: /connect with spotify/i,
-    });
-    fireEvent.click(loginButton);
+    // Given I have a login page in loading state
+    renderLoginPage(undefined, { isLoading: true });
 
     // Then it should show a loading state
-    await waitFor(() => {
-      expect(screen.getByText(/connecting\.\.\./i)).toBeInTheDocument();
-      expect(screen.getByRole('button')).toBeDisabled();
-    });
+    expect(screen.getByText(/connecting\.\.\./i)).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeDisabled();
 
     // Check for loading spinner
     expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
   });
 
   it('should display error message when login fails', async () => {
-    // Given I have a login page with a service that will fail
-    const mockService = new MockAuthService();
-    mockService.setShouldFailLogin(true);
+    // Given I have a login page with an error state
+    renderLoginPage(undefined, {
+      error: 'Spotify Premium subscription is required',
+    });
 
-    renderLoginPage(mockService);
+    // Then an error message should be displayed
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(
+      screen.getByText(/spotify premium subscription is required/i)
+    ).toBeInTheDocument();
+  });
+
+  it('should clear error when dismiss button is clicked', async () => {
+    // Given I have a login page with an error state
+    const { auth } = renderLoginPage(undefined, {
+      error: 'Test error message',
+    });
+
+    // When I click the dismiss button
+    const dismissButton = screen.getByRole('button', {
+      name: /dismiss error/i,
+    });
+    fireEvent.click(dismissButton);
+
+    // Then the clearError function should be called
+    expect(auth.clearError).toHaveBeenCalled();
+  });
+
+  it('should clear error before attempting new login', async () => {
+    // Given I have a login page with an error state
+    const { auth } = renderLoginPage(undefined, {
+      error: 'Test error message',
+    });
 
     // When I click the login button
     const loginButton = screen.getByRole('button', {
@@ -161,64 +200,9 @@ describe('LoginPage', () => {
     });
     fireEvent.click(loginButton);
 
-    // Then an error message should be displayed
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(
-        screen.getByText(/spotify premium subscription is required/i)
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('should clear error when dismiss button is clicked', async () => {
-    // Given I have a login page with a service that will fail
-    const mockService = new MockAuthService();
-    mockService.setShouldFailLogin(true);
-
-    renderLoginPage(mockService);
-
-    // When I trigger an error and then dismiss it
-    const loginButton = screen.getByRole('button', {
-      name: /connect with spotify/i,
-    });
-    fireEvent.click(loginButton);
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    // Then dismissing the error should remove it
-    const dismissButton = screen.getByRole('button', {
-      name: /dismiss error/i,
-    });
-    fireEvent.click(dismissButton);
-
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-  });
-
-  it('should clear error before attempting new login', async () => {
-    // Given I have a login page with a service that will fail initially
-    const mockService = new MockAuthService();
-    mockService.setShouldFailLogin(true);
-
-    renderLoginPage(mockService);
-
-    // When I attempt a login that fails, then attempt another login
-    const loginButton = screen.getByRole('button', {
-      name: /connect with spotify/i,
-    });
-    fireEvent.click(loginButton);
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    // Then the error should be cleared when starting a new login attempt
-    mockService.setShouldFailLogin(false);
-    fireEvent.click(loginButton);
-
-    // Error should be cleared immediately when new login starts
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Then clearError should be called before login
+    expect(auth.clearError).toHaveBeenCalled();
+    expect(auth.login).toHaveBeenCalled();
   });
 
   it('should have proper accessibility attributes', () => {

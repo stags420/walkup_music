@@ -3,11 +3,10 @@ import {
   AuthState,
   AuthAction,
   AuthService,
-  SpotifyAuthService,
   AuthContextType,
   AuthContext,
+  authServiceProvider,
 } from '@/modules/auth';
-import { AppConfig } from '@/modules/config';
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -19,7 +18,6 @@ const initialState: AuthState = {
 interface AuthProviderProps {
   children: ReactNode;
   authService?: AuthService; // Allow injection for testing
-  config?: AppConfig; // Allow injection for testing
 }
 
 // Auth reducer
@@ -77,38 +75,19 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
-export function AuthProvider({
-  children,
-  authService,
-  config,
-}: AuthProviderProps) {
+export function AuthProvider({ children, authService }: AuthProviderProps) {
   const [curAuth, authActionDispatcher] = useReducer(authReducer, initialState);
 
-  // Memoize default config to prevent recreation on every render
-  const defaultConfig: AppConfig = useMemo(() => {
-    // Get the current origin and convert localhost to 127.0.0.1 for Spotify compatibility
-    const getRedirectUri = () => {
-      if (globalThis.window === undefined) {
-        return 'http://127.0.0.1:8000/callback';
-      }
-
-      const origin = globalThis.location.origin;
-      // Replace localhost with 127.0.0.1 as required by Spotify
-      const spotifyCompatibleOrigin = origin.replace('localhost', '127.0.0.1');
-      return `${spotifyCompatibleOrigin}/callback`;
-    };
-
-    return {
-      maxSegmentDuration: 10,
-      spotifyClientId: '7534de4cf2c14614846f1b0ca26a5400',
-      redirectUri: getRedirectUri(),
-    };
-  }, []);
-
-  // Memoize service to prevent recreation on every render
+  // Use singleton service provider instead of creating instances
+  // For testing, we can still inject a mock service
   const service = useMemo(() => {
-    return authService || new SpotifyAuthService(config || defaultConfig);
-  }, [authService, config, defaultConfig]);
+    if (authService) {
+      // Use injected service for testing
+      return authService;
+    }
+    // Use singleton service provider for production (config comes from global singleton)
+    return authServiceProvider.getOrCreate();
+  }, [authService]);
 
   // Check authentication status on mount
   useEffect(() => {

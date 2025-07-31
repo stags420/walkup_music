@@ -1,8 +1,12 @@
-import { useAuth } from '@/modules/auth';
+import { AuthContextType } from '@/modules/auth';
 import './LoginPage.css';
 
-export function LoginPage() {
-  const { state, login, clearError } = useAuth();
+interface LoginPageProps {
+  auth: AuthContextType;
+}
+
+export function LoginPage({ auth }: LoginPageProps) {
+  const { state, login, clearError } = auth;
 
   const handleLogin = async () => {
     clearError();

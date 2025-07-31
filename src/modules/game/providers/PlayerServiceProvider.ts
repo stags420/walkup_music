@@ -1,16 +1,16 @@
-import { PlayerService } from './PlayerService';
+import { PlayerService } from '../services/PlayerService';
 import { LocalStorageService, StorageService } from '@/modules/storage';
 
 /**
- * Factory for creating PlayerService instances with proper dependencies
+ * Provider for creating PlayerService instances with proper dependencies
  */
-export class PlayerServiceFactory {
+export class PlayerServiceProvider {
   private static instance: PlayerService | null = null;
 
   /**
    * Get a singleton instance of PlayerService with LocalStorageService
    */
-  static getInstance(): PlayerService {
+  static getOrCreate(): PlayerService {
     if (!this.instance) {
       const storageService = new LocalStorageService();
       this.instance = new PlayerService(storageService);

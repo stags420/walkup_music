@@ -16,7 +16,7 @@ Apply explicit dependency injection patterns for maintainable, testable code. Pr
 
 ### Depend on Interfaces
 
-- Define contracts using interfaces (Java) or abstract classes (TypeScript)
+- Define contracts using interfaces
 - Consumers depend only on abstractions, never concrete implementations
 - Enables easy testing and implementation swapping
 

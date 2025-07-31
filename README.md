@@ -22,19 +22,19 @@ git clone <repository-url>
 cd walkup_music
 ```
 
-2. Run the setup script:
+1. Run the setup script:
 
 ```bash
 ./scripts/setup.sh
 ```
 
-3. Start the development server:
+1. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-4. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
+1. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
 
 ### Available Scripts
 
@@ -125,7 +125,7 @@ The hooks are stored in the `hooks/` directory and are automatically configured 
 
 The project follows a modular architecture with domain-driven design principles:
 
-```
+```text
 src/
 ├── components/           # Main application components
 │   └── index.ts         # Component exports
@@ -229,8 +229,11 @@ class SpotifyAuthService implements AuthService {
   // Implementation...
 }
 
+// Global config initialized at startup
+appConfigProvider.initialize(config);
+
 // Components receive services via props
-<AuthProvider authService={authService} config={config}>
+<AuthProvider authService={authService}>
   <App />
 </AuthProvider>
 ```

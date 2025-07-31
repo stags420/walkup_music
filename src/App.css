@@ -1,12 +1,45 @@
 .App {
   min-height: 100vh;
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 50%, #191414 100%);
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .App-header {
-  background: #191414;
+  background: linear-gradient(135deg, #191414 0%, #1db954 100%);
   color: white;
-  padding: 1rem 2rem;
+  padding: 0.75rem 0.5rem;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.App-header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.App-header p {
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0 0;
+  color: #b3b3b3;
+}
+
+@media (min-width: 768px) {
+  .App-header {
+    padding: 1.5rem 2rem;
+  }
+
+  .App-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .App-header p {
+    font-size: 0.9rem;
+    margin: 0.5rem 0 0 0;
+  }
 }
 
 .App-header h1 {

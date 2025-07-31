@@ -1,19 +1,27 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
-import { PlayerList } from './PlayerList';
+import { MusicService } from '@/modules/music/services/MusicService';
+import { PlayerList, PlayerListRef } from './PlayerList';
 import { PlayerForm } from './PlayerForm';
-import { populateWithMockData } from '@/modules/game/utils/mockData';
+import { SegmentSelector, SongSegment } from '@/modules/music';
 import './PlayerManager.css';
 
 interface PlayerManagerProps {
   playerService: PlayerService;
+  musicService: MusicService;
 }
 
-export function PlayerManager({ playerService }: PlayerManagerProps) {
+export function PlayerManager({
+  playerService,
+  musicService,
+}: PlayerManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
-  const [loadingMockData, setLoadingMockData] = useState(false);
+  const [editingSegmentOnly, setEditingSegmentOnly] = useState(false);
+  const [showSegmentSelector, setShowSegmentSelector] = useState(false);
+
+  const playerListRef = useRef<PlayerListRef>(null);
 
   const handleAddPlayer = () => {
     setEditingPlayer(undefined);
@@ -22,34 +30,45 @@ export function PlayerManager({ playerService }: PlayerManagerProps) {
 
   const handleEditPlayer = (player: Player) => {
     setEditingPlayer(player);
+    setEditingSegmentOnly(false);
     setShowForm(true);
+  };
+
+  const handleEditSegment = (player: Player) => {
+    setEditingPlayer(player);
+    setShowSegmentSelector(true);
   };
 
   const handleDeletePlayer = async (playerId: string) => {
     await playerService.deletePlayer(playerId);
+    // Refresh the player list after deletion
+    playerListRef.current?.refreshPlayers();
   };
 
   const handleSavePlayer = () => {
     setShowForm(false);
     setEditingPlayer(undefined);
-    // PlayerList will automatically refresh via useEffect
+    setEditingSegmentOnly(false);
+    // Refresh the player list after save
+    playerListRef.current?.refreshPlayers();
   };
 
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingPlayer(undefined);
+    setEditingSegmentOnly(false);
   };
 
-  const handleLoadMockData = async () => {
-    try {
-      setLoadingMockData(true);
-      await populateWithMockData(playerService);
-      // PlayerList will automatically refresh
-    } catch (error) {
-      console.error('Failed to load mock data:', error);
-    } finally {
-      setLoadingMockData(false);
-    }
+  const handleSegmentSaved = () => {
+    setShowSegmentSelector(false);
+    setEditingPlayer(undefined);
+    // Refresh the player list after save
+    playerListRef.current?.refreshPlayers();
+  };
+
+  const handleSegmentCancelled = () => {
+    setShowSegmentSelector(false);
+    setEditingPlayer(undefined);
   };
 
   return (
@@ -57,13 +76,6 @@ export function PlayerManager({ playerService }: PlayerManagerProps) {
       <div className="player-manager-header">
         <h1>Player Management</h1>
         <div className="header-actions">
-          <button
-            onClick={handleLoadMockData}
-            className="mock-data-button"
-            disabled={loadingMockData}
-          >
-            {loadingMockData ? 'Loading...' : 'Load Test Data'}
-          </button>
           <button onClick={handleAddPlayer} className="add-player-button">
             Add Player
           </button>
@@ -71,17 +83,39 @@ export function PlayerManager({ playerService }: PlayerManagerProps) {
       </div>
 
       <PlayerList
+        ref={playerListRef}
         playerService={playerService}
         onEditPlayer={handleEditPlayer}
+        onEditSegment={handleEditSegment}
         onDeletePlayer={handleDeletePlayer}
       />
 
       {showForm && (
         <PlayerForm
           playerService={playerService}
+          musicService={musicService}
           player={editingPlayer}
+          segmentEditOnly={editingSegmentOnly}
           onSave={handleSavePlayer}
           onCancel={handleCancelForm}
+        />
+      )}
+
+      {showSegmentSelector && editingPlayer?.song && (
+        <SegmentSelector
+          track={editingPlayer.song.track}
+          initialSegment={editingPlayer.song}
+          onConfirm={async (segment: SongSegment) => {
+            try {
+              await playerService.updatePlayer(editingPlayer.id, {
+                song: segment,
+              });
+              handleSegmentSaved();
+            } catch (error) {
+              console.error('Failed to update timing:', error);
+            }
+          }}
+          onCancel={handleSegmentCancelled}
         />
       )}
     </div>

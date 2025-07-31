@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/modules/auth';
+import { AuthContextType } from '@/modules/auth';
 
-export function CallbackPage() {
+interface CallbackPageProps {
+  auth: AuthContextType;
+}
+
+export function CallbackPage({ auth }: CallbackPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { handleCallback, state } = useAuth();
+  const { handleCallback, state } = auth;
   const processedRef = useRef(false);
 
   useEffect(() => {

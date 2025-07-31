@@ -1,11 +1,24 @@
 .player-list {
-  padding: 1rem;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .player-list {
+    padding: 1rem;
+  }
 }
 
 .player-list h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: #333;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
+  padding: 0 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .player-list h2 {
+    font-size: 1.5rem;
+  }
 }
 
 .player-list-loading,
@@ -64,21 +77,58 @@
 
 .player-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .player-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .player-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
 }
 
 .player-card {
-  background: white;
-  border: 1px solid #ddd;
+  background: linear-gradient(145deg, #ffffff 0%, #f7fafc 100%);
+  border: 1px solid rgba(29, 185, 84, 0.2);
   border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s ease;
+  padding: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .player-card {
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.player-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1db954 0%, #1ed760 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .player-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 35px rgba(29, 185, 84, 0.15);
+  transform: translateY(-4px);
+  border-color: rgba(29, 185, 84, 0.3);
 }
 
 .player-info {
@@ -88,79 +138,160 @@
 .player-name {
   margin: 0 0 0.5rem 0;
   color: #333;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
+@media (min-width: 768px) {
+  .player-name {
+    font-size: 1.2rem;
+  }
+}
+
 .player-song {
-  background-color: #f8f9fa;
-  padding: 0.75rem;
+  background: linear-gradient(
+    135deg,
+    rgba(29, 185, 84, 0.1) 0%,
+    rgba(30, 215, 96, 0.1) 100%
+  );
+  padding: 0.5rem;
   border-radius: 4px;
-  border-left: 4px solid #1db954;
+  border-left: 3px solid #1db954;
+  border: 1px solid rgba(29, 185, 84, 0.2);
+}
+
+@media (min-width: 768px) {
+  .player-song {
+    padding: 1rem;
+    border-radius: 8px;
+  }
 }
 
 .song-title {
   margin: 0 0 0.25rem 0;
   font-weight: 500;
   color: #333;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .song-title {
+    font-size: 1rem;
+  }
 }
 
 .song-artist {
   margin: 0 0 0.25rem 0;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .song-artist {
+    font-size: 0.875rem;
+  }
 }
 
 .song-timing {
   margin: 0;
   color: #888;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-family: monospace;
+}
+
+@media (min-width: 768px) {
+  .song-timing {
+    font-size: 0.8rem;
+  }
 }
 
 .no-song {
   margin: 0;
   color: #999;
   font-style: italic;
-  padding: 0.75rem;
+  padding: 0.5rem;
   background-color: #f8f9fa;
   border-radius: 4px;
-  border-left: 4px solid #ddd;
+  border-left: 3px solid #ddd;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .no-song {
+    border-radius: 4px;
+    font-size: 1rem;
+  }
 }
 
 .player-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .edit-button,
+.edit-segment-button,
 .delete-button {
   flex: 1;
-  padding: 0.5rem;
+  min-width: 60px;
+  padding: 0.4rem 0.2rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .player-actions {
+    gap: 0.5rem;
+  }
+
+  .edit-button,
+  .edit-segment-button,
+  .delete-button {
+    min-width: 80px;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
 }
 
 .edit-button {
-  background-color: #2196f3;
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
   color: white;
+  box-shadow: 0 3px 10px rgba(29, 185, 84, 0.3);
 }
 
 .edit-button:hover {
-  background-color: #1976d2;
+  background: linear-gradient(135deg, #1ed760 0%, #21e065 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(29, 185, 84, 0.4);
+}
+
+.edit-segment-button {
+  background: linear-gradient(135deg, #0f7b6c 0%, #047857 100%);
+  color: white;
+  box-shadow: 0 3px 10px rgba(15, 123, 108, 0.3);
+}
+
+.edit-segment-button:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(15, 123, 108, 0.4);
 }
 
 .delete-button {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
 }
 
 .delete-button:hover {
-  background-color: #d32f2f;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
 }
 
 .edit-button:focus,

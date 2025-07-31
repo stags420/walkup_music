@@ -20,15 +20,36 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
 }
 
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0;
   text-align: center;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  #root {
+    padding: 2rem;
+  }
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Ensure all input text is black for better readability */
+input[type='text'],
+input[type='number'],
+input[type='email'],
+input[type='password'],
+textarea,
+select,
+.form-control {
+  color: black !important;
 }

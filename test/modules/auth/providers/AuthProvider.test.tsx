@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth, AuthService } from '@/modules/auth';
-import { AppConfig } from '@/modules/config';
+import { appConfigProvider, AppConfig } from '@/modules/config';
 
 // Mock auth service for testing
 class MockAuthService implements AuthService {
@@ -107,13 +107,21 @@ describe('AuthContext', () => {
 
   beforeEach(() => {
     mockAuthService = new MockAuthService();
+    // Initialize global config for tests
+    appConfigProvider.reset();
+    appConfigProvider.initialize(mockConfig);
+  });
+
+  afterEach(() => {
+    // Clean up global config after each test
+    appConfigProvider.reset();
   });
 
   it('should provide initial unauthenticated state', () => {
     // Given I have an AuthProvider with a mock auth service
     // When I render the component
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -135,7 +143,7 @@ describe('AuthContext', () => {
 
     // When I render the AuthProvider
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -155,7 +163,7 @@ describe('AuthContext', () => {
   it('should handle login success', async () => {
     // Given I have an AuthProvider with a mock auth service
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -175,7 +183,7 @@ describe('AuthContext', () => {
 
     // When I render the AuthProvider and click login
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -202,7 +210,7 @@ describe('AuthContext', () => {
     mockAuthService.setAuthenticated(true);
 
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -230,7 +238,7 @@ describe('AuthContext', () => {
   it('should handle callback success', async () => {
     // Given I have an AuthProvider with a mock auth service
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -256,7 +264,7 @@ describe('AuthContext', () => {
 
     // When I render the AuthProvider and handle a callback
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );
@@ -280,7 +288,7 @@ describe('AuthContext', () => {
     mockAuthService.setShouldFailLogin(true);
 
     render(
-      <AuthProvider authService={mockAuthService} config={mockConfig}>
+      <AuthProvider authService={mockAuthService}>
         <TestComponent />
       </AuthProvider>
     );

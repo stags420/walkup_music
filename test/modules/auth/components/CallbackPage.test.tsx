@@ -6,8 +6,12 @@ import {
   RenderResult,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { CallbackPage, AuthProvider, AuthService } from '@/modules/auth';
-import { AppConfig } from '@/modules/config';
+import {
+  CallbackPage,
+  AuthService,
+  AuthContextType,
+  AuthState,
+} from '@/modules/auth';
 
 // Mock navigate function
 const mockNavigate = jest.fn();
@@ -54,31 +58,50 @@ class MockAuthService implements AuthService {
   async refreshToken(): Promise<void> {}
 }
 
-const mockConfig: AppConfig = {
-  maxSegmentDuration: 10,
-  spotifyClientId: 'test-client-id',
-  redirectUri: 'http://127.0.0.1:8000/callback',
-};
+function createMockAuthContext(
+  authService?: MockAuthService,
+  overrides?: Partial<AuthState>
+): { auth: AuthContextType; service: MockAuthService } {
+  const service = authService || new MockAuthService();
+
+  const defaultState: AuthState = {
+    isAuthenticated: false,
+    isLoading: false,
+    user: null,
+    error: null,
+    ...overrides,
+  };
+
+  const auth: AuthContextType = {
+    state: defaultState,
+    login: service.login.bind(service),
+    logout: service.logout.bind(service),
+    clearError: jest.fn(),
+    handleCallback: service.handleCallback.bind(service),
+  };
+
+  return { auth, service };
+}
 
 async function renderCallbackPage(
   searchParams: string,
-  authService?: MockAuthService
+  authService?: MockAuthService,
+  stateOverrides?: Partial<AuthState>
 ) {
-  const service = authService || new MockAuthService();
+  const { auth, service } = createMockAuthContext(authService, stateOverrides);
   let result: RenderResult;
 
   await act(async () => {
     result = render(
       <MemoryRouter initialEntries={[`/callback${searchParams}`]}>
-        <AuthProvider authService={service} config={mockConfig}>
-          <CallbackPage />
-        </AuthProvider>
+        <CallbackPage auth={auth} />
       </MemoryRouter>
     );
   });
 
   return {
     service,
+    auth,
     ...result!,
   };
 }
@@ -211,14 +234,13 @@ describe('CallbackPage', () => {
   });
 
   it('should display error if present in auth state', async () => {
-    // Given I have a callback page with valid parameters
-    // When I render the callback page
-    await renderCallbackPage('?code=test-code&state=test-state');
+    // Given I have a callback page with an error in auth state
+    await renderCallbackPage('?code=test-code&state=test-state', undefined, {
+      error: 'Test error message',
+    });
 
-    // Then the error message container should be present in the DOM structure
-    // even if not currently showing an error
-    expect(
-      screen.getByText(/connecting to spotify\.\.\./i)
-    ).toBeInTheDocument();
+    // Then the error message should be displayed
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByText(/test error message/i)).toBeInTheDocument();
   });
 });

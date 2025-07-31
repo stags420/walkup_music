@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import { PlayerList } from '@/modules/game/components/PlayerList';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
@@ -227,7 +233,10 @@ describe('PlayerList', () => {
 
     // When I click the delete button
     const deleteButton = screen.getByLabelText('Delete John Doe');
-    fireEvent.click(deleteButton);
+
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
 
     // Then a confirmation dialog should be shown
     expect(mockConfirm).toHaveBeenCalledWith(
@@ -258,7 +267,10 @@ describe('PlayerList', () => {
 
     // When I click the delete button and confirm
     const deleteButton = screen.getByLabelText('Delete John Doe');
-    fireEvent.click(deleteButton);
+
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
 
     // Then the onDeletePlayer callback should be called
     await waitFor(() => {
@@ -290,7 +302,10 @@ describe('PlayerList', () => {
 
     // When I click the delete button but cancel
     const deleteButton = screen.getByLabelText('Delete John Doe');
-    fireEvent.click(deleteButton);
+
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
 
     // Then the onDeletePlayer callback should not be called
     expect(mockOnDeletePlayer).not.toHaveBeenCalled();

@@ -2,14 +2,21 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .player-form-overlay {
+    padding: 2rem;
+  }
 }
 
 .player-form-modal {
@@ -18,8 +25,18 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 500px;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .player-form-modal {
+    border-radius: 12px;
+    max-height: 90vh;
+  }
 }
 
 .player-form-header {
@@ -34,7 +51,13 @@
 .player-form-header h2 {
   margin: 0;
   color: #333;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .player-form-header h2 {
+    font-size: 1.5rem;
+  }
 }
 
 .close-button {
@@ -125,36 +148,131 @@
 
 .current-song {
   background-color: white;
-  padding: 0.75rem;
-  border-radius: 4px;
-  border-left: 4px solid #1db954;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.song-preview {
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.song-album-art {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.song-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .song-title {
   margin: 0 0 0.25rem 0;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.4;
 }
 
 .song-artist {
   margin: 0 0 0.25rem 0;
-  color: #666;
-  font-size: 0.9rem;
+  color: #374151;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.song-album {
+  margin: 0 0 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .song-timing {
   margin: 0;
-  color: #888;
-  font-size: 0.8rem;
+  color: #9ca3af;
+  font-size: 0.75rem;
   font-family: monospace;
+  line-height: 1.4;
+}
+
+.song-actions {
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.change-song-button,
+.edit-timing-button,
+.remove-song-button,
+.select-song-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-song-button,
+.select-song-button {
+  background: #3b82f6;
+  color: white;
+}
+
+.change-song-button:hover:not(:disabled),
+.select-song-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.edit-timing-button {
+  background: linear-gradient(135deg, #0f7b6c 0%, #047857 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(15, 123, 108, 0.3);
+}
+
+.edit-timing-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 123, 108, 0.4);
+}
+
+.remove-song-button {
+  background: #ef4444;
+  color: white;
+}
+
+.remove-song-button:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.change-song-button:disabled,
+.remove-song-button:disabled,
+.select-song-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.no-song {
+  text-align: center;
+  padding: 1.5rem 1rem;
 }
 
 .no-song-message {
-  margin: 0;
-  color: #666;
-  font-style: italic;
-  text-align: center;
-  padding: 1rem;
+  margin: 0 0 1rem 0;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .form-actions {

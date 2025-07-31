@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
+import { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock PlayerService
 const mockPlayerService = {
@@ -11,6 +12,13 @@ const mockPlayerService = {
   deletePlayer: jest.fn(),
   getPlayer: jest.fn(),
 } as unknown as jest.Mocked<PlayerService>;
+
+// Mock MusicService
+const mockMusicService = {
+  search: jest.fn(),
+  getTrack: jest.fn(),
+  getSegment: jest.fn(),
+} as unknown as jest.Mocked<MusicService>;
 
 const mockOnSave = jest.fn();
 const mockOnCancel = jest.fn();
@@ -48,6 +56,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -72,6 +81,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -97,6 +107,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -121,6 +132,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           player={mockPlayer}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -139,6 +151,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           player={mockPlayer}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -163,6 +176,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           player={mockPlayer}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -179,6 +193,7 @@ describe('PlayerForm', () => {
       await waitFor(() => {
         expect(mockPlayerService.updatePlayer).toHaveBeenCalledWith('1', {
           name: 'John Updated',
+          song: mockPlayer.song, // Song is preserved in edit mode
         });
       });
       expect(mockOnSave).toHaveBeenCalledWith(updatedPlayer);
@@ -204,7 +219,7 @@ describe('PlayerForm', () => {
       // Then a no song message is displayed
       expect(
         screen.getByText(
-          'No song selected. Song selection will be available in a future update.'
+          'No walk-up song selected. Choose a song to play when this player bats.'
         )
       ).toBeInTheDocument();
     });
@@ -216,6 +231,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -234,13 +250,14 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
       );
 
       // When I click the close button
-      const closeButton = screen.getByLabelText('Close form');
+      const closeButton = screen.getByLabelText('Close');
       fireEvent.click(closeButton);
 
       // Then the onCancel callback is called
@@ -256,6 +273,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -265,7 +283,7 @@ describe('PlayerForm', () => {
       const nameInput = screen.getByLabelText('Player Name *');
       const submitButton = screen.getByText('Add Player');
       const cancelButton = screen.getByText('Cancel');
-      const closeButton = screen.getByLabelText('Close form');
+      const closeButton = screen.getByLabelText('Close');
 
       fireEvent.change(nameInput, { target: { value: 'Test Player' } });
       fireEvent.click(submitButton);
@@ -289,6 +307,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -320,6 +339,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -344,6 +364,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -371,6 +392,7 @@ describe('PlayerForm', () => {
       const { rerender } = render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
         />
@@ -384,6 +406,7 @@ describe('PlayerForm', () => {
       rerender(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           player={mockPlayer}
           onSave={mockOnSave}
           onCancel={mockOnCancel}

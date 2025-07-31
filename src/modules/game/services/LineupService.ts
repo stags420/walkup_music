@@ -2,7 +2,7 @@ import { BattingOrder, Player } from '@/modules/game';
 
 // Game control interface
 
-export interface GameService {
+export interface LineupService {
   createBattingOrder(playerIds: string[]): Promise<BattingOrder>;
   updateBattingOrder(order: BattingOrder): Promise<BattingOrder>;
   getCurrentBatter(): Player | null;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { FormEvent, MouseEvent } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
@@ -174,10 +175,44 @@ export function PlayerForm({
     }
   };
 
-  return (
-    <div className="modal d-block" tabIndex={-1} onClick={handleOverlayClick}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div
+      className="modal fade show d-block"
+      tabIndex={-1}
+      onClick={handleOverlayClick}
+      style={{
+        zIndex: 1055,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        margin: 0,
+        padding: 0,
+      }}
+    >
+      <div
+        className="modal-dialog modal-dialog-centered"
+        style={{
+          margin: '0 auto',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+        }}
+      >
+        <div
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: '100%',
+            maxWidth: '500px',
+            margin: 0,
+          }}
+        >
           <div className="modal-header">
             <h5 className="modal-title">
               {isSegmentEdit
@@ -367,6 +402,7 @@ export function PlayerForm({
           onCancel={handleCancelSegmentSelection}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

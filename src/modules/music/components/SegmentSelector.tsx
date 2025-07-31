@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
@@ -133,7 +134,7 @@ export function SegmentSelector({
 
   const maxStartTime = Math.max(0, trackDurationSeconds - duration);
 
-  return (
+  return createPortal(
     <div className="segment-selector-overlay">
       <div className="segment-selector-modal">
         <div className="segment-selector-header">
@@ -282,6 +283,7 @@ export function SegmentSelector({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

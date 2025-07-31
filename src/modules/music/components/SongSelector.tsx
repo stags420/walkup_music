@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { MusicService } from '@/modules/music/services/MusicService';
@@ -69,7 +70,7 @@ export function SongSelector({
     }
   };
 
-  return (
+  return createPortal(
     <div className="song-selector-overlay">
       <div className="song-selector-modal">
         <div className="song-selector-header">
@@ -197,6 +198,7 @@ export function SongSelector({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -187,7 +187,7 @@ export function SegmentSelector({
     <div className="segment-selector-overlay">
       <div className="segment-selector-modal">
         <div className="segment-selector-header">
-          <h2>Select Song Segment</h2>
+          <h2>Select Timing</h2>
           <button
             onClick={handleCancel}
             className="close-button"
@@ -223,8 +223,6 @@ export function SegmentSelector({
 
           <div className="segment-controls">
             <div className="timing-section">
-              <h3>Select Timing</h3>
-
               <div className="timing-controls">
                 <div className="control-group">
                   <label htmlFor="start-time" className="control-label">
@@ -304,9 +302,9 @@ export function SegmentSelector({
                       disabled={!musicService}
                     >
                       {isPlayingSelection ? (
-                        <>⏸ Stop Selection</>
+                        <>⏸ STOP SELECTION</>
                       ) : (
-                        <>▶ Play Selection</>
+                        <>▶ PLAY SELECTION</>
                       )}
                     </button>
                   </div>

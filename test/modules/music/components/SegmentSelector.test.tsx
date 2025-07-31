@@ -86,7 +86,7 @@ describe('SegmentSelector', () => {
     renderSegmentSelector();
 
     // Then it should display the track information
-    expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+    expect(screen.getByText('Select Timing')).toBeInTheDocument(); // Modal header only
     expect(screen.getByText('Test Song')).toBeInTheDocument();
     expect(screen.getByText('Test Artist')).toBeInTheDocument();
     expect(screen.getAllByText('3:00')).toHaveLength(2); // Track duration and timeline label

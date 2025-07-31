@@ -1,20 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { LineupService } from '@/modules/game/services/LineupService';
+import { PlayerService } from '@/modules/game/services/PlayerService';
+import { MusicService } from '@/modules/music/services/MusicService';
+import { PlayerCard } from '@/modules/core/components';
 import './CurrentBatterDisplay.css';
 
 interface CurrentBatterDisplayProps {
   lineupService: LineupService;
+  playerService: PlayerService;
+  musicService: MusicService;
 }
 
 export function CurrentBatterDisplay({
   lineupService,
+  playerService,
+  musicService,
 }: CurrentBatterDisplayProps) {
   const [currentBatter, setCurrentBatter] = useState<Player | null>(null);
   const [onDeckBatter, setOnDeckBatter] = useState<Player | null>(null);
   const [inTheHoleBatter, setInTheHoleBatter] = useState<Player | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Refresh batter information
   const refreshBatters = useCallback(async () => {
@@ -38,34 +43,6 @@ export function CurrentBatterDisplay({
     refreshBatters();
   }, [refreshBatters]);
 
-  const handlePlayMusic = async () => {
-    if (!currentBatter || !currentBatter.song) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await lineupService.playWalkUpMusic(currentBatter);
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Failed to play walk-up music:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStopMusic = async () => {
-    setIsLoading(true);
-    try {
-      await lineupService.stopMusic();
-      setIsPlaying(false);
-    } catch (error) {
-      console.error('Failed to stop music:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const renderCurrentBatter = () => {
     if (!currentBatter) {
       return (
@@ -77,65 +54,28 @@ export function CurrentBatterDisplay({
     }
 
     return (
-      <div className="current-batter-card">
-        <div className="current-batter-header">
-          <h2>Current Batter</h2>
-          <h3 className="player-name">{currentBatter.name}</h3>
-        </div>
-
-        {currentBatter.song ? (
-          <div className="current-batter-content">
-            <div className="album-art-section">
-              <img
-                src={currentBatter.song.track.albumArt}
-                alt={`${currentBatter.song.track.album} album art`}
-                className="album-art"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
-            </div>
-
-            <div className="song-info">
-              <h4 className="song-title">{currentBatter.song.track.name}</h4>
-              <p className="song-artist">
-                {currentBatter.song.track.artists.join(', ')}
-              </p>
-              <p className="song-timing">
-                {currentBatter.song.startTime}s -{' '}
-                {currentBatter.song.startTime + currentBatter.song.duration}s
-              </p>
-            </div>
-
-            <div className="playback-controls">
-              <div className="control-buttons">
-                {isPlaying ? (
-                  <button
-                    onClick={handleStopMusic}
-                    disabled={isLoading}
-                    className="stop-button"
-                  >
-                    {isLoading ? 'Stopping...' : 'Stop Music'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handlePlayMusic}
-                    disabled={isLoading}
-                    className="play-button"
-                  >
-                    {isLoading ? 'Loading...' : 'Play Walk-Up Music'}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="no-song-warning">
-            <p>⚠️ Current batter has no song selected</p>
-          </div>
-        )}
-      </div>
+      <PlayerCard
+        player={{
+          id: currentBatter.id,
+          name: currentBatter.name,
+          song: currentBatter.song
+            ? {
+                title: currentBatter.song.track.name,
+                artist: currentBatter.song.track.artists.join(', '),
+                albumArt: currentBatter.song.track.albumArt,
+                timing: `${currentBatter.song.startTime}s - ${currentBatter.song.startTime + currentBatter.song.duration}s`,
+              }
+            : undefined,
+        }}
+        header="BATTER UP"
+        size="large"
+        displayAlbumArt={true}
+        allowPlayMusic={true}
+        playerService={playerService}
+        musicService={musicService}
+        onPlayerUpdated={refreshBatters}
+        className="current-batter-card"
+      />
     );
   };
 
@@ -148,11 +88,14 @@ export function CurrentBatterDisplay({
       'in-the-hole': 'In The Hole',
     };
 
-    const positionClass = `secondary-batter-card ${position}`;
+    const borderColors = {
+      'on-deck': '#1db954',
+      'in-the-hole': '#666666',
+    };
 
     if (!batter) {
       return (
-        <div className={positionClass}>
+        <div className={`secondary-batter-card ${position}`}>
           <h4>{positionLabels[position]}</h4>
           <p className="no-player">No player assigned</p>
         </div>
@@ -160,22 +103,28 @@ export function CurrentBatterDisplay({
     }
 
     return (
-      <div className={positionClass}>
-        <h4>{positionLabels[position]}</h4>
-        <div className="secondary-player-info">
-          <h5>{batter.name}</h5>
-          {batter.song ? (
-            <div className="secondary-song-info">
-              <p className="song-title">{batter.song.track.name}</p>
-              <p className="song-artist">
-                {batter.song.track.artists.join(', ')}
-              </p>
-            </div>
-          ) : (
-            <p className="no-song">No song selected</p>
-          )}
-        </div>
-      </div>
+      <PlayerCard
+        player={{
+          id: batter.id,
+          name: batter.name,
+          song: batter.song
+            ? {
+                title: batter.song.track.name,
+                artist: batter.song.track.artists.join(', '),
+                timing: `${batter.song.startTime}s - ${batter.song.startTime + batter.song.duration}s`,
+              }
+            : undefined,
+        }}
+        header={positionLabels[position]}
+        size="medium"
+        displayAlbumArt={false}
+        allowPlayMusic={false}
+        borderColor={borderColors[position]}
+        playerService={playerService}
+        musicService={musicService}
+        onPlayerUpdated={refreshBatters}
+        className={`secondary-batter-card ${position}`}
+      />
     );
   };
 

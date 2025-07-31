@@ -1,19 +1,11 @@
 .current-batter-display {
   padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
   margin-bottom: 20px;
 }
 
-/* Current batter - prominent display */
+/* Current batter - prominent display - styles handled by PlayerCard component */
 .current-batter-card {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 3px solid #007bff;
   margin-bottom: 20px;
-  text-align: center;
 }
 
 .current-batter-header {
@@ -29,11 +21,44 @@
   letter-spacing: 0.5px;
 }
 
+.player-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
 .player-name {
   margin: 0;
   font-size: 2rem;
   font-weight: 600;
   color: #333;
+}
+
+.edit-player-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.edit-player-button:hover {
+  background: #5a6268;
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
 }
 
 .current-batter-content {
@@ -142,38 +167,42 @@
   gap: 20px;
 }
 
+/* Secondary batter cards - styles handled by PlayerCard component */
 .secondary-batter-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 2px solid transparent;
-  transition: all 0.2s ease;
+  /* Styling handled by PlayerCard component */
 }
 
 .secondary-batter-card.on-deck {
-  border-color: #28a745;
-  background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+  /* Border color handled by PlayerCard borderColor prop */
 }
 
 .secondary-batter-card.in-the-hole {
-  border-color: #6c757d;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  /* Border color handled by PlayerCard borderColor prop */
 }
 
-.secondary-batter-card h4 {
-  margin: 0 0 15px 0;
+.secondary-batter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.secondary-batter-header h4 {
+  margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
   text-align: center;
   color: #333;
+  flex: 1;
 }
 
-.secondary-batter-card.on-deck h4 {
+.secondary-batter-card.on-deck .secondary-batter-header h4 {
   color: #28a745;
 }
 
-.secondary-batter-card.in-the-hole h4 {
+.secondary-batter-card.in-the-hole .secondary-batter-header h4 {
   color: #6c757d;
 }
 
@@ -248,9 +277,26 @@
     font-size: 1.1rem;
   }
 
+  .edit-player-button {
+    width: 32px;
+    height: 32px;
+    top: 10px;
+    right: 10px;
+  }
+
+  .edit-player-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .secondary-batters {
     grid-template-columns: 1fr;
     gap: 15px;
+  }
+
+  .secondary-batter-header {
+    flex-direction: column;
+    text-align: center;
   }
 
   .control-buttons {
@@ -281,5 +327,17 @@
 
   .player-name {
     font-size: 1.3rem;
+  }
+
+  .edit-player-button {
+    width: 28px;
+    height: 28px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .edit-player-button svg {
+    width: 12px;
+    height: 12px;
   }
 }

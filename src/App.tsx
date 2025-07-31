@@ -89,8 +89,10 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
     return (
       <div className="App">
         <header className="App-header">
-          <h1>Walk-Up Music Manager</h1>
-          <p>Loading...</p>
+          <div className="header-content">
+            <h1>Walk Up Music</h1>
+            <p className="welcome-text">Loading...</p>
+          </div>
         </header>
       </div>
     );
@@ -99,12 +101,21 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
   return (
     <div>
       <header className="App-header">
-        <h1>Walk-Up Music Manager</h1>
-        <p>Welcome, {auth.state.user?.displayName}!</p>
+        <div className="header-content">
+          <h1>Walk Up Music</h1>
+          <p className="welcome-text">
+            Welcome, {auth.state.user?.displayName}!
+          </p>
+        </div>
       </header>
       <main>
         {isGameMode ? (
-          <GameMode lineupService={lineupService} onEndGame={handleEndGame} />
+          <GameMode
+            lineupService={lineupService}
+            playerService={playerService}
+            musicService={musicService}
+            onEndGame={handleEndGame}
+          />
         ) : (
           <PlayerManager
             playerService={playerService}

@@ -4,7 +4,7 @@ import './Button.css';
 interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger' | 'success';
   disabled?: boolean;
   type?: 'button' | 'submit';
   className?: string;
@@ -29,3 +29,6 @@ export function Button({
     </button>
   );
 }
+
+// Add default export
+export default Button;

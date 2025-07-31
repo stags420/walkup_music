@@ -46,7 +46,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Ensure all input text is black for better readability */
+/* Ensure all input text is white for better readability in dark theme */
 input[type='text'],
 input[type='number'],
 input[type='email'],
@@ -54,5 +54,138 @@ input[type='password'],
 textarea,
 select,
 .form-control {
-  color: black !important;
+  color: #ffffff !important;
+  background-color: #2a2a2a !important;
+  border: 1px solid #404040 !important;
+}
+
+/* Input focus states */
+input[type='text']:focus,
+input[type='number']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+textarea:focus,
+select:focus,
+.form-control:focus {
+  background-color: #333333 !important;
+  border-color: #1db954 !important;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2) !important;
+}
+
+/* Placeholder text styling */
+input::placeholder,
+textarea::placeholder {
+  color: #808080 !important;
+  opacity: 1 !important;
+}
+
+/* Common text styling classes - use these across the application */
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-green {
+  color: #1db954 !important;
+}
+
+.text-gray {
+  color: #b3b3b3 !important;
+}
+
+.text-muted {
+  color: #808080 !important;
+}
+
+/* Music-related text styles */
+.song-title {
+  color: #1db954 !important;
+  font-weight: 600 !important;
+}
+
+.artist-name {
+  color: #ffffff !important;
+}
+
+.album-name {
+  color: #b3b3b3 !important;
+}
+
+.track-duration {
+  color: #808080 !important;
+  font-family: monospace !important;
+  font-weight: 500 !important;
+}
+
+.timing-info {
+  color: #ffffff !important;
+  font-family: monospace !important;
+  font-size: 0.8rem !important;
+}
+
+/* Player-related text styles */
+.player-name {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.position-header {
+  color: #1db954 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* General purpose text styles */
+.no-song-text {
+  color: #808080 !important;
+  font-style: italic !important;
+}
+
+/* Bootstrap Modal Dark Theme Overrides */
+.modal-content {
+  background-color: #1a1a1a !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid #2a2a2a !important;
+  background-color: #1a1a1a !important;
+}
+
+.modal-body {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+.modal-footer {
+  border-top: 1px solid #2a2a2a !important;
+  background-color: #1a1a1a !important;
+}
+
+.modal-title {
+  color: #ffffff !important;
+}
+
+.modal-body p {
+  color: #ffffff !important;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Additional Bootstrap form control overrides */
+.form-control,
+.form-select {
+  background-color: #2a2a2a !important;
+  border-color: #404040 !important;
+  color: #ffffff !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #333333 !important;
+  border-color: #1db954 !important;
+  box-shadow: 0 0 0 0.2rem rgba(29, 185, 84, 0.25) !important;
+  color: #ffffff !important;
 }

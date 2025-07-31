@@ -189,7 +189,7 @@ describe('PlayerForm with Song Selection', () => {
     fireEvent.click(editTimingButton);
 
     // Verify segment selector is open
-    expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+    expect(screen.getByText('Select Timing')).toBeInTheDocument();
 
     // Cancel segment selection - use the one in the segment selector
     const cancelButtons = screen.getAllByText('Cancel');
@@ -200,7 +200,7 @@ describe('PlayerForm with Song Selection', () => {
     fireEvent.click(segmentCancelButton);
 
     // Should return to main form
-    expect(screen.queryByText('Select Song Segment')).not.toBeInTheDocument();
+    expect(screen.queryByText('Select Timing')).not.toBeInTheDocument();
   });
 
   it('should handle song removal', () => {

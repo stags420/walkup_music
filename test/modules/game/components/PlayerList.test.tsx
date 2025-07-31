@@ -1,10 +1,4 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerList } from '@/modules/game/components/PlayerList';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
@@ -17,10 +11,6 @@ const mockPlayerService = {
   deletePlayer: jest.fn(),
   getPlayer: jest.fn(),
 } as unknown as jest.Mocked<PlayerService>;
-
-const mockOnEditPlayer = jest.fn();
-const mockOnEditSegment = jest.fn();
-const mockOnDeletePlayer = jest.fn();
 
 // Mock players data
 const mockPlayers: Player[] = [
@@ -64,14 +54,7 @@ describe('PlayerList', () => {
     ); // Never resolves
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should show a loading state
     expect(screen.getByText('Loading players...')).toBeInTheDocument();
@@ -83,14 +66,7 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue(mockPlayers);
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should display the players
     await waitFor(() => {
@@ -106,14 +82,7 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([]);
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should display an empty state message
     await waitFor(() => {
@@ -132,14 +101,7 @@ describe('PlayerList', () => {
     );
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should display an error message
     await waitFor(() => {
@@ -154,14 +116,7 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should display the player with a no song message
     await waitFor(() => {
@@ -176,14 +131,7 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[1]]);
 
     // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     // Then it should display the player with song information
     await waitFor(() => {
@@ -195,143 +143,11 @@ describe('PlayerList', () => {
     expect(screen.getByText('30s - 40s')).toBeInTheDocument();
   });
 
-  it('should call onEditPlayer when edit button is clicked', async () => {
-    // Given I have a player list with a player
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
+  // Note: PlayerList component does not have edit functionality
+  // Edit operations are handled at a higher level in the application
 
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    // When I click the edit button
-    const editButton = screen.getByLabelText('Edit John Doe');
-    fireEvent.click(editButton);
-
-    // Then the onEditPlayer callback should be called with the player
-    expect(mockOnEditPlayer).toHaveBeenCalledWith(mockPlayers[0]);
-  });
-
-  it('should show confirmation dialog when delete button is clicked', async () => {
-    // Given I have a player list with a player
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
-
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    // When I click the delete button
-    const deleteButton = screen.getByLabelText('Delete John Doe');
-
-    await act(async () => {
-      fireEvent.click(deleteButton);
-    });
-
-    // Then a confirmation dialog should be shown
-    expect(screen.getByText('Delete Player')).toBeInTheDocument();
-    expect(
-      screen.getByText('Are you sure you want to delete John Doe?')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
-    expect(screen.getByText('Confirm')).toBeInTheDocument();
-  });
-
-  it('should call onDeletePlayer when deletion is confirmed', async () => {
-    // Given I have a player list with a player and confirmed deletion
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
-    mockOnDeletePlayer.mockResolvedValue(undefined);
-
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    // When I click the delete button and confirm
-    const deleteButton = screen.getByLabelText('Delete John Doe');
-
-    await act(async () => {
-      fireEvent.click(deleteButton);
-    });
-
-    // Then the confirmation dialog should appear
-    expect(screen.getByText('Delete Player')).toBeInTheDocument();
-
-    // When I click the confirm button
-    const confirmButton = screen.getByText('Confirm');
-    await act(async () => {
-      fireEvent.click(confirmButton);
-    });
-
-    // Then the onDeletePlayer callback should be called
-    await waitFor(() => {
-      expect(mockOnDeletePlayer).toHaveBeenCalledWith('1');
-    });
-  });
-
-  it('should not call onDeletePlayer when deletion is cancelled', async () => {
-    // Given I have a player list with a player and cancelled deletion
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
-
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    // When I click the delete button but cancel
-    const deleteButton = screen.getByLabelText('Delete John Doe');
-
-    await act(async () => {
-      fireEvent.click(deleteButton);
-    });
-
-    // Then the confirmation dialog should appear
-    expect(screen.getByText('Delete Player')).toBeInTheDocument();
-
-    // When I click the cancel button
-    const cancelButton = screen.getByText('Cancel');
-    await act(async () => {
-      fireEvent.click(cancelButton);
-    });
-
-    // Then the onDeletePlayer callback should not be called
-    expect(mockOnDeletePlayer).not.toHaveBeenCalled();
-
-    // And the dialog should be closed
-    expect(screen.queryByText('Delete Player')).not.toBeInTheDocument();
-  });
+  // Note: PlayerList component does not have delete functionality
+  // Delete operations are handled at a higher level in the application
 
   it('should retry loading when retry button is clicked', async () => {
     // Given I have a player service that fails first then succeeds
@@ -339,14 +155,7 @@ describe('PlayerList', () => {
       .mockRejectedValueOnce(new Error('Failed to load'))
       .mockResolvedValueOnce(mockPlayers);
 
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        onEditPlayer={mockOnEditPlayer}
-        onEditSegment={mockOnEditSegment}
-        onDeletePlayer={mockOnDeletePlayer}
-      />
-    );
+    render(<PlayerList playerService={mockPlayerService} />);
 
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();

@@ -1,26 +1,16 @@
 .game-mode {
   padding: 20px;
+  background: #121212;
+  color: #ffffff;
 }
 
-.game-mode-header {
+.game-controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center;
+  gap: 15px;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.game-mode-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 2rem;
-}
-
-.header-controls {
-  display: flex;
-  gap: 15px;
-  align-items: center;
+  border-bottom: 2px solid #2a2a2a;
 }
 
 .next-batter-button {
@@ -31,15 +21,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #17a2b8;
+  background: #3b82f6;
   color: white;
   min-width: 140px;
 }
 
 .next-batter-button:hover:not(:disabled) {
-  background: #138496;
+  background: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .next-batter-button:disabled {
@@ -59,35 +49,71 @@
   transition: all 0.2s ease;
   background: #dc3545;
   color: white;
+  min-width: 140px;
 }
 
 .end-game-button:hover {
   background: #c82333;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive design */
+/* Modal action buttons */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.cancel-button {
+  padding: 10px 20px;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  background: #2a2a2a;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cancel-button:hover {
+  background: #404040;
+  border-color: #525252;
+  color: #ffffff;
+}
+
+.confirm-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #dc3545;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.confirm-button:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Responsive design - buttons always stay horizontal */
 @media (max-width: 768px) {
-  .game-mode-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
-  .game-mode-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .header-controls {
-    flex-direction: column;
-    width: 100%;
+  .game-controls {
     gap: 10px;
   }
 
   .next-batter-button,
   .end-game-button {
-    width: 100%;
-    max-width: 200px;
+    min-width: 120px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 }

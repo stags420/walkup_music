@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
+import unusedImports from "eslint-plugin-unused-imports";
 
 export default [
   // Base JavaScript recommended rules
@@ -33,6 +34,7 @@ export default [
       '@typescript-eslint': tseslint,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      'unused-imports': unusedImports,
     },
     rules: {
       // TypeScript rules
@@ -43,7 +45,9 @@ export default [
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': ["warn", {
+        fixToUnknown: true,
+      }],
 
       // React hooks rules
       ...reactHooks.configs.recommended.rules,

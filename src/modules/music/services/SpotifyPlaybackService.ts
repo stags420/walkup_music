@@ -253,16 +253,12 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
  * Mock implementation for testing
  */
 export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
-  private isPlaying = false;
-
   async play(_uri: string, _startPositionMs: number = 0): Promise<void> {
-    this.isPlaying = true;
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   async pause(): Promise<void> {
-    this.isPlaying = false;
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -280,9 +276,10 @@ declare global {
   }
 }
 
-// Initialize the global callback function
+// Initialize the global callback function immediately
 if (globalThis.window !== undefined) {
-  globalThis.window.onSpotifyWebPlaybackSDKReady = () => {
+  // Set up the callback function before the SDK loads
+  globalThis.onSpotifyWebPlaybackSDKReady = () => {
     console.log('Spotify Web Playback SDK is ready');
   };
 }

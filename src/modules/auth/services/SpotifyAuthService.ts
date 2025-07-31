@@ -169,17 +169,15 @@ export class SpotifyAuthService implements AuthService {
 
   /**
    * Checks if the user is currently authenticated
-   * Uses the same expiration logic as getAccessToken for consistency
    */
   isAuthenticated(): boolean {
     if (!this.tokens) {
       return false;
     }
 
-    // Check if token is not expired (with configurable buffer for consistency)
+    // Check if token is not expired
     const now = Date.now();
-    const bufferMs = this.config.tokenRefreshBufferMinutes * 60 * 1000; // Convert minutes to milliseconds
-    return now < this.tokens.expiresAt - bufferMs;
+    return now < this.tokens.expiresAt;
   }
 
   /**

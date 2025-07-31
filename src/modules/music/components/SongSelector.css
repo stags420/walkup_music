@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -14,17 +14,18 @@
 }
 
 .song-selector-modal {
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 20px 25px -5px rgba(0, 0, 0, 0.5),
+    0 10px 10px -5px rgba(0, 0, 0, 0.3);
   max-width: 800px;
   width: 100%;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid #2a2a2a;
 }
 
 .song-selector-header {
@@ -32,7 +33,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px 32px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #2a2a2a;
   padding-bottom: 16px;
   margin-bottom: 24px;
 }
@@ -41,7 +42,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
 }
 
 .close-button {
@@ -54,14 +55,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #b3b3b3;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .close-button:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: #2a2a2a;
+  color: #ffffff;
 }
 
 .song-selector-content {
@@ -79,24 +80,25 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
 .search-input {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #d1d5db;
+  border: 2px solid #404040;
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
-  color: black;
+  color: #ffffff;
+  background: #2a2a2a;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #1db954;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
 }
 
 .results-section {
@@ -113,14 +115,14 @@
   justify-content: center;
   padding: 40px 20px;
   text-align: center;
-  color: #6b7280;
+  color: #808080;
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
+  border: 3px solid #2a2a2a;
+  border-top: 3px solid #1db954;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -133,12 +135,12 @@
 }
 
 .error-message {
-  color: #dc2626;
+  color: #ff6b6b;
   margin-bottom: 16px;
 }
 
 .retry-button {
-  background: #3b82f6;
+  background: #1db954;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -149,7 +151,7 @@
 }
 
 .retry-button:hover {
-  background: #2563eb;
+  background: #1ed760;
 }
 
 .tracks-grid {
@@ -160,13 +162,13 @@
 }
 
 .track-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2a2a2a;
   border-radius: 8px;
   padding: 12px 16px;
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
-  background: white;
+  background: #2a2a2a;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -174,22 +176,22 @@
 }
 
 .track-card:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: #404040;
+  background: #333333;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
 }
 
 .track-card.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.15);
+  border-color: #1db954;
+  background: #1a2a1a;
+  box-shadow: 0 4px 12px -2px rgba(29, 185, 84, 0.2);
 }
 
 .track-card:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #1db954;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
 }
 
 .track-album-art {
@@ -198,7 +200,7 @@
   border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .track-album-art img {
@@ -235,7 +237,7 @@
 .track-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: #1db954;
   margin: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -245,7 +247,7 @@
 
 .track-artist {
   font-size: 0.7rem;
-  color: #6b7280;
+  color: #ffffff;
   margin: 2px 0 0 0;
   line-height: 1.1;
   white-space: nowrap;
@@ -259,7 +261,7 @@
 
 .track-duration {
   font-size: 0.75rem;
-  color: #374151;
+  color: #808080;
   margin: 0;
   white-space: nowrap;
   flex-shrink: 0;
@@ -267,7 +269,7 @@
     'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro',
     monospace;
   font-weight: 500;
-  background: #f3f4f6;
+  background: #1a1a1a;
   padding: 2px 6px;
   border-radius: 4px;
   min-width: 40px;
@@ -283,8 +285,8 @@
 }
 
 .preview-button {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #1a1a1a;
+  border: 1px solid #404040;
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -294,12 +296,14 @@
   cursor: pointer;
   transition: all 0.15s ease;
   font-size: 0.8rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #b3b3b3;
 }
 
 .preview-button:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: #2a2a2a;
+  border-color: #525252;
+  color: #ffffff;
   transform: scale(1.05);
 }
 
@@ -319,7 +323,7 @@
 .selected-indicator {
   width: 20px;
   height: 20px;
-  background: #3b82f6;
+  background: #1db954;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -331,11 +335,11 @@
 
 .song-selector-actions {
   padding: 24px 32px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #2a2a2a;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: #f9fafb;
+  background: #1a1a1a;
 }
 
 .cancel-button,
@@ -350,27 +354,27 @@
 }
 
 .cancel-button {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #404040;
 }
 
 .cancel-button:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #404040;
+  border-color: #525252;
 }
 
 .select-button {
-  background: #3b82f6;
+  background: #1db954;
   color: white;
 }
 
 .select-button:hover:not(:disabled) {
-  background: #2563eb;
+  background: #1ed760;
 }
 
 .select-button:disabled {
-  background: #9ca3af;
+  background: #6b7280;
   cursor: not-allowed;
 }
 
@@ -449,10 +453,10 @@
     padding: 2px 4px;
     min-width: 36px;
     text-align: center;
-    background: #e5e7eb;
+    background: #1a1a1a;
     border-radius: 3px;
     font-weight: 500;
-    color: #374151;
+    color: #808080;
     align-self: center;
     flex-shrink: 0;
   }

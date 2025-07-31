@@ -51,10 +51,10 @@ export function TrackCard({
 
       <div className="track-info">
         <div className="track-details">
-          <div className="track-name">{track.name}</div>
-          <div className="track-artist">{artistNames}</div>
+          <div className="track-name song-title">{track.name}</div>
+          <div className="track-artist artist-name">{artistNames}</div>
           {variant === 'detailed' && (
-            <div className="track-album">{track.album.name}</div>
+            <div className="track-album album-name">{track.album.name}</div>
           )}
         </div>
       </div>
@@ -80,3 +80,5 @@ export function TrackCard({
     </div>
   );
 }
+
+export default TrackCard;

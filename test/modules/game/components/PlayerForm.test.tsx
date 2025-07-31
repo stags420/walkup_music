@@ -266,7 +266,7 @@ describe('PlayerForm', () => {
       fireEvent.click(editTimingButton);
 
       // Then the segment selector should be displayed
-      expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      expect(screen.getByText('Select Timing')).toBeInTheDocument();
     });
 
     it('should handle song selection', async () => {
@@ -291,7 +291,7 @@ describe('PlayerForm', () => {
       fireEvent.click(editTimingButton);
 
       // Then the segment selector should be displayed
-      expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      expect(screen.getByText('Select Timing')).toBeInTheDocument();
     });
 
     it('should remove song when Remove Song button is clicked', () => {
@@ -330,7 +330,7 @@ describe('PlayerForm', () => {
       fireEvent.click(editTimingButton);
 
       // Then the segment selector should be visible
-      expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      expect(screen.getByText('Select Timing')).toBeInTheDocument();
       // The main modal content should still be visible (it's not hidden)
       expect(screen.getByText('Edit Player')).toBeInTheDocument();
     });
@@ -368,7 +368,7 @@ describe('PlayerForm', () => {
       });
 
       // Then the segment selector should be automatically displayed
-      expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      expect(screen.getByText('Select Timing')).toBeInTheDocument();
     });
 
     it('should auto-open segment selector in segment edit mode', () => {
@@ -379,7 +379,7 @@ describe('PlayerForm', () => {
       });
 
       // Then the segment selector should be open
-      expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      expect(screen.getByText('Select Timing')).toBeInTheDocument();
       expect(screen.getAllByText('Test Song')).toHaveLength(2); // One in main form, one in segment selector
     });
   });

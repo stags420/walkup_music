@@ -39,3 +39,6 @@ export function Modal({
     </div>
   );
 }
+
+// Add default export
+export default Modal;

@@ -1,57 +1,53 @@
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1db954 0%, #1ed760 50%, #191414 100%);
+  background: #121212;
   width: 100%;
   overflow-x: hidden;
   position: relative;
 }
 
 .App-header {
-  background: linear-gradient(135deg, #191414 0%, #1db954 100%);
+  background: #1a1a1a;
   color: white;
-  padding: 0.75rem 0.5rem;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border-bottom: 1px solid rgba(29, 185, 84, 0.3);
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .App-header h1 {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
+  color: #ffffff;
 }
 
-.App-header p {
+.welcome-text {
   font-size: 0.8rem;
-  margin: 0.2rem 0 0 0;
-  color: #b3b3b3;
+  margin: 0;
+  color: #1db954;
+  text-align: right;
 }
 
 @media (min-width: 768px) {
   .App-header {
-    padding: 1.5rem 2rem;
+    padding: 0.75rem 2rem;
   }
 
   .App-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
   }
 
-  .App-header p {
+  .welcome-text {
     font-size: 0.9rem;
-    margin: 0.5rem 0 0 0;
   }
-}
-
-.App-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.App-header p {
-  margin: 0.5rem 0 0 0;
-  color: #b3b3b3;
-  font-size: 0.9rem;
 }
 
 .app-loading {
@@ -61,12 +57,14 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  background: #121212;
+  color: #ffffff;
 }
 
 .loading-spinner {
   width: 2rem;
   height: 2rem;
-  border: 3px solid #f3f3f3;
+  border: 3px solid #2a2a2a;
   border-top: 3px solid #1db954;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -83,35 +81,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
+  background: #121212;
 }
 
 .callback-container {
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: #1a1a1a;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   max-width: 400px;
   width: 100%;
+  border: 1px solid #2a2a2a;
 }
 
 .callback-container h2 {
-  color: #191414;
+  color: #ffffff;
   margin: 1rem 0 0.5rem 0;
 }
 
 .callback-container p {
-  color: #666;
+  color: #b3b3b3;
   margin: 0 0 1rem 0;
 }
 
 .callback-container .error-message {
-  background: #fee;
-  border: 1px solid #fcc;
+  background: #2d1b1b;
+  border: 1px solid #4a2a2a;
   border-radius: 6px;
   padding: 1rem;
   margin-top: 1rem;
-  color: #c33;
+  color: #ff6b6b;
   text-align: left;
 }

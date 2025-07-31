@@ -1,16 +1,15 @@
-import { useReducer, useMemo, useEffect, useCallback, ReactNode } from 'react';
+import { useReducer, useEffect, useCallback, ReactNode } from 'react';
 import {
   AuthState,
   AuthAction,
   AuthService,
   AuthContextType,
   AuthContext,
-  AuthServiceProvider,
 } from '@/modules/auth';
 
 interface AuthProviderProps {
   children: ReactNode;
-  authService?: AuthService; // Allow injection for testing
+  authService: AuthService; // Allow injection for testing
 }
 
 // Auth reducer
@@ -37,18 +36,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 }
 
 export function AuthProvider({ children, authService }: AuthProviderProps) {
-  // Use singleton service provider instead of creating instances
-  // For testing, we can still inject a mock service
-  const service = useMemo(() => {
-    if (authService) {
-      // Use injected service for testing
-      return authService;
-    }
-    // Use singleton service provider for production (config comes from global singleton)
-    return AuthServiceProvider.getOrCreate();
-  }, [authService]);
-
-  const isAuthenticated = service.isAuthenticated();
+  const isAuthenticated = authService.isAuthenticated();
   const initialState: AuthState = {
     isAuthenticated: isAuthenticated,
     user: null,
@@ -59,8 +47,8 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        if (service.isAuthenticated()) {
-          const userInfo = await service.getUserInfo();
+        if (authService.isAuthenticated()) {
+          const userInfo = await authService.getUserInfo();
           if (userInfo) {
             dispatch({
               type: 'LOGIN_SUCCESS',
@@ -81,36 +69,36 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
     };
 
     checkAuthStatus();
-  }, [service]);
+  }, [authService]);
 
   const login = useCallback(async () => {
     try {
-      await service.login();
+      await authService.login();
       // Note: login() redirects to Spotify, so we won't reach this point
       // The success handling happens in handleCallback
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
     }
-  }, [service]);
+  }, [authService]);
 
   const logout = useCallback(async () => {
     try {
-      await service.logout();
+      await authService.logout();
       dispatch({ type: 'LOGOUT' });
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
     }
-  }, [service]);
+  }, [authService]);
 
   const handleCallback = useCallback(
     async (code: string, state: string) => {
       try {
-        await service.handleCallback(code, state);
+        await authService.handleCallback(code, state);
 
         // Get user info after successful callback
-        const userInfo = await service.getUserInfo();
+        const userInfo = await authService.getUserInfo();
         if (userInfo) {
           dispatch({
             type: 'LOGIN_SUCCESS',
@@ -123,7 +111,7 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
         throw error;
       }
     },
-    [service]
+    [authService]
   );
 
   const contextValue: AuthContextType = {

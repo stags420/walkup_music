@@ -48,25 +48,6 @@ export function PlayerManager({
     setShowForm(true);
   };
 
-  const handleEditPlayer = (player: Player) => {
-    setEditingPlayer(player);
-    setEditingSegmentOnly(false);
-    setShowForm(true);
-  };
-
-  const handleEditSegment = (player: Player) => {
-    setEditingPlayer(player);
-    setShowSegmentSelector(true);
-  };
-
-  const handleDeletePlayer = async (playerId: string) => {
-    await playerService.deletePlayer(playerId);
-    // Refresh the player list after deletion
-    playerListRef.current?.refreshPlayers();
-    // Update local state
-    setPlayers(players.filter((p) => p.id !== playerId));
-  };
-
   const handleSavePlayer = () => {
     setShowForm(false);
     setEditingPlayer(undefined);
@@ -132,9 +113,7 @@ export function PlayerManager({
       <PlayerList
         ref={playerListRef}
         playerService={playerService}
-        onEditPlayer={handleEditPlayer}
-        onEditSegment={handleEditSegment}
-        onDeletePlayer={handleDeletePlayer}
+        musicService={musicService}
       />
 
       {showForm && (

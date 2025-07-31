@@ -74,7 +74,7 @@
   - Add song preview functionality to segment selection UI using player
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
-- [-] 11. Create game mode interface
+- [x] 11. Create game mode interface
   - Create LineupService class for lineup management/storage. Store lineup and current position 
     as separate state. For now, just use the current list of players as the lineup, don't store 
     anything new. We will build a UI later to modify it.

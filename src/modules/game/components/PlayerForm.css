@@ -20,7 +20,7 @@
 }
 
 .player-form-modal {
-  background: white;
+  background: #1a1a1a;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   width: 100%;
@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   margin: 0;
+  border: 1px solid #2a2a2a;
 }
 
 @media (min-width: 768px) {
@@ -50,7 +51,7 @@
 
 .player-form-header h2 {
   margin: 0;
-  color: #333;
+  color: #ffffff;
   font-size: 1.25rem;
 }
 
@@ -106,16 +107,18 @@
 .form-label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #ffffff;
   font-weight: 500;
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid #404040;
   border-radius: 4px;
   font-size: 1rem;
+  background-color: #2a2a2a;
+  color: #ffffff;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -128,7 +131,9 @@
 }
 
 .form-input:disabled {
-  background-color: #f5f5f5;
+  background-color: #1a1a1a;
+  color: #808080;
+  border-color: #2a2a2a;
   cursor: not-allowed;
 }
 
@@ -142,7 +147,7 @@
 
 .song-section h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: #ffffff;
   font-size: 1.1rem;
 }
 
@@ -176,14 +181,14 @@
 .song-title {
   margin: 0 0 0.25rem 0;
   font-weight: 600;
-  color: #111827;
+  color: #1db954;
   font-size: 1rem;
   line-height: 1.4;
 }
 
 .song-artist {
   margin: 0 0 0.25rem 0;
-  color: #374151;
+  color: #ffffff;
   font-size: 0.875rem;
   line-height: 1.4;
 }

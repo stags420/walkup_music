@@ -37,8 +37,8 @@ export function TrackPreview({ track }: TrackPreviewProps) {
           />
         )}
         <div className="track-details">
-          <div className="track-name">{track.name}</div>
-          <div className="track-artist">{artistNames}</div>
+          <div className="track-name song-title">{track.name}</div>
+          <div className="track-artist artist-name">{artistNames}</div>
           <div className="track-duration">
             {formatDuration(track.duration_ms)}
           </div>
@@ -47,3 +47,5 @@ export function TrackPreview({ track }: TrackPreviewProps) {
     </div>
   );
 }
+
+export default TrackPreview;

@@ -37,6 +37,7 @@ export function PlayerForm({
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [hideMainModal, setHideMainModal] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isEditing = !!player;
   const isSegmentEdit = segmentEditOnly && !!player?.song;
@@ -116,6 +117,24 @@ export function PlayerForm({
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePlayer = async () => {
+    if (!player) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      await playerService.deletePlayer(player.id);
+      onSave({ ...player, id: '' }); // Signal deletion
+    } catch (error_) {
+      setError(
+        error_ instanceof Error ? error_.message : 'Failed to delete player'
+      );
+    } finally {
+      setLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -209,7 +228,6 @@ export function PlayerForm({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  style={{ color: 'black' }}
                   placeholder="Enter player name"
                   disabled={loading}
                   required
@@ -237,35 +255,20 @@ export function PlayerForm({
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src =
-                            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiAyMEM0Mi4yIDIwIDUwIDI3LjggNTAgMzhDNTAgNDguMiA0Mi4yIDU2IDMyIDU2QzIxLjggNTYgMTQgNDguMiAxNCAzOEMxNCAyNy44IDIxLjggMjAgMzIgMjBaIiBmaWxsPSIjRTVFN0VCIi8+CjwvcmVnPgo8L3N2Zz4K';
+                            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMkEyQTI5Ii8+CjxwYXRoIGQ9Ik0zMiAyMEM0Mi4yIDIwIDUwIDI3LjggNTAgMzhDNTAgNDguMiA0Mi4yIDU2IDMyIDU2QzIxLjggNTYgMTQgNDguMiAxNCAzOEMxNCAyNy44IDIxLjggMjAgMzIgMjBaIiBmaWxsPSIjMkEyQTI5Ii8+CjwvcmVnPgo8L3N2Zz4K';
                         }}
                       />
                       <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                        <h6
-                          className="mb-1 fw-bold text-truncate"
-                          style={{ color: 'black' }}
-                        >
+                        <h6 className="mb-1 fw-bold text-truncate song-title">
                           {song.track.name}
                         </h6>
-                        <p
-                          className="mb-1 text-muted text-truncate"
-                          style={{ fontSize: '0.9rem' }}
-                        >
+                        <p className="mb-1 text-truncate artist-name">
                           by {song.track.artists.join(', ')}
                         </p>
-                        <p
-                          className="mb-1 text-muted text-truncate"
-                          style={{ fontSize: '0.8rem' }}
-                        >
+                        <p className="mb-1 text-truncate album-name">
                           {song.track.album}
                         </p>
-                        <p
-                          className="mb-0 text-muted"
-                          style={{
-                            fontSize: '0.75rem',
-                            fontFamily: 'monospace',
-                          }}
-                        >
+                        <p className="mb-0 timing-info">
                           Plays from {song.startTime}s for {song.duration}s
                         </p>
                       </div>
@@ -311,7 +314,7 @@ export function PlayerForm({
               ) : isSegmentEdit ? null : (
                 <Card>
                   <Card.Body className="text-center p-4">
-                    <p className="text-muted mb-3">
+                    <p className="mb-3 no-song-text">
                       No walk-up song selected. Choose a song to play when this
                       player bats.
                     </p>
@@ -330,6 +333,16 @@ export function PlayerForm({
         </Modal.Body>
 
         <Modal.Footer>
+          {isEditing && !isSegmentEdit && (
+            <Button
+              variant="danger"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={loading}
+              style={{ marginRight: 'auto' }}
+            >
+              Delete Player
+            </Button>
+          )}
           <Button variant="secondary" onClick={handleCancel} disabled={loading}>
             Cancel
           </Button>
@@ -345,6 +358,39 @@ export function PlayerForm({
                 : isEditing
                   ? 'Update Player'
                   : 'Add Player'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        show={showDeleteConfirm}
+        onHide={() => setShowDeleteConfirm(false)}
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Player</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            Are you sure you want to delete "{player?.name}"? This action cannot
+            be undone.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleDeletePlayer}
+            disabled={loading}
+          >
+            {loading ? 'Deleting...' : 'Delete Player'}
           </Button>
         </Modal.Footer>
       </Modal>

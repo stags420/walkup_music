@@ -175,7 +175,7 @@ describe('App Component Rendering', () => {
       );
 
       // Then it should display the authenticated app
-      expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
+      expect(screen.getByText('Walk Up Music')).toBeInTheDocument();
 
       // Wait for loading to complete and then check for welcome message
       await waitFor(() => {
@@ -256,7 +256,7 @@ describe('App Component Rendering', () => {
       render(<AuthenticatedApp auth={authenticatedAuth} />);
 
       // Then it should display the app header and user welcome
-      expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
+      expect(screen.getByText('Walk Up Music')).toBeInTheDocument();
 
       // Wait for loading to complete and then check for welcome message
       await waitFor(() => {
@@ -264,7 +264,7 @@ describe('App Component Rendering', () => {
       });
 
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-        'Walk-Up Music Manager'
+        'Walk Up Music'
       );
     });
 
@@ -312,7 +312,7 @@ describe('App Component Rendering', () => {
       render(<AuthenticatedApp auth={authenticatedAuth} />);
 
       // Then it should still render without crashing
-      expect(screen.getByText('Walk-Up Music Manager')).toBeInTheDocument();
+      expect(screen.getByText('Walk Up Music')).toBeInTheDocument();
 
       // Wait for loading to complete and then check for welcome message
       await waitFor(() => {

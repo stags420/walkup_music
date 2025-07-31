@@ -7,13 +7,13 @@ import {
 } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
+import { MusicService } from '@/modules/music/services/MusicService';
+import { PlayerCard } from '@/modules/core/components';
 import './PlayerList.css';
 
 interface PlayerListProps {
   playerService: PlayerService;
-  onEditPlayer: (player: Player) => void;
-  onEditSegment: (player: Player) => void;
-  onDeletePlayer: (playerId: string) => void;
+  musicService: MusicService;
 }
 
 export interface PlayerListRef {
@@ -21,17 +21,10 @@ export interface PlayerListRef {
 }
 
 export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
-  function PlayerList(
-    { playerService, onEditPlayer, onEditSegment, onDeletePlayer },
-    ref
-  ) {
+  function PlayerList({ playerService, musicService }, ref) {
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{
-      playerId: string;
-      playerName: string;
-    } | null>(null);
 
     const loadPlayers = useCallback(async () => {
       try {
@@ -60,29 +53,6 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
     useEffect(() => {
       loadPlayers();
     }, [loadPlayers]);
-
-    const handleDelete = (playerId: string, playerName: string) => {
-      setDeleteConfirmation({ playerId, playerName });
-    };
-
-    const handleConfirmDelete = async () => {
-      if (!deleteConfirmation) return;
-
-      try {
-        await onDeletePlayer(deleteConfirmation.playerId);
-        await loadPlayers(); // Refresh the list
-        setDeleteConfirmation(null);
-      } catch (error_) {
-        setError(
-          error_ instanceof Error ? error_.message : 'Failed to delete player'
-        );
-        setDeleteConfirmation(null);
-      }
-    };
-
-    const handleCancelDelete = () => {
-      setDeleteConfirmation(null);
-    };
 
     if (loading) {
       return (
@@ -117,74 +87,29 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
         <h2>Players ({players.length})</h2>
         <div className="player-grid">
           {players.map((player) => (
-            <div key={player.id} className="player-card">
-              <div className="player-info">
-                <h3 className="player-name">{player.name}</h3>
-                {player.song ? (
-                  <div className="player-song">
-                    <p className="song-title">{player.song.track.name}</p>
-                    <p className="song-artist">
-                      by {player.song.track.artists.join(', ')}
-                    </p>
-                    <p className="song-timing">
-                      {player.song.startTime}s -{' '}
-                      {player.song.startTime + player.song.duration}s
-                    </p>
-                  </div>
-                ) : (
-                  <p className="no-song">No walk-up song selected</p>
-                )}
-              </div>
-              <div className="player-actions">
-                <button
-                  onClick={() => onEditPlayer(player)}
-                  className="edit-button"
-                  aria-label={`Edit ${player.name}`}
-                >
-                  Edit Player
-                </button>
-                {player.song && (
-                  <button
-                    onClick={() => onEditSegment(player)}
-                    className="edit-segment-button"
-                    aria-label={`Edit song timing for ${player.name}`}
-                  >
-                    Edit Timing
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(player.id, player.name)}
-                  className="delete-button"
-                  aria-label={`Delete ${player.name}`}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+            <PlayerCard
+              key={player.id}
+              player={{
+                id: player.id,
+                name: player.name,
+                song: player.song
+                  ? {
+                      title: player.song.track.name,
+                      artist: player.song.track.artists.join(', '),
+                      timing: `${player.song.startTime}s - ${player.song.startTime + player.song.duration}s`,
+                    }
+                  : undefined,
+              }}
+              size="medium"
+              displayAlbumArt={false}
+              allowPlayMusic={false}
+              playerService={playerService}
+              musicService={musicService}
+              onPlayerUpdated={loadPlayers}
+              className="player-management-card"
+            />
           ))}
         </div>
-
-        {deleteConfirmation && (
-          <div className="confirmation-overlay">
-            <div className="confirmation-dialog">
-              <h3>Delete Player</h3>
-              <p>
-                Are you sure you want to delete {deleteConfirmation.playerName}?
-              </p>
-              <div className="confirmation-actions">
-                <button onClick={handleCancelDelete} className="cancel-button">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="confirm-button"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }

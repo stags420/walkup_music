@@ -8,17 +8,12 @@ export {
   SpotifyPlaybackServiceImpl,
   MockSpotifyPlaybackService,
 } from './services/SpotifyPlaybackService';
-export type {
-  SpotifyPlaybackService,
-  WebPlaybackState,
-  WebPlaybackTrack,
-  SpotifyPlayer,
-  SpotifyWebPlaybackSDK,
-} from './services/SpotifyPlaybackService';
+export type { SpotifyPlaybackService } from './services/SpotifyPlaybackService';
 export { SongSelector } from './components/SongSelector';
 export { SegmentSelector } from './components/SegmentSelector';
 export { MusicProvider } from './providers/MusicProvider';
 export type { MusicContextType } from './providers/MusicProvider';
-export { useMusic } from './hooks/useMusic';
-// Service provider for stateless MusicService
+// Service providers for stateless services
 export { MusicServiceProvider } from './providers/MusicServiceProvider';
+export { SpotifyApiServiceProvider } from './providers/SpotifyApiServiceProvider';
+export { SpotifyPlaybackServiceProvider } from './providers/SpotifyPlaybackServiceProvider';

@@ -1,18 +1,17 @@
-// Singleton service provider for AuthService following React concepts guidance
 import { AuthService } from '@/modules/auth';
 import { SpotifyAuthService } from '@/modules/auth/services/SpotifyAuthService';
 import { appConfigProvider } from '@/modules/config';
 
 /**
- * Singleton service provider for AuthService
- * Use this for stateless singleton services - NOT React Context
- *
- * Usage: const authService = authServiceProvider.getOrCreate();
+ * Provider for creating AuthService instances with proper dependencies
  */
-class AuthServiceProvider {
-  private instance: AuthService | null = null;
+export class AuthServiceProvider {
+  private static instance: AuthService | null = null;
 
-  getOrCreate(): AuthService {
+  /**
+   * Get a singleton instance of AuthService with AppConfig
+   */
+  static getOrCreate(): AuthService {
     if (!this.instance) {
       // Get config from global config singleton
       const config = appConfigProvider.get();
@@ -22,23 +21,16 @@ class AuthServiceProvider {
   }
 
   /**
-   * Create a new instance for testing
-   * @param mockService - Mock service for testing
+   * Create a new AuthService instance for testing
    */
-  createForTesting(mockService: AuthService): AuthService {
+  static createForTesting(mockService: AuthService): AuthService {
     return mockService;
   }
 
   /**
    * Reset the singleton instance (useful for testing)
    */
-  reset(): void {
+  static reset(): void {
     this.instance = null;
   }
 }
-
-// Export a singleton instance of the provider
-const authServiceProvider = new AuthServiceProvider();
-
-export default authServiceProvider;
-export { AuthServiceProvider };

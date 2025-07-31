@@ -5,13 +5,8 @@ import {
   AuthService,
   AuthContextType,
   AuthContext,
-  authServiceProvider,
+  AuthServiceProvider,
 } from '@/modules/auth';
-
-const initialState: AuthState = {
-  isAuthenticated: false,
-  user: null,
-};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -42,8 +37,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 }
 
 export function AuthProvider({ children, authService }: AuthProviderProps) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
   // Use singleton service provider instead of creating instances
   // For testing, we can still inject a mock service
   const service = useMemo(() => {
@@ -52,8 +45,15 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
       return authService;
     }
     // Use singleton service provider for production (config comes from global singleton)
-    return authServiceProvider.getOrCreate();
+    return AuthServiceProvider.getOrCreate();
   }, [authService]);
+
+  const isAuthenticated = service.isAuthenticated();
+  const initialState: AuthState = {
+    isAuthenticated: isAuthenticated,
+    user: null,
+  };
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Check authentication status on mount
   useEffect(() => {

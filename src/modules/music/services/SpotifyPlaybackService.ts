@@ -59,7 +59,10 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
 
   constructor(authService: AuthService) {
     this.authService = authService;
-    this.initialize();
+    // Initialize asynchronously but don't wait for it
+    this.initialize().catch((error) => {
+      console.error('Failed to initialize Spotify playback:', error);
+    });
   }
 
   private async initialize(): Promise<void> {
@@ -95,7 +98,6 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
 
       // Set up event listeners
       this.player.addListener('ready', (data: SpotifyPlayerCallbackData) => {
-        console.log('Spotify Web Playback SDK is ready');
         if (data.device_id) {
           this.deviceId = data.device_id;
           this.isReadyFlag = true;
@@ -149,21 +151,21 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
   }
 
   async play(uri: string, startPositionMs: number = 0): Promise<void> {
+    // Wait for the service to be ready if it's not already
+    if (!this.isReadyFlag) {
+      await this.waitForReady();
+    }
+
     if (!this.player || !this.isReadyFlag) {
       throw new Error('Spotify Web Playback SDK is not ready');
     }
 
     try {
-      // Load the track using Spotify Web API
-      await this.loadTrack(uri);
+      // Load the track using Spotify Web API with start position
+      await this.loadTrack(uri, startPositionMs);
 
       // Resume playback
       await this.player.resume();
-
-      // Seek to start position if needed
-      if (startPositionMs > 0) {
-        await this.player.seek(startPositionMs);
-      }
     } catch (error) {
       console.error('Failed to play track:', error);
       throw error;
@@ -171,6 +173,11 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
   }
 
   async pause(): Promise<void> {
+    // Wait for the service to be ready if it's not already
+    if (!this.isReadyFlag) {
+      await this.waitForReady();
+    }
+
     if (!this.player || !this.isReadyFlag) {
       throw new Error('Spotify Web Playback SDK is not ready');
     }
@@ -187,7 +194,28 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
     return this.isReadyFlag;
   }
 
-  private async loadTrack(uri: string): Promise<void> {
+  private async waitForReady(): Promise<void> {
+    // Wait up to 10 seconds for the service to be ready
+    const maxWaitTime = 10000;
+    const checkInterval = 100;
+    const maxChecks = maxWaitTime / checkInterval;
+
+    for (let i = 0; i < maxChecks; i++) {
+      if (this.isReadyFlag) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, checkInterval));
+    }
+
+    throw new Error(
+      'Spotify Web Playback SDK failed to initialize within 10 seconds'
+    );
+  }
+
+  private async loadTrack(
+    uri: string,
+    startPositionMs: number = 0
+  ): Promise<void> {
     if (!this.deviceId) {
       throw new Error('No device ID available');
     }
@@ -207,7 +235,7 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
         },
         body: JSON.stringify({
           uris: [uri],
-          position_ms: 0,
+          position_ms: startPositionMs,
         }),
       }
     );

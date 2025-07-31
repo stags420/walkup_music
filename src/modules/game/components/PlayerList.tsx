@@ -57,45 +57,9 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
       [loadPlayers]
     );
 
-    // Auto-load test data if no players exist
-    const loadPlayersWithAutoInit = useCallback(async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const loadedPlayers = await playerService.getAllPlayers();
-
-        // If no players exist, auto-load some test data for better UX
-        if (loadedPlayers.length === 0) {
-          const testPlayers = [
-            'Mike Johnson',
-            'Sarah Williams',
-            'David Rodriguez',
-            'Emily Chen',
-            'Alex Thompson',
-          ];
-
-          for (const name of testPlayers) {
-            await playerService.createPlayer(name);
-          }
-
-          // Load the newly created players
-          const playersAfterInit = await playerService.getAllPlayers();
-          setPlayers(playersAfterInit);
-        } else {
-          setPlayers(loadedPlayers);
-        }
-      } catch (error_) {
-        setError(
-          error_ instanceof Error ? error_.message : 'Failed to load players'
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [playerService]);
-
     useEffect(() => {
-      loadPlayersWithAutoInit();
-    }, [loadPlayersWithAutoInit]);
+      loadPlayers();
+    }, [loadPlayers]);
 
     const handleDelete = (playerId: string, playerName: string) => {
       setDeleteConfirmation({ playerId, playerName });

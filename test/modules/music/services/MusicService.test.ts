@@ -1,4 +1,3 @@
-import { AuthService } from '@/modules/auth';
 import { SpotifyPlaybackService } from '@/modules/music';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 
@@ -36,7 +35,7 @@ describe('MockMusicService', () => {
   let musicService: MockMusicService;
 
   beforeEach(() => {
-    musicService = new MockMusicService();
+    musicService = new MockMusicService(mockPlaybackService);
     jest.clearAllMocks();
   });
 
@@ -253,23 +252,15 @@ describe('MockMusicService', () => {
 
 describe('SpotifyMusicService', () => {
   let musicService: SpotifyMusicService;
-  let mockAuthService: jest.Mocked<AuthService>;
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
 
-    // Create mock auth service
-    mockAuthService = {
-      login: jest.fn(),
-      logout: jest.fn(),
-      getAccessToken: jest.fn(),
-      isAuthenticated: jest.fn(),
-      refreshToken: jest.fn(),
-      handleCallback: jest.fn(),
-    };
-
-    musicService = new SpotifyMusicService(mockAuthService);
+    musicService = new SpotifyMusicService(
+      mockSpotifyApiService,
+      mockPlaybackService
+    );
   });
 
   describe('searchTracks', () => {

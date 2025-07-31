@@ -55,43 +55,6 @@
     monospace;
 }
 
-.preview-controls {
-  display: flex;
-  justify-content: center;
-}
-
-.play-button {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.play-button:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.play-button:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
-
-.play-button.playing {
-  background: #dc2626;
-}
-
-.play-button.playing:hover {
-  background: #b91c1c;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .track-preview {

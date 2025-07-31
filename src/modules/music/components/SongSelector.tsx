@@ -195,29 +195,34 @@ export function SongSelector({
 
             {!loading && !error && tracks.length > 0 && (
               <div className="tracks-grid">
-                {tracks.map((track) => (
-                  <TrackCard
-                    key={track.id}
-                    track={{
-                      id: track.id,
-                      name: track.name,
-                      artists: track.artists.map((name) => ({ name })),
-                      album: {
-                        name: track.album,
-                        images: [{ url: track.albumArt }],
-                      },
-                      duration_ms: track.durationMs,
-                      preview_url: track.previewUrl,
-                    }}
-                    variant="compact"
-                    isSelected={selectedTrackId === track.id}
-                    onSelect={() => handleTrackSelect(track)}
-                    onPreview={() =>
-                      handlePlayPreview(track, {} as React.MouseEvent)
-                    }
-                    isPlaying={playingTrackId === track.id}
-                  />
-                ))}
+                {tracks
+                  .filter(
+                    (track, index, self) =>
+                      index === self.findIndex((t) => t.id === track.id)
+                  )
+                  .map((track) => (
+                    <TrackCard
+                      key={track.id}
+                      track={{
+                        id: track.id,
+                        name: track.name,
+                        artists: track.artists.map((name) => ({ name })),
+                        album: {
+                          name: track.album,
+                          images: [{ url: track.albumArt }],
+                        },
+                        duration_ms: track.durationMs,
+                        preview_url: track.previewUrl,
+                      }}
+                      variant="compact"
+                      isSelected={selectedTrackId === track.id}
+                      onSelect={() => handleTrackSelect(track)}
+                      onPreview={() =>
+                        handlePlayPreview(track, {} as React.MouseEvent)
+                      }
+                      isPlaying={playingTrackId === track.id}
+                    />
+                  ))}
               </div>
             )}
 

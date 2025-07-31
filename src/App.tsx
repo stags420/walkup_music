@@ -5,7 +5,7 @@ import {
   LoginPage,
   CallbackPage,
   AuthContextType,
-  authServiceProvider,
+  AuthServiceProvider,
 } from '@/modules/auth';
 import { PlayerManager, PlayerServiceProvider } from '@/modules/game';
 import { MusicServiceProvider } from '@/modules/music';
@@ -40,7 +40,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
   // Get services from singleton providers and pass as props
   // This follows the guidance: use singleton providers for stateless services
   const playerService = PlayerServiceProvider.getOrCreate();
-  const authService = authServiceProvider.getOrCreate();
+  const authService = AuthServiceProvider.getOrCreate();
   const musicService = MusicServiceProvider.getOrCreate(authService, false); // Use real Spotify integration
 
   return (
@@ -66,9 +66,10 @@ function AppContainer() {
 }
 
 export function App() {
+  const authService = AuthServiceProvider.getOrCreate();
   return (
     <Router basename="/">
-      <AuthProvider>
+      <AuthProvider authService={authService}>
         <AppContainer />
       </AuthProvider>
     </Router>

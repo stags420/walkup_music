@@ -81,9 +81,17 @@ export class SpotifyApiService {
     const searchData = await response.json();
     const searchResponse = this.validateSearchResponse(searchData);
 
-    return searchResponse.tracks.items.map((track) =>
+    // Transform tracks and deduplicate by ID
+    const transformedTracks = searchResponse.tracks.items.map((track) =>
       this.transformApiTrackToSpotifyTrack(track)
     );
+
+    // Remove duplicates based on track ID
+    const uniqueTracks = transformedTracks.filter(
+      (track, index, self) => index === self.findIndex((t) => t.id === track.id)
+    );
+
+    return uniqueTracks;
   }
 
   /**

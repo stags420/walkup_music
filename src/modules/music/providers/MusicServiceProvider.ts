@@ -3,6 +3,8 @@ import {
   MockMusicService,
   SpotifyMusicService,
 } from '@/modules/music/services/MusicService';
+import { SpotifyApiServiceProvider } from './SpotifyApiServiceProvider';
+import { SpotifyPlaybackServiceProvider } from './SpotifyPlaybackServiceProvider';
 import { AuthService } from '@/modules/auth';
 
 /**
@@ -21,10 +23,24 @@ export class MusicServiceProvider {
     useMockService = false
   ): MusicService {
     if (!this.instance) {
-      this.instance =
-        useMockService || !authService
-          ? new MockMusicService(undefined)
-          : new SpotifyMusicService(authService);
+      if (useMockService || !authService) {
+        const mockPlaybackService = SpotifyPlaybackServiceProvider.getOrCreate(
+          undefined,
+          true
+        );
+        this.instance = new MockMusicService(mockPlaybackService);
+      } else {
+        const spotifyApiService =
+          SpotifyApiServiceProvider.getOrCreate(authService);
+        const playbackService = SpotifyPlaybackServiceProvider.getOrCreate(
+          authService,
+          false
+        );
+        this.instance = new SpotifyMusicService(
+          spotifyApiService,
+          playbackService
+        );
+      }
     }
     return this.instance;
   }

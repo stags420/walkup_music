@@ -1,11 +1,6 @@
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SpotifyApiService } from './SpotifyApiService';
-import {
-  SpotifyPlaybackService,
-  SpotifyPlaybackServiceImpl,
-  MockSpotifyPlaybackService,
-} from './SpotifyPlaybackService';
-import { AuthService } from '@/modules/auth';
+import { SpotifyPlaybackService } from './SpotifyPlaybackService';
 
 /**
  * Service interface for music-related operations
@@ -33,9 +28,12 @@ export class SpotifyMusicService implements MusicService {
   private spotifyApiService: SpotifyApiService;
   private playbackService: SpotifyPlaybackService;
 
-  constructor(authService: AuthService) {
-    this.spotifyApiService = new SpotifyApiService(authService);
-    this.playbackService = new SpotifyPlaybackServiceImpl(authService);
+  constructor(
+    spotifyApiService: SpotifyApiService,
+    playbackService: SpotifyPlaybackService
+  ) {
+    this.spotifyApiService = spotifyApiService;
+    this.playbackService = playbackService;
   }
 
   async searchTracks(query: string): Promise<SpotifyTrack[]> {
@@ -216,8 +214,8 @@ export class MockMusicService implements MusicService {
 
   private playbackService: SpotifyPlaybackService;
 
-  constructor(_authService?: AuthService) {
-    this.playbackService = new MockSpotifyPlaybackService();
+  constructor(playbackService: SpotifyPlaybackService) {
+    this.playbackService = playbackService;
   }
 
   async searchTracks(query: string): Promise<SpotifyTrack[]> {
@@ -243,7 +241,14 @@ export class MockMusicService implements MusicService {
 
     // Return a shuffled subset to simulate varied results
     const shuffled = results.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(8, shuffled.length));
+    const limitedResults = shuffled.slice(0, Math.min(8, shuffled.length));
+
+    // Remove duplicates based on track ID (in case of any duplicates)
+    const uniqueResults = limitedResults.filter(
+      (track, index, self) => index === self.findIndex((t) => t.id === track.id)
+    );
+
+    return uniqueResults;
   }
 
   async playTrack(uri: string, startPositionMs?: number): Promise<void> {

@@ -58,6 +58,15 @@ describe('SegmentSelector', () => {
     (mockMusicService.getCurrentState as jest.Mock).mockResolvedValue({});
   });
 
+  // Set up fake timers for timeout testing
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   const renderSegmentSelector = (props = {}) => {
     return render(
       <SegmentSelector
@@ -183,22 +192,6 @@ describe('SegmentSelector', () => {
     expect(durationInput.value).toBe('15');
   });
 
-  it('should show preview button when preview URL is available', () => {
-    renderSegmentSelector();
-
-    expect(screen.getByText(/preview/i)).toBeInTheDocument();
-  });
-
-  it('should handle preview button click', async () => {
-    renderSegmentSelector();
-
-    const previewButton = screen.getByText(/preview/i);
-    fireEvent.click(previewButton);
-
-    // Should call the music service to play the track
-    expect(mockMusicService.playTrack).toHaveBeenCalledWith(mockTrack.uri, 0);
-  });
-
   it('should display selected segment info', () => {
     renderSegmentSelector();
 
@@ -222,7 +215,7 @@ describe('SegmentSelector', () => {
     expect(segment).toBeInTheDocument();
   });
 
-  it('should handle confirm action', () => {
+  it('should handle confirm action', async () => {
     renderSegmentSelector();
 
     // Set specific values
@@ -232,32 +225,38 @@ describe('SegmentSelector', () => {
     fireEvent.change(startTimeInput, { target: { value: '25' } });
     fireEvent.change(durationInput, { target: { value: '7' } });
 
-    const confirmButton = screen.getByText('Confirm Selection');
+    const confirmButton = screen.getByText('Confirm');
     fireEvent.click(confirmButton);
 
-    expect(mockOnConfirm).toHaveBeenCalledWith({
-      track: mockTrack,
-      startTime: 25,
-      duration: 7,
+    await waitFor(() => {
+      expect(mockOnConfirm).toHaveBeenCalledWith({
+        track: mockTrack,
+        startTime: 25,
+        duration: 7,
+      });
     });
   });
 
-  it('should handle cancel action', () => {
+  it('should handle cancel action', async () => {
     renderSegmentSelector();
 
     const cancelButton = screen.getByText('Cancel');
     fireEvent.click(cancelButton);
 
-    expect(mockOnCancel).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockOnCancel).toHaveBeenCalled();
+    });
   });
 
-  it('should handle close button action', () => {
+  it('should handle close button action', async () => {
     renderSegmentSelector();
 
     const closeButton = screen.getByLabelText('Close segment selector');
     fireEvent.click(closeButton);
 
-    expect(mockOnCancel).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockOnCancel).toHaveBeenCalled();
+    });
   });
 
   it('should format time correctly', () => {
@@ -308,21 +307,21 @@ describe('SegmentSelector', () => {
     expect(startTimeInput.value).toBe('176');
   });
 
-  it('should show different preview button text when playing', async () => {
+  it('should show different selection button text when playing', async () => {
     renderSegmentSelector();
 
-    const previewButton = screen.getByText(/preview/i);
-    fireEvent.click(previewButton);
+    const selectionButton = screen.getByText(/play selection/i);
+    fireEvent.click(selectionButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/stop/i)).toBeInTheDocument();
+      expect(screen.getByText(/stop selection/i)).toBeInTheDocument();
     });
   });
 
-  it('should show playback status when ready', () => {
+  it('should show selection button', () => {
     renderSegmentSelector();
 
-    expect(screen.getByText(/Spotify playback ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/play selection/i)).toBeInTheDocument();
   });
 
   it('should handle playback errors gracefully', async () => {
@@ -333,11 +332,78 @@ describe('SegmentSelector', () => {
 
     renderSegmentSelector();
 
-    const previewButton = screen.getByText(/preview/i);
-    fireEvent.click(previewButton);
+    const selectionButton = screen.getByText(/play selection/i);
+    fireEvent.click(selectionButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to play track/i)).toBeInTheDocument();
     });
+  });
+
+  it('should stop playback after specified duration', async () => {
+    // Given I have a segment selector with a 5-second duration
+    renderSegmentSelector({ maxDuration: 5 });
+
+    // When I set the duration to 2 seconds and start playback
+    const durationInput = screen.getByLabelText('Duration') as HTMLInputElement;
+    fireEvent.change(durationInput, { target: { value: '2' } });
+
+    const selectionButton = screen.getByText(/play selection/i);
+    fireEvent.click(selectionButton);
+
+    // Then the button should show "Stop Selection"
+    await waitFor(() => {
+      expect(screen.getByText(/stop selection/i)).toBeInTheDocument();
+    });
+
+    // And the playTrack method should be called
+    expect(mockMusicService.playTrack).toHaveBeenCalledWith(
+      mockTrack.uri,
+      0 // startPositionMs
+    );
+
+    // When the timeout fires (after 2 seconds)
+    jest.runAllTimers();
+
+    // Then the pause method should be called
+    await waitFor(() => {
+      expect(mockMusicService.pause).toHaveBeenCalled();
+    });
+
+    // And the button should show "Play Selection" again
+    await waitFor(() => {
+      expect(screen.getByText(/play selection/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should clear timeout when manually stopping playback', async () => {
+    // Given I have a segment selector with playback running
+    renderSegmentSelector();
+
+    const selectionButton = screen.getByText(/play selection/i);
+    fireEvent.click(selectionButton);
+
+    // When I manually stop the playback before the timeout fires
+    await waitFor(() => {
+      expect(screen.getByText(/stop selection/i)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText(/stop selection/i));
+
+    // Then the pause method should be called immediately
+    await waitFor(() => {
+      expect(mockMusicService.pause).toHaveBeenCalled();
+    });
+
+    // And the button should show "Play Selection" again
+    await waitFor(() => {
+      expect(screen.getByText(/play selection/i)).toBeInTheDocument();
+    });
+
+    // When the timeout would have fired (after 10 seconds)
+    jest.runAllTimers();
+
+    // Then pause should not be called again (timeout was cleared)
+    expect(mockMusicService.pause).toHaveBeenCalledTimes(1);
   });
 });

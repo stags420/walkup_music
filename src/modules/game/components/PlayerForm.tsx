@@ -360,6 +360,7 @@ export function PlayerForm({
       {showSegmentSelector && selectedTrack && (
         <SegmentSelector
           track={selectedTrack}
+          musicService={musicService}
           initialSegment={song}
           onConfirm={handleSegmentConfirmed}
           onCancel={handleCancelSegmentSelection}

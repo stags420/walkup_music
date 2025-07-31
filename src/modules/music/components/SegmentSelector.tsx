@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal as defaultCreatePortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
@@ -9,7 +9,7 @@ import './SegmentSelector.css';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
-  musicService: MusicService;
+  musicService?: MusicService;
   initialSegment?: SongSegment;
   onConfirm: (segment: SongSegment) => void;
   onCancel: () => void;
@@ -30,47 +30,58 @@ export function SegmentSelector({
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
   );
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPlaybackReady, setIsPlaybackReady] = useState(false);
+  const [isPlayingSelection, setIsPlayingSelection] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isPlayingRef = useRef(false);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 
+  // Prevent body scroll when modal is open
   useEffect(() => {
-    // Check if playback is ready when component mounts
-    const checkPlaybackReady = async () => {
-      try {
-        // Check if playback service is ready without trying to play
-        if (
-          musicService.isPlaybackConnected() &&
-          musicService.isPlaybackReady()
-        ) {
-          setIsPlaybackReady(true);
-          setPlaybackError(null);
-        } else {
-          // If not ready, set error message but don't try to play
-          setPlaybackError(
-            'Spotify playback not available, using preview audio'
-          );
-          setIsPlaybackReady(false);
-        }
-      } catch (error) {
-        console.warn('Playback not ready, will use fallback preview:', error);
-        setPlaybackError('Spotify playback not available, using preview audio');
-        setIsPlaybackReady(false);
-      }
-    };
-
-    checkPlaybackReady();
+    const originalStyle = globalThis.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      // Cleanup playback timeout
-      if (playbackTimeoutRef.current) {
-        clearTimeout(playbackTimeoutRef.current);
-      }
+      document.body.style.overflow = originalStyle;
     };
-  }, [track.uri, musicService]);
+  }, []);
+
+  // Cleanup function to stop playback
+  const stopPlayback = useCallback(async () => {
+    if (isPlayingRef.current && musicService) {
+      try {
+        await musicService.pause();
+      } catch (error) {
+        console.debug('Playback pause failed:', error);
+      }
+      setIsPlayingSelection(false);
+      isPlayingRef.current = false;
+    }
+    if (playbackTimeoutRef.current) {
+      clearTimeout(playbackTimeoutRef.current);
+      playbackTimeoutRef.current = null;
+    }
+  }, [musicService]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+    };
+  }, [stopPlayback]);
+
+  // Cleanup when modal is closed
+  const handleCancel = () => {
+    stopPlayback()
+      .then(() => {
+        onCancel();
+      })
+      .catch((error) => {
+        console.error('Failed to stop playback on cancel:', error);
+        onCancel();
+      });
+  };
 
   const handleStartTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newStartTime = Math.max(
@@ -88,36 +99,43 @@ export function SegmentSelector({
     setDuration(newDuration);
   };
 
-  const handlePlayPreview = async () => {
-    if (isPlaying) {
-      // Stop playback
-      try {
-        await musicService.pause();
-      } catch (error) {
-        console.debug('Playback pause failed:', error);
-      }
-      setIsPlaying(false);
+  const handlePlaySelection = async () => {
+    if (!musicService) {
+      console.warn('MusicService not available for playback');
+      setPlaybackError('MusicService not available for playback');
+      return;
+    }
 
-      if (playbackTimeoutRef.current) {
-        clearTimeout(playbackTimeoutRef.current);
-        playbackTimeoutRef.current = null;
-      }
+    if (isPlayingRef.current) {
+      // Stop selection playback
+      await stopPlayback();
     } else {
-      // Start playback
+      // Start playback from selected segment
       try {
         const startPositionMs = startTime * 1000;
+
+        // Clear any existing timeout first
+        if (playbackTimeoutRef.current) {
+          clearTimeout(playbackTimeoutRef.current);
+          playbackTimeoutRef.current = null;
+        }
+
         await musicService.playTrack(track.uri, startPositionMs);
-        setIsPlaying(true);
+        setIsPlayingSelection(true);
+        isPlayingRef.current = true;
         setPlaybackError(null);
 
         // Stop after the selected duration
         playbackTimeoutRef.current = setTimeout(async () => {
-          try {
-            await musicService.pause();
-          } catch (error) {
-            console.debug('Playback pause failed:', error);
+          if (isPlayingRef.current && musicService) {
+            try {
+              await musicService.pause();
+            } catch (error) {
+              console.error('Failed to stop playback after timeout:', error);
+            }
+            setIsPlayingSelection(false);
+            isPlayingRef.current = false;
           }
-          setIsPlaying(false);
           playbackTimeoutRef.current = null;
         }, duration * 1000);
       } catch (error) {
@@ -125,18 +143,36 @@ export function SegmentSelector({
         setPlaybackError(
           'Failed to play track. Please check your Spotify Premium subscription.'
         );
-        setIsPlaying(false);
+        setIsPlayingSelection(false);
+        isPlayingRef.current = false;
+        // Clear timeout if playback fails
+        if (playbackTimeoutRef.current) {
+          clearTimeout(playbackTimeoutRef.current);
+          playbackTimeoutRef.current = null;
+        }
       }
     }
   };
 
   const handleConfirm = () => {
-    const segment: SongSegment = {
-      track,
-      startTime,
-      duration,
-    };
-    onConfirm(segment);
+    stopPlayback()
+      .then(() => {
+        const segment: SongSegment = {
+          track,
+          startTime,
+          duration,
+        };
+        onConfirm(segment);
+      })
+      .catch((error) => {
+        console.error('Failed to stop playback on confirm:', error);
+        const segment: SongSegment = {
+          track,
+          startTime,
+          duration,
+        };
+        onConfirm(segment);
+      });
   };
 
   const formatTime = (seconds: number) => {
@@ -153,7 +189,7 @@ export function SegmentSelector({
         <div className="segment-selector-header">
           <h2>Select Song Segment</h2>
           <button
-            onClick={onCancel}
+            onClick={handleCancel}
             className="close-button"
             aria-label="Close segment selector"
           >
@@ -174,8 +210,6 @@ export function SegmentSelector({
               duration_ms: track.durationMs,
               preview_url: track.previewUrl,
             }}
-            onPlay={handlePlayPreview}
-            isPlaying={isPlaying}
           />
 
           {playbackError && (
@@ -261,12 +295,21 @@ export function SegmentSelector({
                     <strong>Selected segment:</strong> {formatTime(startTime)} -{' '}
                     {formatTime(startTime + duration)}
                   </p>
-                  {isPlaybackReady && (
-                    <p className="playback-status">
-                      <span className="status-indicator ready">●</span>
-                      Spotify playback ready
-                    </p>
-                  )}
+
+                  {/* Play Selection Button moved inside segment-info */}
+                  <div className="play-selection-section">
+                    <button
+                      className={`play-button selection ${isPlayingSelection ? 'playing' : ''}`}
+                      onClick={handlePlaySelection}
+                      disabled={!musicService}
+                    >
+                      {isPlayingSelection ? (
+                        <>⏸ Stop Selection</>
+                      ) : (
+                        <>▶ Play Selection</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -274,11 +317,11 @@ export function SegmentSelector({
         </div>
 
         <div className="segment-selector-actions">
-          <Button onClick={onCancel} variant="secondary">
+          <Button onClick={handleCancel} variant="secondary">
             Cancel
           </Button>
           <Button onClick={handleConfirm} className="btn-success">
-            Confirm Selection
+            Confirm
           </Button>
         </div>
       </div>

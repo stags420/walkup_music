@@ -15,8 +15,6 @@ interface Track {
 
 interface TrackPreviewProps {
   track: Track;
-  onPlay?: () => void;
-  isPlaying?: boolean;
 }
 
 const formatDuration = (ms: number) => {
@@ -25,11 +23,7 @@ const formatDuration = (ms: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export function TrackPreview({
-  track,
-  onPlay,
-  isPlaying = false,
-}: TrackPreviewProps) {
+export function TrackPreview({ track }: TrackPreviewProps) {
   const albumArt = track.album.images[0]?.url;
   const artistNames = track.artists.map((artist) => artist.name).join(', ');
 
@@ -51,18 +45,6 @@ export function TrackPreview({
           </div>
         </div>
       </div>
-
-      {track.preview_url && (
-        <div className="preview-controls">
-          <button
-            className={`play-button ${isPlaying ? 'playing' : ''}`}
-            onClick={onPlay}
-            disabled={!track.preview_url}
-          >
-            {isPlaying ? <>⏸ Stop Preview</> : <>▶ Play Preview</>}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

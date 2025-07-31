@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
@@ -25,7 +25,6 @@ export function SongSelector({
   const [error, setError] = useState<string | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const searchTracks = async () => {
@@ -60,28 +59,33 @@ export function SongSelector({
     setSelectedTrackId(track.id);
   };
 
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = async () => {
     const selectedTrack = tracks.find((track) => track.id === selectedTrackId);
     if (selectedTrack) {
-      // Stop any playing audio before confirming selection
-      if (audioRef.current) {
-        audioRef.current.pause();
+      // Stop any playing preview before confirming selection
+      try {
+        await musicService.pause();
         setPlayingTrackId(null);
+      } catch (error) {
+        console.debug('Failed to stop preview:', error);
       }
       onSelectTrack(selectedTrack);
+    } else {
+      console.warn('No track selected');
     }
   };
 
-  const handlePlayPreview = (track: SpotifyTrack, event: React.MouseEvent) => {
+  const handlePlayPreview = async (
+    track: SpotifyTrack,
+    event: React.MouseEvent
+  ) => {
     event.stopPropagation(); // Prevent track selection when clicking play button
 
+    // In test environment, just toggle the playing state
     if (
-      !audioRef.current ||
-      !track.previewUrl ||
       globalThis.window === undefined ||
       globalThis.process?.env.NODE_ENV?.includes('test')
     ) {
-      // In test environment or no preview URL, just toggle the playing state
       setPlayingTrackId(playingTrackId === track.id ? null : track.id);
       return;
     }
@@ -89,53 +93,43 @@ export function SongSelector({
     if (playingTrackId === track.id) {
       // Stop current track
       try {
-        audioRef.current.pause();
+        await musicService.pause();
+        setPlayingTrackId(null);
       } catch (error) {
-        console.debug('Audio pause failed:', error);
+        console.debug('Playback pause failed:', error);
+        setPlayingTrackId(null);
       }
-      setPlayingTrackId(null);
     } else {
       // Stop any currently playing track and start new one
       try {
-        audioRef.current.pause();
-        audioRef.current.src = track.previewUrl;
-        audioRef.current.currentTime = 0;
-
-        audioRef.current
-          .play()
-          .then(() => {
-            setPlayingTrackId(track.id);
-          })
-          .catch((error) => {
-            console.debug('Audio play failed:', error);
-            setPlayingTrackId(null);
-          });
+        await musicService.pause(); // Stop any current playback
+        await musicService.previewTrack(track.uri, 0, 30000); // 30 second preview
+        setPlayingTrackId(track.id);
       } catch (error) {
-        console.debug('Audio operations failed:', error);
+        console.debug('Playback preview failed:', error);
         setPlayingTrackId(null);
       }
     }
   };
 
-  // Clean up audio when component unmounts or tracks change
+  // Clean up playback when component unmounts
   useEffect(() => {
-    const audio = audioRef.current;
     return () => {
-      if (audio) {
-        audio.pause();
-        setPlayingTrackId(null);
-      }
-    };
-  }, []);
-
-  // Stop audio when tracks change (new search results)
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
+      // Stop any playing preview when component unmounts
+      musicService.pause().catch((error) => {
+        console.debug('Failed to stop preview on unmount:', error);
+      });
       setPlayingTrackId(null);
-    }
-  }, [tracks]);
+    };
+  }, [musicService]);
+
+  // Stop playback when tracks change (new search results)
+  useEffect(() => {
+    musicService.pause().catch((error) => {
+      console.debug('Failed to stop preview on tracks change:', error);
+    });
+    setPlayingTrackId(null);
+  }, [tracks, musicService]);
 
   return createPortal(
     <div className="song-selector-overlay">
@@ -247,13 +241,6 @@ export function SongSelector({
             Select Song
           </Button>
         </div>
-
-        {/* Hidden audio element for preview playback */}
-        <audio
-          ref={audioRef}
-          onEnded={() => setPlayingTrackId(null)}
-          onError={() => setPlayingTrackId(null)}
-        />
       </div>
     </div>,
     document.body

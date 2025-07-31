@@ -104,6 +104,7 @@ export function PlayerManager({
       {showSegmentSelector && editingPlayer?.song && (
         <SegmentSelector
           track={editingPlayer.song.track}
+          musicService={musicService}
           initialSegment={editingPlayer.song}
           onConfirm={async (segment: SongSegment) => {
             try {

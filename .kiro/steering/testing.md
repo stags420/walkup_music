@@ -242,3 +242,34 @@ test('should advance batting order correctly', () => {
 - Use deterministic test data and timing
 - Handle async operations properly with proper awaits
 - Retry mechanisms only for genuinely flaky external dependencies
+
+
+## React
+
+Key Principles:
+Test Behavior, Not Implementation:
+.
+Focus on what the user experiences and how the component responds to interactions and props, not on the specific internal state or method calls. This makes tests more robust to refactors.
+Simulate User Interactions:
+.
+Use libraries like @testing-library/user-event to accurately simulate user actions (clicks, typing, hovering) rather than directly manipulating DOM events.
+Isolate Tests:
+.
+Each test case should be independent and test a specific aspect of the component's behavior in isolation. Use mocks and stubs for external dependencies (APIs, databases) to ensure tests are not affected by external factors.
+Clear and Descriptive Test Cases:
+.
+Write test descriptions that clearly explain what is being tested and what the expected outcome is.
+Test Accessibility:
+.
+Consider testing for accessibility features and ensuring your components are usable for all users.
+Tools and Libraries:
+Jest: A popular JavaScript testing framework often used with React.
+React Testing Library (RTL): A library built on top of DOM Testing Library that provides utilities for testing React components in a way that emphasizes user-centric testing.
+Cypress or Playwright: For end-to-end (E2E) testing, simulating a user's full journey through the application in a real browser environment.
+General Steps:
+Install Testing Libraries: Set up Jest and React Testing Library in your project.
+Create Test Files: Place test files alongside or in a dedicated __tests__ directory for the component being tested.
+Render the Component: Use render from React Testing Library to render the component in a test environment.
+Simulate Interactions (if applicable): Use user-event to simulate user interactions like clicks or input changes.
+Make Assertions: Use Jest's expect assertions with RTL's queries (e.g., getByText, getByRole, queryByTestId) to verify the component's output or behavior.
+Clean Up: Use cleanup (often implicitly handled by RTL) or unmount to ensure a clean slate for subsequent tests.

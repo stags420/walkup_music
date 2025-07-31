@@ -1,5 +1,10 @@
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SpotifyApiService } from './SpotifyApiService';
+import {
+  SpotifyPlaybackService,
+  SpotifyPlaybackServiceImpl,
+  MockSpotifyPlaybackService,
+} from './SpotifyPlaybackService';
 import { AuthService } from '@/modules/auth';
 
 /**
@@ -7,20 +12,87 @@ import { AuthService } from '@/modules/auth';
  */
 export interface MusicService {
   searchTracks(query: string): Promise<SpotifyTrack[]>;
+  playTrack(uri: string, startPositionMs?: number): Promise<void>;
+  previewTrack(
+    uri: string,
+    startPositionMs?: number,
+    durationMs?: number
+  ): Promise<void>;
+  pause(): Promise<void>;
+  resume(): Promise<void>;
+  seek(positionMs: number): Promise<void>;
+  getCurrentState(): Promise<unknown>;
+  isPlaybackConnected(): boolean;
+  isPlaybackReady(): boolean;
 }
 
 /**
- * Real implementation of MusicService using Spotify Web API
+ * Real implementation of MusicService using Spotify Web API and Web Playback SDK
  */
 export class SpotifyMusicService implements MusicService {
   private spotifyApiService: SpotifyApiService;
+  private playbackService: SpotifyPlaybackService;
 
   constructor(authService: AuthService) {
     this.spotifyApiService = new SpotifyApiService(authService);
+    this.playbackService = new SpotifyPlaybackServiceImpl(authService);
   }
 
   async searchTracks(query: string): Promise<SpotifyTrack[]> {
     return this.spotifyApiService.searchTracks(query);
+  }
+
+  async playTrack(uri: string, startPositionMs?: number): Promise<void> {
+    return this.playbackService.play(uri, startPositionMs);
+  }
+
+  async previewTrack(
+    uri: string,
+    startPositionMs?: number,
+    durationMs?: number
+  ): Promise<void> {
+    // Load and play the track
+    await this.playbackService.play(uri, startPositionMs);
+
+    // Auto-pause after duration
+    setTimeout(async () => {
+      try {
+        await this.playbackService.pause();
+      } catch (error) {
+        console.error('Failed to auto-pause preview:', error);
+      }
+    }, durationMs);
+  }
+
+  async pause(): Promise<void> {
+    return this.playbackService.pause();
+  }
+
+  async resume(): Promise<void> {
+    // For resume, we just play the current track again
+    // This is a simplified approach - in a real app you might want to track the current track
+    throw new Error('Resume not implemented - use playTrack instead');
+  }
+
+  async seek(_positionMs: number): Promise<void> {
+    // Seek is not part of our simplified interface
+    // You would need to play the track again with the new position
+    throw new Error(
+      'Seek not implemented - use playTrack with startPositionMs instead'
+    );
+  }
+
+  async getCurrentState(): Promise<unknown> {
+    // Not part of our simplified interface
+    throw new Error('getCurrentState not implemented');
+  }
+
+  isPlaybackConnected(): boolean {
+    return this.playbackService.isReady();
+  }
+
+  isPlaybackReady(): boolean {
+    return this.playbackService.isReady();
   }
 }
 
@@ -142,6 +214,12 @@ export class MockMusicService implements MusicService {
     },
   ];
 
+  private playbackService: SpotifyPlaybackService;
+
+  constructor(_authService?: AuthService) {
+    this.playbackService = new MockSpotifyPlaybackService();
+  }
+
   async searchTracks(query: string): Promise<SpotifyTrack[]> {
     // Simulate network delay
     await new Promise((resolve) =>
@@ -166,5 +244,58 @@ export class MockMusicService implements MusicService {
     // Return a shuffled subset to simulate varied results
     const shuffled = results.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(8, shuffled.length));
+  }
+
+  async playTrack(uri: string, startPositionMs?: number): Promise<void> {
+    return this.playbackService.play(uri, startPositionMs);
+  }
+
+  async previewTrack(
+    uri: string,
+    startPositionMs?: number,
+    durationMs?: number
+  ): Promise<void> {
+    // Load and play the track
+    await this.playbackService.play(uri, startPositionMs);
+
+    // Auto-pause after duration
+    setTimeout(async () => {
+      try {
+        await this.playbackService.pause();
+      } catch (error) {
+        console.error('Failed to auto-pause preview:', error);
+      }
+    }, durationMs);
+  }
+
+  async pause(): Promise<void> {
+    return this.playbackService.pause();
+  }
+
+  async resume(): Promise<void> {
+    // For resume, we just play the current track again
+    // This is a simplified approach - in a real app you might want to track the current track
+    throw new Error('Resume not implemented - use playTrack instead');
+  }
+
+  async seek(_positionMs: number): Promise<void> {
+    // Seek is not part of our simplified interface
+    // You would need to play the track again with the new position
+    throw new Error(
+      'Seek not implemented - use playTrack with startPositionMs instead'
+    );
+  }
+
+  async getCurrentState(): Promise<unknown> {
+    // Not part of our simplified interface
+    throw new Error('getCurrentState not implemented');
+  }
+
+  isPlaybackConnected(): boolean {
+    return this.playbackService.isReady();
+  }
+
+  isPlaybackReady(): boolean {
+    return this.playbackService.isReady();
   }
 }

@@ -23,7 +23,7 @@ export class MusicServiceProvider {
     if (!this.instance) {
       this.instance =
         useMockService || !authService
-          ? new MockMusicService()
+          ? new MockMusicService(undefined)
           : new SpotifyMusicService(authService);
     }
     return this.instance;

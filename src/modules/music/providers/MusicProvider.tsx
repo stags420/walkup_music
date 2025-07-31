@@ -22,7 +22,7 @@ export function MusicProvider({
   // Use injected service for testing, or create default for production
   // Note: This provider is mainly for testing - production uses MusicServiceProvider.getOrCreate()
   const musicService = useMemo(
-    () => injectedService || new MockMusicService(),
+    () => injectedService || new MockMusicService(undefined),
     [injectedService]
   );
 

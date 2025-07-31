@@ -1,4 +1,5 @@
 import { AuthService } from '@/modules/auth';
+import { SpotifyPlaybackService } from '@/modules/music';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 
 // Mock SpotifyApiService before importing SpotifyMusicService
@@ -8,6 +9,22 @@ const mockSpotifyApiService = {
 
 jest.mock('@/modules/music/services/SpotifyApiService', () => ({
   SpotifyApiService: jest.fn().mockImplementation(() => mockSpotifyApiService),
+}));
+
+// Mock SpotifyPlaybackService
+const mockPlaybackService: SpotifyPlaybackService = {
+  play: jest.fn(),
+  pause: jest.fn(),
+  isReady: jest.fn(),
+};
+
+jest.mock('@/modules/music/services/SpotifyPlaybackService', () => ({
+  SpotifyPlaybackServiceImpl: jest
+    .fn()
+    .mockImplementation(() => mockPlaybackService),
+  MockSpotifyPlaybackService: jest
+    .fn()
+    .mockImplementation(() => mockPlaybackService),
 }));
 
 import {
@@ -20,6 +37,7 @@ describe('MockMusicService', () => {
 
   beforeEach(() => {
     musicService = new MockMusicService();
+    jest.clearAllMocks();
   });
 
   describe('searchTracks', () => {
@@ -153,6 +171,84 @@ describe('MockMusicService', () => {
       }
     });
   });
+
+  describe('playback functionality', () => {
+    it('should delegate playTrack to playback service', async () => {
+      // Given a track URI and start position
+      const uri = 'spotify:track:test123';
+      const startPositionMs = 30000;
+
+      // When playing a track
+      await musicService.playTrack(uri, startPositionMs);
+
+      // Then should delegate to playback service
+      expect(mockPlaybackService.play).toHaveBeenCalledWith(
+        uri,
+        startPositionMs
+      );
+    });
+
+    it('should delegate pause to playback service', async () => {
+      // When pausing playback
+      await musicService.pause();
+
+      // Then should delegate to playback service
+      expect(mockPlaybackService.pause).toHaveBeenCalled();
+    });
+
+    it('should throw error for resume (not implemented)', async () => {
+      // When trying to resume playback
+      const resumePromise = musicService.resume();
+
+      // Then should throw an error
+      await expect(resumePromise).rejects.toThrow('Resume not implemented');
+    });
+
+    it('should throw error for seek (not implemented)', async () => {
+      // Given a position in milliseconds
+      const positionMs = 60000;
+
+      // When trying to seek to position
+      const seekPromise = musicService.seek(positionMs);
+
+      // Then should throw an error
+      await expect(seekPromise).rejects.toThrow('Seek not implemented');
+    });
+
+    it('should throw error for getCurrentState (not implemented)', async () => {
+      // When trying to get current state
+      const statePromise = musicService.getCurrentState();
+
+      // Then should throw an error
+      await expect(statePromise).rejects.toThrow(
+        'getCurrentState not implemented'
+      );
+    });
+
+    it('should delegate isPlaybackConnected to playback service', () => {
+      // Given playback service returns ready state
+      mockPlaybackService.isReady.mockReturnValue(true);
+
+      // When checking if connected
+      const result = musicService.isPlaybackConnected();
+
+      // Then should delegate to playback service and return result
+      expect(mockPlaybackService.isReady).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+
+    it('should delegate isPlaybackReady to playback service', () => {
+      // Given playback service returns ready state
+      mockPlaybackService.isReady.mockReturnValue(true);
+
+      // When checking if ready
+      const result = musicService.isPlaybackReady();
+
+      // Then should delegate to playback service and return result
+      expect(mockPlaybackService.isReady).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+  });
 });
 
 describe('SpotifyMusicService', () => {
@@ -226,6 +322,84 @@ describe('SpotifyMusicService', () => {
 
       // Then should have used the SpotifyApiService
       expect(mockSpotifyApiService.searchTracks).toHaveBeenCalledWith(query);
+    });
+  });
+
+  describe('playback functionality', () => {
+    it('should delegate playTrack to playback service', async () => {
+      // Given a track URI and start position
+      const uri = 'spotify:track:test123';
+      const startPositionMs = 30000;
+
+      // When playing a track
+      await musicService.playTrack(uri, startPositionMs);
+
+      // Then should delegate to playback service
+      expect(mockPlaybackService.play).toHaveBeenCalledWith(
+        uri,
+        startPositionMs
+      );
+    });
+
+    it('should delegate pause to playback service', async () => {
+      // When pausing playback
+      await musicService.pause();
+
+      // Then should delegate to playback service
+      expect(mockPlaybackService.pause).toHaveBeenCalled();
+    });
+
+    it('should throw error for resume (not implemented)', async () => {
+      // When trying to resume playback
+      const resumePromise = musicService.resume();
+
+      // Then should throw an error
+      await expect(resumePromise).rejects.toThrow('Resume not implemented');
+    });
+
+    it('should throw error for seek (not implemented)', async () => {
+      // Given a position in milliseconds
+      const positionMs = 60000;
+
+      // When trying to seek to position
+      const seekPromise = musicService.seek(positionMs);
+
+      // Then should throw an error
+      await expect(seekPromise).rejects.toThrow('Seek not implemented');
+    });
+
+    it('should throw error for getCurrentState (not implemented)', async () => {
+      // When trying to get current state
+      const statePromise = musicService.getCurrentState();
+
+      // Then should throw an error
+      await expect(statePromise).rejects.toThrow(
+        'getCurrentState not implemented'
+      );
+    });
+
+    it('should delegate isPlaybackConnected to playback service', () => {
+      // Given playback service returns ready state
+      mockPlaybackService.isReady.mockReturnValue(true);
+
+      // When checking if connected
+      const result = musicService.isPlaybackConnected();
+
+      // Then should delegate to playback service and return result
+      expect(mockPlaybackService.isReady).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+
+    it('should delegate isPlaybackReady to playback service', () => {
+      // Given playback service returns ready state
+      mockPlaybackService.isReady.mockReturnValue(true);
+
+      // When checking if ready
+      const result = musicService.isPlaybackReady();
+
+      // Then should delegate to playback service and return result
+      expect(mockPlaybackService.isReady).toHaveBeenCalled();
+      expect(result).toBe(true);
     });
   });
 });

@@ -1,52 +1,76 @@
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal as defaultCreatePortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
 import { Button, TrackPreview } from '@/modules/core';
+import { MusicService } from '@/modules/music/services/MusicService';
 import './SegmentSelector.css';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
+  musicService: MusicService;
   initialSegment?: SongSegment;
   onConfirm: (segment: SongSegment) => void;
   onCancel: () => void;
   maxDuration?: number; // seconds, default 10
+  createPortal?: typeof defaultCreatePortal;
 }
 
 export function SegmentSelector({
   track,
+  musicService,
   initialSegment,
   onConfirm,
   onCancel,
   maxDuration = 10,
+  createPortal = defaultCreatePortal,
 }: SegmentSelectorProps) {
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
   );
   const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaybackReady, setIsPlaybackReady] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 
   useEffect(() => {
-    // Reset audio when component mounts or track changes
-    if (
-      audioRef.current &&
-      globalThis.window !== undefined &&
-      !globalThis.process?.env.NODE_ENV?.includes('test')
-    ) {
+    // Check if playback is ready when component mounts
+    const checkPlaybackReady = async () => {
       try {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+        // Check if playback service is ready without trying to play
+        if (
+          musicService.isPlaybackConnected() &&
+          musicService.isPlaybackReady()
+        ) {
+          setIsPlaybackReady(true);
+          setPlaybackError(null);
+        } else {
+          // If not ready, set error message but don't try to play
+          setPlaybackError(
+            'Spotify playback not available, using preview audio'
+          );
+          setIsPlaybackReady(false);
+        }
       } catch (error) {
-        // Handle cases where audio operations might fail
-        console.debug('Audio operations failed:', error);
+        console.warn('Playback not ready, will use fallback preview:', error);
+        setPlaybackError('Spotify playback not available, using preview audio');
+        setIsPlaybackReady(false);
       }
-    }
-    setIsPlaying(false);
-  }, [track.id]);
+    };
+
+    checkPlaybackReady();
+
+    return () => {
+      // Cleanup playback timeout
+      if (playbackTimeoutRef.current) {
+        clearTimeout(playbackTimeoutRef.current);
+      }
+    };
+  }, [track.uri, musicService]);
 
   const handleStartTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newStartTime = Math.max(
@@ -64,55 +88,43 @@ export function SegmentSelector({
     setDuration(newDuration);
   };
 
-  const handlePlayPreview = () => {
-    if (
-      !audioRef.current ||
-      globalThis.window === undefined ||
-      globalThis.process?.env.NODE_ENV?.includes('test')
-    ) {
-      // In test environment, just toggle the playing state
-      setIsPlaying(!isPlaying);
-      return;
-    }
-
+  const handlePlayPreview = async () => {
     if (isPlaying) {
+      // Stop playback
       try {
-        audioRef.current.pause();
+        await musicService.pause();
       } catch (error) {
-        console.debug('Audio pause failed:', error);
+        console.debug('Playback pause failed:', error);
       }
       setIsPlaying(false);
-    } else {
-      // Note: Spotify preview URLs typically start at the best part of the song
-      // In a real implementation, we'd use the Spotify Web Playback SDK for precise timing
-      try {
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
 
-            // Stop after the selected duration
-            setTimeout(() => {
-              if (
-                audioRef.current &&
-                globalThis.window !== undefined &&
-                !globalThis.process?.env.NODE_ENV?.includes('test')
-              ) {
-                try {
-                  audioRef.current.pause();
-                } catch (error) {
-                  console.debug('Audio pause failed:', error);
-                }
-              }
-              setIsPlaying(false);
-            }, duration * 1000);
-          })
-          .catch(() => {
-            // Preview might not be available
-            setIsPlaying(false);
-          });
+      if (playbackTimeoutRef.current) {
+        clearTimeout(playbackTimeoutRef.current);
+        playbackTimeoutRef.current = null;
+      }
+    } else {
+      // Start playback
+      try {
+        const startPositionMs = startTime * 1000;
+        await musicService.playTrack(track.uri, startPositionMs);
+        setIsPlaying(true);
+        setPlaybackError(null);
+
+        // Stop after the selected duration
+        playbackTimeoutRef.current = setTimeout(async () => {
+          try {
+            await musicService.pause();
+          } catch (error) {
+            console.debug('Playback pause failed:', error);
+          }
+          setIsPlaying(false);
+          playbackTimeoutRef.current = null;
+        }, duration * 1000);
       } catch (error) {
-        console.debug('Audio play failed:', error);
+        console.error('Playback failed:', error);
+        setPlaybackError(
+          'Failed to play track. Please check your Spotify Premium subscription.'
+        );
         setIsPlaying(false);
       }
     }
@@ -166,13 +178,13 @@ export function SegmentSelector({
             isPlaying={isPlaying}
           />
 
-          {track.previewUrl && (
-            <audio
-              ref={audioRef}
-              src={track.previewUrl}
-              onEnded={() => setIsPlaying(false)}
-              onError={() => setIsPlaying(false)}
-            />
+          {playbackError && (
+            <div className="playback-error">
+              <p className="error-message">{playbackError}</p>
+              <p className="error-hint">
+                Note: Spotify Premium is required for full playback control.
+              </p>
+            </div>
           )}
 
           <div className="segment-controls">
@@ -249,6 +261,12 @@ export function SegmentSelector({
                     <strong>Selected segment:</strong> {formatTime(startTime)} -{' '}
                     {formatTime(startTime + duration)}
                   </p>
+                  {isPlaybackReady && (
+                    <p className="playback-status">
+                      <span className="status-indicator ready">●</span>
+                      Spotify playback ready
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

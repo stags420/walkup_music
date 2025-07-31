@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SegmentSelector } from '@/modules/music/components/SegmentSelector';
 import { SpotifyTrack, SongSegment } from '@/modules/music';
+import { MusicService } from '@/modules/music/services/MusicService';
+import React from 'react';
 
 const mockTrack: SpotifyTrack = {
   id: 'track1',
@@ -19,20 +21,51 @@ const mockSegment: SongSegment = {
   duration: 8,
 };
 
+// Mock music service
+const mockMusicService: MusicService = {
+  searchTracks: jest.fn(),
+  playTrack: jest.fn(),
+  previewTrack: jest.fn(),
+  pause: jest.fn(),
+  resume: jest.fn(),
+  seek: jest.fn(),
+  getCurrentState: jest.fn(),
+  isPlaybackConnected: jest.fn().mockReturnValue(true),
+  isPlaybackReady: jest.fn().mockReturnValue(true),
+};
+
+// Mock createPortal function
+const mockCreatePortal = jest.fn(
+  (
+    children: React.ReactNode,
+    _container?: Element | DocumentFragment,
+    _key?: React.Key | null | undefined
+  ) => children as React.ReactPortal
+);
+
 describe('SegmentSelector', () => {
   const mockOnConfirm = jest.fn();
   const mockOnCancel = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Set up default mock implementations that return Promises
+    (mockMusicService.playTrack as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.pause as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.resume as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.seek as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.getCurrentState as jest.Mock).mockResolvedValue({});
   });
 
   const renderSegmentSelector = (props = {}) => {
     return render(
       <SegmentSelector
         track={mockTrack}
+        musicService={mockMusicService}
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}
+        createPortal={mockCreatePortal}
         {...props}
       />
     );
@@ -156,24 +189,14 @@ describe('SegmentSelector', () => {
     expect(screen.getByText(/preview/i)).toBeInTheDocument();
   });
 
-  it('should handle preview button click', () => {
-    const mockPlay = jest.fn().mockResolvedValue(undefined);
-    const mockPause = jest.fn();
-
-    jest
-      .spyOn(globalThis.HTMLAudioElement.prototype, 'play')
-      .mockImplementation(mockPlay);
-    jest
-      .spyOn(globalThis.HTMLAudioElement.prototype, 'pause')
-      .mockImplementation(mockPause);
-
+  it('should handle preview button click', async () => {
     renderSegmentSelector();
 
     const previewButton = screen.getByText(/preview/i);
     fireEvent.click(previewButton);
 
-    // In test environment, we just toggle the playing state instead of calling audio methods
-    expect(previewButton).toBeInTheDocument();
+    // Should call the music service to play the track
+    expect(mockMusicService.playTrack).toHaveBeenCalledWith(mockTrack.uri, 0);
   });
 
   it('should display selected segment info', () => {
@@ -286,11 +309,6 @@ describe('SegmentSelector', () => {
   });
 
   it('should show different preview button text when playing', async () => {
-    const mockPlay = jest.fn().mockResolvedValue(undefined);
-    jest
-      .spyOn(globalThis.HTMLAudioElement.prototype, 'play')
-      .mockImplementation(mockPlay);
-
     renderSegmentSelector();
 
     const previewButton = screen.getByText(/preview/i);
@@ -298,6 +316,28 @@ describe('SegmentSelector', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/stop/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should show playback status when ready', () => {
+    renderSegmentSelector();
+
+    expect(screen.getByText(/Spotify playback ready/i)).toBeInTheDocument();
+  });
+
+  it('should handle playback errors gracefully', async () => {
+    // Mock playback error
+    (mockMusicService.playTrack as jest.Mock).mockRejectedValue(
+      new Error('Playback failed')
+    );
+
+    renderSegmentSelector();
+
+    const previewButton = screen.getByText(/preview/i);
+    fireEvent.click(previewButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to play track/i)).toBeInTheDocument();
     });
   });
 });

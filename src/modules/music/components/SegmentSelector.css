@@ -184,6 +184,28 @@
   background: #b91c1c;
 }
 
+.playback-error {
+  background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.error-hint {
+  color: #7f1d1d;
+  font-size: 0.75rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
 .timing-section h3 {
   margin: 0 0 6px 0;
   font-size: 1rem;
@@ -311,6 +333,25 @@
   padding: 4px 8px;
   border-radius: 3px;
   border: 1px solid rgba(29, 185, 84, 0.2);
+}
+
+.playback-status {
+  margin-top: 8px !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+  color: #166534 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.status-indicator {
+  font-size: 0.875rem;
+}
+
+.status-indicator.ready {
+  color: #16a34a;
 }
 
 .segment-selector-actions {

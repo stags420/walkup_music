@@ -67,11 +67,11 @@
   - Write integration tests for Spotify-enabled player management
   - _Requirements: 2.2, 2.3, 2.4, 2.6, 2.7_
 
-- [ ] 10. Create Spotify Web Playback SDK integration
+- [-] 10. Create Spotify Web Playback SDK integration
   - Initialize Spotify Web Playback SDK with proper error handling
   - Implement music playback with precise segment timing control
   - Create unit tests for playback functionality with SDK mocking
-  - Add actual song preview functionality and segment selection
+  - Add song preview functionality to segment selection UI using player
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 11. Implement game control service

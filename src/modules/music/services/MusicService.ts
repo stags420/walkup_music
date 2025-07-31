@@ -1,10 +1,27 @@
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import { SpotifyApiService } from './SpotifyApiService';
+import { AuthService } from '@/modules/auth';
 
 /**
  * Service interface for music-related operations
  */
 export interface MusicService {
   searchTracks(query: string): Promise<SpotifyTrack[]>;
+}
+
+/**
+ * Real implementation of MusicService using Spotify Web API
+ */
+export class SpotifyMusicService implements MusicService {
+  private spotifyApiService: SpotifyApiService;
+
+  constructor(authService: AuthService) {
+    this.spotifyApiService = new SpotifyApiService(authService);
+  }
+
+  async searchTracks(query: string): Promise<SpotifyTrack[]> {
+    return this.spotifyApiService.searchTracks(query);
+  }
 }
 
 /**

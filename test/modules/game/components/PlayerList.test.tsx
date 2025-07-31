@@ -19,6 +19,7 @@ const mockPlayerService = {
 } as unknown as jest.Mocked<PlayerService>;
 
 const mockOnEditPlayer = jest.fn();
+const mockOnEditSegment = jest.fn();
 const mockOnDeletePlayer = jest.fn();
 
 // Mock players data
@@ -67,6 +68,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -85,6 +87,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -107,6 +110,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -132,6 +136,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -153,6 +158,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -174,6 +180,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -196,6 +203,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -213,16 +221,14 @@ describe('PlayerList', () => {
   });
 
   it('should show confirmation dialog when delete button is clicked', async () => {
-    // Given I have a player list with a player and a mock confirm dialog
+    // Given I have a player list with a player
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
-
-    // Mock window.confirm
-    const mockConfirm = jest.spyOn(globalThis, 'confirm').mockReturnValue(true);
 
     render(
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -239,11 +245,12 @@ describe('PlayerList', () => {
     });
 
     // Then a confirmation dialog should be shown
-    expect(mockConfirm).toHaveBeenCalledWith(
-      'Are you sure you want to delete this player?'
-    );
-
-    mockConfirm.mockRestore();
+    expect(screen.getByText('Delete Player')).toBeInTheDocument();
+    expect(
+      screen.getByText('Are you sure you want to delete John Doe?')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+    expect(screen.getByText('Confirm')).toBeInTheDocument();
   });
 
   it('should call onDeletePlayer when deletion is confirmed', async () => {
@@ -251,12 +258,11 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
     mockOnDeletePlayer.mockResolvedValue(undefined);
 
-    const mockConfirm = jest.spyOn(globalThis, 'confirm').mockReturnValue(true);
-
     render(
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -272,26 +278,30 @@ describe('PlayerList', () => {
       fireEvent.click(deleteButton);
     });
 
+    // Then the confirmation dialog should appear
+    expect(screen.getByText('Delete Player')).toBeInTheDocument();
+
+    // When I click the confirm button
+    const confirmButton = screen.getByText('Confirm');
+    await act(async () => {
+      fireEvent.click(confirmButton);
+    });
+
     // Then the onDeletePlayer callback should be called
     await waitFor(() => {
       expect(mockOnDeletePlayer).toHaveBeenCalledWith('1');
     });
-
-    mockConfirm.mockRestore();
   });
 
   it('should not call onDeletePlayer when deletion is cancelled', async () => {
     // Given I have a player list with a player and cancelled deletion
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
-    const mockConfirm = jest
-      .spyOn(globalThis, 'confirm')
-      .mockReturnValue(false);
-
     render(
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );
@@ -307,10 +317,20 @@ describe('PlayerList', () => {
       fireEvent.click(deleteButton);
     });
 
+    // Then the confirmation dialog should appear
+    expect(screen.getByText('Delete Player')).toBeInTheDocument();
+
+    // When I click the cancel button
+    const cancelButton = screen.getByText('Cancel');
+    await act(async () => {
+      fireEvent.click(cancelButton);
+    });
+
     // Then the onDeletePlayer callback should not be called
     expect(mockOnDeletePlayer).not.toHaveBeenCalled();
 
-    mockConfirm.mockRestore();
+    // And the dialog should be closed
+    expect(screen.queryByText('Delete Player')).not.toBeInTheDocument();
   });
 
   it('should retry loading when retry button is clicked', async () => {
@@ -323,6 +343,7 @@ describe('PlayerList', () => {
       <PlayerList
         playerService={mockPlayerService}
         onEditPlayer={mockOnEditPlayer}
+        onEditSegment={mockOnEditSegment}
         onDeletePlayer={mockOnDeletePlayer}
       />
     );

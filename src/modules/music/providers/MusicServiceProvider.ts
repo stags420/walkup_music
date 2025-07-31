@@ -1,7 +1,9 @@
 import {
   MusicService,
   MockMusicService,
+  SpotifyMusicService,
 } from '@/modules/music/services/MusicService';
+import { AuthService } from '@/modules/auth';
 
 /**
  * Provider for creating MusicService instances with proper dependencies
@@ -11,12 +13,18 @@ export class MusicServiceProvider {
 
   /**
    * Get a singleton instance of MusicService
+   * @param authService - Required for real Spotify integration
+   * @param useMockService - Whether to use mock service (default: false)
    */
-  static getOrCreate(): MusicService {
+  static getOrCreate(
+    authService?: AuthService,
+    useMockService = false
+  ): MusicService {
     if (!this.instance) {
-      // In production, this would create a real Spotify service
-      // For now, using MockMusicService for development
-      this.instance = new MockMusicService();
+      this.instance =
+        useMockService || !authService
+          ? new MockMusicService()
+          : new SpotifyMusicService(authService);
     }
     return this.instance;
   }
@@ -26,5 +34,12 @@ export class MusicServiceProvider {
    */
   static createForTesting(mockService: MusicService): MusicService {
     return mockService;
+  }
+
+  /**
+   * Reset the singleton instance (useful for testing)
+   */
+  static reset(): void {
+    this.instance = null;
   }
 }

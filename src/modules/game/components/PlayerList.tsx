@@ -28,6 +28,10 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+      playerId: string;
+      playerName: string;
+    } | null>(null);
 
     const loadPlayers = useCallback(async () => {
       try {
@@ -93,19 +97,27 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
       loadPlayersWithAutoInit();
     }, [loadPlayersWithAutoInit]);
 
-    const handleDelete = async (playerId: string) => {
-      if (!confirm('Are you sure you want to delete this player?')) {
-        return;
-      }
+    const handleDelete = (playerId: string, playerName: string) => {
+      setDeleteConfirmation({ playerId, playerName });
+    };
+
+    const handleConfirmDelete = async () => {
+      if (!deleteConfirmation) return;
 
       try {
-        await onDeletePlayer(playerId);
+        await onDeletePlayer(deleteConfirmation.playerId);
         await loadPlayers(); // Refresh the list
+        setDeleteConfirmation(null);
       } catch (error_) {
         setError(
           error_ instanceof Error ? error_.message : 'Failed to delete player'
         );
+        setDeleteConfirmation(null);
       }
+    };
+
+    const handleCancelDelete = () => {
+      setDeleteConfirmation(null);
     };
 
     if (loading) {
@@ -177,7 +189,7 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
                   </button>
                 )}
                 <button
-                  onClick={() => handleDelete(player.id)}
+                  onClick={() => handleDelete(player.id, player.name)}
                   className="delete-button"
                   aria-label={`Delete ${player.name}`}
                 >
@@ -187,6 +199,28 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
             </div>
           ))}
         </div>
+
+        {deleteConfirmation && (
+          <div className="confirmation-overlay">
+            <div className="confirmation-dialog">
+              <h3>Delete Player</h3>
+              <p>
+                Are you sure you want to delete {deleteConfirmation.playerName}?
+              </p>
+              <div className="confirmation-actions">
+                <button onClick={handleCancelDelete} className="cancel-button">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="confirm-button"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

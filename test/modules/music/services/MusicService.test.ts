@@ -1,4 +1,19 @@
-import { MockMusicService } from '@/modules/music/services/MusicService';
+import { AuthService } from '@/modules/auth';
+import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+
+// Mock SpotifyApiService before importing SpotifyMusicService
+const mockSpotifyApiService = {
+  searchTracks: jest.fn(),
+};
+
+jest.mock('@/modules/music/services/SpotifyApiService', () => ({
+  SpotifyApiService: jest.fn().mockImplementation(() => mockSpotifyApiService),
+}));
+
+import {
+  MockMusicService,
+  SpotifyMusicService,
+} from '@/modules/music/services/MusicService';
 
 describe('MockMusicService', () => {
   let musicService: MockMusicService;
@@ -136,6 +151,81 @@ describe('MockMusicService', () => {
       if (tigerResults.length > 0 && queenResults.length > 0) {
         expect(tigerResults[0].id).not.toBe(queenResults[0].id);
       }
+    });
+  });
+});
+
+describe('SpotifyMusicService', () => {
+  let musicService: SpotifyMusicService;
+  let mockAuthService: jest.Mocked<AuthService>;
+
+  beforeEach(() => {
+    // Clear all mocks
+    jest.clearAllMocks();
+
+    // Create mock auth service
+    mockAuthService = {
+      login: jest.fn(),
+      logout: jest.fn(),
+      getAccessToken: jest.fn(),
+      isAuthenticated: jest.fn(),
+      refreshToken: jest.fn(),
+      handleCallback: jest.fn(),
+    };
+
+    musicService = new SpotifyMusicService(mockAuthService);
+  });
+
+  describe('searchTracks', () => {
+    test('should delegate search to SpotifyApiService', async () => {
+      // Given a search query and expected results
+      const query = 'test query';
+      const expectedTracks: SpotifyTrack[] = [
+        {
+          id: 'track1',
+          name: 'Test Song',
+          artists: ['Test Artist'],
+          album: 'Test Album',
+          albumArt: 'https://example.com/art.jpg',
+          previewUrl: 'https://example.com/preview.mp3',
+          durationMs: 180000,
+          uri: 'spotify:track:track1',
+        },
+      ];
+
+      mockSpotifyApiService.searchTracks.mockResolvedValue(expectedTracks);
+
+      // When searching for tracks
+      const result = await musicService.searchTracks(query);
+
+      // Then should delegate to SpotifyApiService and return results
+      expect(mockSpotifyApiService.searchTracks).toHaveBeenCalledWith(query);
+      expect(result).toEqual(expectedTracks);
+    });
+
+    test('should pass through errors from SpotifyApiService', async () => {
+      // Given SpotifyApiService throws an error
+      const error = new Error('API error');
+      mockSpotifyApiService.searchTracks.mockRejectedValue(error);
+
+      // When searching for tracks
+      const searchPromise = musicService.searchTracks('test query');
+
+      // Then should propagate the error
+      await expect(searchPromise).rejects.toThrow('API error');
+    });
+
+    test('should create SpotifyApiService with auth service', async () => {
+      // Given a search query
+      const query = 'test';
+      const expectedTracks: SpotifyTrack[] = [];
+      mockSpotifyApiService.searchTracks.mockResolvedValue(expectedTracks);
+
+      // When we use the service
+      await musicService.searchTracks(query);
+
+      // Then should have used the SpotifyApiService
+      expect(mockSpotifyApiService.searchTracks).toHaveBeenCalledWith(query);
     });
   });
 });

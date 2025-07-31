@@ -2,7 +2,8 @@
 export { SongSegment } from './models/SongSegment';
 export { SpotifyTrack } from './models/SpotifyTrack';
 export type { MusicService } from './services/MusicService';
-export { MockMusicService } from './services/MusicService';
+export { MockMusicService, SpotifyMusicService } from './services/MusicService';
+export { SpotifyApiService } from './services/SpotifyApiService';
 export { SongSelector } from './components/SongSelector';
 export { SegmentSelector } from './components/SegmentSelector';
 export { MusicProvider } from './providers/MusicProvider';

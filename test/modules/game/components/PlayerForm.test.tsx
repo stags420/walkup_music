@@ -215,6 +215,7 @@ describe('PlayerForm', () => {
       render(
         <PlayerForm
           playerService={mockPlayerService}
+          musicService={mockMusicService}
           player={playerWithoutSong}
           onSave={mockOnSave}
           onCancel={mockOnCancel}

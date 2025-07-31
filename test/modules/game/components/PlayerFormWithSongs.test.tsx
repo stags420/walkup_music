@@ -308,7 +308,7 @@ describe('PlayerForm with Song Selection', () => {
     renderPlayerForm({ player: mockPlayerWithSong });
 
     const albumImage = screen.getByAltText(
-      'Test Album album cover'
+      'Test Album album art'
     ) as HTMLImageElement;
 
     // Simulate image load error

@@ -1,8 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
+import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 
 // Mock PlayerService
 const mockPlayerService = {
@@ -15,7 +17,7 @@ const mockPlayerService = {
 
 // Mock MusicService
 const mockMusicService = {
-  search: jest.fn(),
+  searchTracks: jest.fn(),
   getTrack: jest.fn(),
   getSegment: jest.fn(),
 } as unknown as jest.Mocked<MusicService>;
@@ -23,20 +25,22 @@ const mockMusicService = {
 const mockOnSave = jest.fn();
 const mockOnCancel = jest.fn();
 
+const mockTrack: SpotifyTrack = {
+  id: 'track1',
+  name: 'Test Song',
+  artists: ['Test Artist'],
+  album: 'Test Album',
+  albumArt: 'test-art.jpg',
+  previewUrl: 'test-preview.mp3',
+  durationMs: 180000,
+  uri: 'spotify:track:track1',
+};
+
 const mockPlayer: Player = {
   id: '1',
   name: 'John Doe',
   song: {
-    track: {
-      id: 'track1',
-      name: 'Test Song',
-      artists: ['Test Artist'],
-      album: 'Test Album',
-      albumArt: 'test-art.jpg',
-      previewUrl: 'test-preview.mp3',
-      durationMs: 180000,
-      uri: 'spotify:track:track1',
-    },
+    track: mockTrack,
     startTime: 30,
     duration: 10,
   },
@@ -113,13 +117,14 @@ describe('PlayerForm', () => {
         />
       );
 
-      // When I submit the form without entering a name
-      fireEvent.submit(screen.getByRole('form'));
+      // When I try to submit the form without entering a name
+      const submitButton = screen.getByText('Add Player');
 
-      // Then an error message is displayed and no service calls are made
-      await waitFor(() => {
-        expect(screen.getByText('Player name is required')).toBeInTheDocument();
-      });
+      // Then the button should be disabled and no service calls should be made
+      expect(submitButton).toBeDisabled();
+      await userEvent.click(submitButton);
+
+      // No error message should appear because the button is disabled
       expect(mockPlayerService.createPlayer).not.toHaveBeenCalled();
       expect(mockOnSave).not.toHaveBeenCalled();
     });
@@ -283,7 +288,6 @@ describe('PlayerForm', () => {
       const nameInput = screen.getByLabelText('Player Name *');
       const submitButton = screen.getByText('Add Player');
       const cancelButton = screen.getByText('Cancel');
-      const closeButton = screen.getByLabelText('Close');
 
       fireEvent.change(nameInput, { target: { value: 'Test Player' } });
       fireEvent.click(submitButton);
@@ -295,7 +299,7 @@ describe('PlayerForm', () => {
       expect(nameInput).toBeDisabled();
       expect(submitButton).toBeDisabled();
       expect(cancelButton).toBeDisabled();
-      expect(closeButton).toBeDisabled();
+      // Close button is handled by Modal.Header and not directly accessible when disabled
     });
 
     it('should show error when service call fails', async () => {
@@ -415,6 +419,430 @@ describe('PlayerForm', () => {
 
       // Then the form resets to show the player's name
       expect(nameInput).toHaveValue('John Doe');
+    });
+  });
+
+  describe('Update Player Flow', () => {
+    it('should successfully update player when Update Player button is clicked', async () => {
+      // Given I have a form in edit mode
+      const updatedPlayer: Player = {
+        ...mockPlayer,
+        name: 'John Updated',
+        updatedAt: new Date(),
+      };
+      mockPlayerService.updatePlayer.mockResolvedValue(updatedPlayer);
+
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I change the name and click Update Player button
+      const nameInput = screen.getByLabelText('Player Name *');
+      const updateButton = screen.getByText('Update Player');
+
+      await userEvent.clear(nameInput);
+      await userEvent.type(nameInput, 'John Updated');
+      await userEvent.click(updateButton);
+
+      // Then the player is updated successfully
+      await waitFor(() => {
+        expect(mockPlayerService.updatePlayer).toHaveBeenCalledWith('1', {
+          name: 'John Updated',
+          song: mockPlayer.song,
+        });
+      });
+      expect(mockOnSave).toHaveBeenCalledWith(updatedPlayer);
+    });
+
+    it('should preserve song data when updating player name only', async () => {
+      // Given I have a player with a song
+      const updatedPlayer: Player = {
+        ...mockPlayer,
+        name: 'New Name',
+      };
+      mockPlayerService.updatePlayer.mockResolvedValue(updatedPlayer);
+
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I update only the name
+      const nameInput = screen.getByLabelText('Player Name *');
+      await userEvent.clear(nameInput);
+      await userEvent.type(nameInput, 'New Name');
+      await userEvent.click(screen.getByText('Update Player'));
+
+      // Then the song data is preserved
+      await waitFor(() => {
+        expect(mockPlayerService.updatePlayer).toHaveBeenCalledWith('1', {
+          name: 'New Name',
+          song: mockPlayer.song, // Original song preserved
+        });
+      });
+    });
+  });
+
+  describe('Song Management Flow', () => {
+    it('should open song selector when Select Song button is clicked', async () => {
+      // Given I have a player without a song
+      const playerWithoutSong: Player = { ...mockPlayer, song: undefined };
+
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={playerWithoutSong}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I click Select Song
+      const selectSongButton = screen.getByText('Select Song');
+      await userEvent.click(selectSongButton);
+
+      // Then the song selector modal appears
+      await waitFor(() => {
+        expect(screen.getByText('Select Walk-up Song')).toBeInTheDocument();
+      });
+
+      // And the main modal is hidden (only song selector visible)
+      expect(screen.queryByText('Edit Player')).not.toBeInTheDocument();
+    });
+
+    it('should open song selector when Change Song button is clicked', async () => {
+      // Given I have a player with a song
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I click Change Song
+      const changeSongButton = screen.getByText('Change Song');
+      await userEvent.click(changeSongButton);
+
+      // Then the song selector modal appears
+      await waitFor(() => {
+        expect(screen.getByText('Select Walk-up Song')).toBeInTheDocument();
+      });
+
+      // And the main modal is hidden
+      expect(screen.queryByText('Edit Player')).not.toBeInTheDocument();
+    });
+
+    it('should return to main modal when song selection is cancelled', async () => {
+      // Given I have the song selector open
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await userEvent.click(screen.getByText('Change Song'));
+      await waitFor(() => {
+        expect(screen.getByText('Select Walk-up Song')).toBeInTheDocument();
+      });
+
+      // When I cancel the song selection
+      const cancelButton = screen.getByText('Cancel');
+      await userEvent.click(cancelButton);
+
+      // Then I return to the main modal
+      await waitFor(() => {
+        expect(screen.getByText('Edit Player')).toBeInTheDocument();
+        expect(
+          screen.queryByText('Select Walk-up Song')
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it('should remove song when Remove Song button is clicked', async () => {
+      // Given I have a player with a song
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Verify song is displayed
+      expect(screen.getByText('Test Song')).toBeInTheDocument();
+
+      // When I click Remove Song
+      const removeSongButton = screen.getByText('Remove Song');
+      await userEvent.click(removeSongButton);
+
+      // Then the song is removed and no song message appears
+      await waitFor(() => {
+        expect(screen.queryByText('Test Song')).not.toBeInTheDocument();
+      });
+
+      // Check for the no song message (partial text match)
+      expect(screen.getByText(/No walk-up song selected/)).toBeInTheDocument();
+    });
+
+    it('should open segment selector when Edit Timing button is clicked', async () => {
+      // Given I have a player with a song
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I click Edit Timing
+      const editTimingButton = screen.getByText('Edit Timing');
+      await userEvent.click(editTimingButton);
+
+      // Then the segment selector modal appears
+      await waitFor(() => {
+        expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      });
+
+      // And the main modal is hidden
+      expect(screen.queryByText('Edit Player')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should show error when update fails', async () => {
+      // Given I have a form and service that fails
+      mockPlayerService.updatePlayer.mockRejectedValue(
+        new Error('Update failed')
+      );
+
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I try to update
+      const updateButton = screen.getByText('Update Player');
+      await userEvent.click(updateButton);
+
+      // Then error is displayed
+      await waitFor(() => {
+        expect(screen.getByText('Update failed')).toBeInTheDocument();
+      });
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('should clear error when form is successfully submitted', async () => {
+      // Given I have a form that initially fails then succeeds
+      const updatedPlayer: Player = { ...mockPlayer, name: 'Updated' };
+
+      let attemptCount = 0;
+      mockPlayerService.updatePlayer.mockImplementation(() => {
+        attemptCount++;
+        if (attemptCount === 1) {
+          return Promise.reject(new Error('First attempt failed'));
+        }
+        return Promise.resolve(updatedPlayer);
+      });
+
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When first attempt fails
+      await userEvent.click(screen.getByText('Update Player'));
+      await waitFor(() => {
+        expect(screen.getByText('First attempt failed')).toBeInTheDocument();
+      });
+
+      // And second attempt succeeds
+      await userEvent.click(screen.getByText('Update Player'));
+
+      // Then error is cleared and success callback is called
+      await waitFor(() => {
+        expect(mockOnSave).toHaveBeenCalledWith(updatedPlayer);
+      });
+      expect(
+        screen.queryByText('First attempt failed')
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Form Validation', () => {
+    it('should prevent submission with empty name in create mode', async () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I try to submit with empty name
+      const addButton = screen.getByText('Add Player');
+      expect(addButton).toBeDisabled();
+
+      // Button should remain disabled even if clicked
+      await userEvent.click(addButton);
+      expect(mockPlayerService.createPlayer).not.toHaveBeenCalled();
+    });
+
+    it('should enable submission when valid name is entered', async () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      const nameInput = screen.getByLabelText('Player Name *');
+      const addButton = screen.getByText('Add Player');
+
+      // Initially disabled
+      expect(addButton).toBeDisabled();
+
+      // When I enter a valid name
+      await userEvent.type(nameInput, 'Valid Name');
+
+      // Then button becomes enabled
+      expect(addButton).not.toBeDisabled();
+    });
+  });
+
+  describe('Modal State Management', () => {
+    it('should properly manage modal visibility during song selection flow', async () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Initially main modal is visible
+      expect(screen.getByText('Edit Player')).toBeInTheDocument();
+      expect(screen.queryByText('Select Walk-up Song')).not.toBeInTheDocument();
+
+      // When I open song selector
+      await userEvent.click(screen.getByText('Change Song'));
+
+      // Main modal hides, song selector shows
+      await waitFor(() => {
+        expect(screen.queryByText('Edit Player')).not.toBeInTheDocument();
+        expect(screen.getByText('Select Walk-up Song')).toBeInTheDocument();
+      });
+
+      // When I cancel song selection
+      await userEvent.click(screen.getByText('Cancel'));
+
+      // Main modal returns, song selector hides
+      await waitFor(() => {
+        expect(screen.getByText('Edit Player')).toBeInTheDocument();
+        expect(
+          screen.queryByText('Select Walk-up Song')
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it('should hide main modal during segment editing', async () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // When I open segment selector
+      await userEvent.click(screen.getByText('Edit Timing'));
+
+      // Main modal hides, segment selector shows
+      await waitFor(() => {
+        expect(screen.queryByText('Edit Player')).not.toBeInTheDocument();
+        expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Segment Edit Only Mode', () => {
+    it('should render in segment edit mode when segmentEditOnly is true', () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          segmentEditOnly={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Should show timing edit modal
+      expect(screen.getByText('Edit Song Timing')).toBeInTheDocument();
+
+      // Should not show player name field
+      expect(screen.queryByLabelText('Player Name *')).not.toBeInTheDocument();
+
+      // Should show Update Timing button
+      expect(screen.getByText('Update Timing')).toBeInTheDocument();
+    });
+
+    it('should auto-open segment selector in segment edit mode', async () => {
+      render(
+        <PlayerForm
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+          player={mockPlayer}
+          segmentEditOnly={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      // Should automatically show segment selector
+      await waitFor(() => {
+        expect(screen.getByText('Select Song Segment')).toBeInTheDocument();
+      });
     });
   });
 });

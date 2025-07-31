@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "disabled": false,
+      "autoApprove": ["puppeteer_screenshot", "puppeteer_click", "puppeteer_type", "puppeteer_navigate", "puppeteer_hover", "puppeteer_fill", "puppeteer_select", "puppeteer_evaluate"]
+    }
+  }
+}

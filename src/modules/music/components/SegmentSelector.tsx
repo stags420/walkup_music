@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
+import { Button, TrackPreview } from '@/modules/core';
 import './SegmentSelector.css';
 
 interface SegmentSelectorProps {
@@ -149,54 +150,34 @@ export function SegmentSelector({
         </div>
 
         <div className="segment-selector-content">
-          <div className="track-preview">
-            <div className="track-info">
-              <img
-                src={track.albumArt}
-                alt={`${track.album} album cover`}
-                className="track-album-art"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src =
-                    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiAyMEM0Mi4yIDIwIDUwIDI3LjggNTAgMzhDNTAgNDguMiA0Mi4yIDU2IDMyIDU2QzIxLjggNTYgMTQgNDguMiAxNCAzOEMxNCAyNy44IDIxLjggMjAgMzIgMjBaIiBmaWxsPSIjRTVFN0VCIi8+CjwvcmVnPgo8L3N2Zz4K';
-                }}
-              />
-              <div className="track-details">
-                <h3 className="track-name">{track.name}</h3>
-                <p className="track-artist">{track.artists.join(', ')}</p>
-                <p className="track-album">{track.album}</p>
-                <p className="track-duration">
-                  Duration: {formatTime(trackDurationSeconds)}
-                </p>
-              </div>
-            </div>
+          <TrackPreview
+            track={{
+              id: track.id,
+              name: track.name,
+              artists: track.artists.map((name) => ({ name })),
+              album: {
+                name: track.album,
+                images: [{ url: track.albumArt }],
+              },
+              duration_ms: track.durationMs,
+              preview_url: track.previewUrl,
+            }}
+            onPlay={handlePlayPreview}
+            isPlaying={isPlaying}
+          />
 
-            {track.previewUrl && (
-              <div className="preview-controls">
-                <button
-                  onClick={handlePlayPreview}
-                  className={`play-button ${isPlaying ? 'playing' : ''}`}
-                  disabled={!track.previewUrl}
-                >
-                  {isPlaying ? '⏸️' : '▶️'} {isPlaying ? 'Stop' : 'Preview'}
-                </button>
-                <audio
-                  ref={audioRef}
-                  src={track.previewUrl}
-                  onEnded={() => setIsPlaying(false)}
-                  onError={() => setIsPlaying(false)}
-                />
-              </div>
-            )}
-          </div>
+          {track.previewUrl && (
+            <audio
+              ref={audioRef}
+              src={track.previewUrl}
+              onEnded={() => setIsPlaying(false)}
+              onError={() => setIsPlaying(false)}
+            />
+          )}
 
           <div className="segment-controls">
             <div className="timing-section">
               <h3>Select Timing</h3>
-              <p className="timing-description">
-                Choose when to start playing and how long the song should play
-                during at-bats.
-              </p>
 
               <div className="timing-controls">
                 <div className="control-group">
@@ -275,12 +256,12 @@ export function SegmentSelector({
         </div>
 
         <div className="segment-selector-actions">
-          <button onClick={onCancel} className="cancel-button">
+          <Button onClick={onCancel} variant="secondary">
             Cancel
-          </button>
-          <button onClick={handleConfirm} className="confirm-button">
+          </Button>
+          <Button onClick={handleConfirm} className="btn-success">
             Confirm Selection
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

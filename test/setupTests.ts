@@ -32,7 +32,8 @@ console.error = (...args) => {
     typeof message === 'string' &&
     (message.includes('Not implemented: HTMLMediaElement.prototype.pause') ||
       message.includes('Not implemented: HTMLMediaElement.prototype.play') ||
-      message.includes('Error: Not implemented: HTMLMediaElement'))
+      message.includes('Error: Not implemented: HTMLMediaElement') ||
+      message.includes('Not implemented: HTMLMediaElement'))
   ) {
     // Suppress these specific JSDOM limitations
     return;

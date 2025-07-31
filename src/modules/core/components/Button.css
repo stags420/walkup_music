@@ -1,0 +1,68 @@
+/* Base button styles */
+.btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Primary button */
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Danger button */
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Success button */
+.btn-success {
+  background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1ed760 0%, #21e065 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(29, 185, 84, 0.5);
+}

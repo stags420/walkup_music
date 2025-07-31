@@ -69,6 +69,7 @@
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+  align-items: center;
 }
 
 @media (min-width: 768px) {

@@ -61,33 +61,32 @@
   - Create unit tests for API integration with mocked responses
   - _Requirements: 2.2, 2.3_
 
-- [ ] 9. Replace mocked functionality with real Spotify integration
+- [x] 9. Replace mocked functionality with real Spotify integration
   - Connect SongSelector component with real Spotify API search
-  - Add actual song preview functionality and segment selection
   - Update PlayerForm to work with real Spotify track data
   - Write integration tests for Spotify-enabled player management
   - _Requirements: 2.2, 2.3, 2.4, 2.6, 2.7_
 
-- [ ] 10. Implement game control service
+- [ ] 10. Create Spotify Web Playback SDK integration
+  - Initialize Spotify Web Playback SDK with proper error handling
+  - Implement music playback with precise segment timing control
+  - Create unit tests for playback functionality with SDK mocking
+  - Add actual song preview functionality and segment selection
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+
+- [ ] 11. Implement game control service
   - Create GameService class for batting order management
   - Add current batter tracking and position advancement
   - Integrate music playback with batter transitions
   - Write unit tests for game state management and music integration
   - _Requirements: 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
 
-- [ ] 11. Build batting order management UI
+- [ ] 12. Build batting order management UI
   - Create BattingOrderManager component for creating and editing orders
   - Implement OrderBuilder with drag-and-drop player arrangement
   - Add current position tracking and modification controls
   - Write component tests for batting order interface
   - _Requirements: 3.1, 3.2, 3.4, 3.5_
-
-- [ ] 12. Create Spotify Web Playback SDK integration
-  - Initialize Spotify Web Playback SDK with proper error handling
-  - Implement music playback with precise segment timing control
-  - Add device selection and playback state management
-  - Create unit tests for playback functionality with SDK mocking
-  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 13. Create game mode interface
   - Build CurrentBatterDisplay showing current, on-deck, and in-the-hole batters

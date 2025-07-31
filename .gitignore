@@ -88,3 +88,5 @@ pids
 spotify-credentials.json
 
 .cursor/
+
+.todo

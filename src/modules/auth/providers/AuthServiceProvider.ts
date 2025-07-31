@@ -1,5 +1,6 @@
 // Singleton service provider for AuthService following React concepts guidance
-import { AuthService, SpotifyAuthService } from '@/modules/auth';
+import { AuthService } from '@/modules/auth';
+import { SpotifyAuthService } from '@/modules/auth/services/SpotifyAuthService';
 import { appConfigProvider } from '@/modules/config';
 
 /**

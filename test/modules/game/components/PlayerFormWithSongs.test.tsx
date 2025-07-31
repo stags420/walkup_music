@@ -158,13 +158,13 @@ describe('PlayerForm with Song Selection', () => {
     });
 
     // Select the track
-    const trackCard = screen.getByRole('button', { name: /test song/i });
-    fireEvent.click(trackCard);
+    const trackCard = screen.getByText('Test Song').closest('.track-card');
+    fireEvent.click(trackCard!);
 
     // Find the select button within the song selector actions
     const selectButtons = screen.getAllByText('Select Song');
     const selectButton = selectButtons.find((btn) =>
-      btn.className.includes('select-button')
+      btn.closest('.song-selector-actions')
     );
     fireEvent.click(selectButton!);
 
@@ -201,13 +201,13 @@ describe('PlayerForm with Song Selection', () => {
       expect(screen.getByText('Test Song')).toBeInTheDocument();
     });
 
-    const trackCard = screen.getByRole('button', { name: /test song/i });
-    fireEvent.click(trackCard);
+    const trackCard = screen.getByText('Test Song').closest('.track-card');
+    fireEvent.click(trackCard!);
 
     // Find the select button within the song selector actions
     const selectButtons = screen.getAllByText('Select Song');
     const selectTrackButton = selectButtons.find((btn) =>
-      btn.className.includes('select-button')
+      btn.closest('.song-selector-actions')
     );
     fireEvent.click(selectTrackButton!);
 
@@ -259,13 +259,13 @@ describe('PlayerForm with Song Selection', () => {
       expect(screen.getByText('Test Song')).toBeInTheDocument();
     });
 
-    const trackCard = screen.getByRole('button', { name: /test song/i });
-    fireEvent.click(trackCard);
+    const trackCard = screen.getByText('Test Song').closest('.track-card');
+    fireEvent.click(trackCard!);
 
     // Find the select button within the song selector actions
     const selectButtons = screen.getAllByText('Select Song');
     const selectTrackButton = selectButtons.find((btn) =>
-      btn.className.includes('select-button')
+      btn.closest('.song-selector-actions')
     );
     fireEvent.click(selectTrackButton!);
 

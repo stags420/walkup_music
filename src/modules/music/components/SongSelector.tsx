@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { MusicService } from '@/modules/music/services/MusicService';
+import { Button, TrackCard } from '@/modules/core';
 import './SongSelector.css';
 
 interface SongSelectorProps {
@@ -11,12 +12,6 @@ interface SongSelectorProps {
   onCancel: () => void;
   initialSearchQuery?: string;
 }
-
-const formatDuration = (durationMs: number) => {
-  const minutes = Math.floor(durationMs / 60000);
-  const seconds = Math.floor((durationMs % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
 
 export function SongSelector({
   musicService,
@@ -29,6 +24,8 @@ export function SongSelector({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const searchTracks = async () => {
@@ -66,9 +63,79 @@ export function SongSelector({
   const handleConfirmSelection = () => {
     const selectedTrack = tracks.find((track) => track.id === selectedTrackId);
     if (selectedTrack) {
+      // Stop any playing audio before confirming selection
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setPlayingTrackId(null);
+      }
       onSelectTrack(selectedTrack);
     }
   };
+
+  const handlePlayPreview = (track: SpotifyTrack, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent track selection when clicking play button
+
+    if (
+      !audioRef.current ||
+      !track.previewUrl ||
+      globalThis.window === undefined ||
+      globalThis.process?.env.NODE_ENV?.includes('test')
+    ) {
+      // In test environment or no preview URL, just toggle the playing state
+      setPlayingTrackId(playingTrackId === track.id ? null : track.id);
+      return;
+    }
+
+    if (playingTrackId === track.id) {
+      // Stop current track
+      try {
+        audioRef.current.pause();
+      } catch (error) {
+        console.debug('Audio pause failed:', error);
+      }
+      setPlayingTrackId(null);
+    } else {
+      // Stop any currently playing track and start new one
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = track.previewUrl;
+        audioRef.current.currentTime = 0;
+
+        audioRef.current
+          .play()
+          .then(() => {
+            setPlayingTrackId(track.id);
+          })
+          .catch((error) => {
+            console.debug('Audio play failed:', error);
+            setPlayingTrackId(null);
+          });
+      } catch (error) {
+        console.debug('Audio operations failed:', error);
+        setPlayingTrackId(null);
+      }
+    }
+  };
+
+  // Clean up audio when component unmounts or tracks change
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      if (audio) {
+        audio.pause();
+        setPlayingTrackId(null);
+      }
+    };
+  }, []);
+
+  // Stop audio when tracks change (new search results)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      setPlayingTrackId(null);
+    }
+  }, [tracks]);
 
   return createPortal(
     <div className="song-selector-overlay">
@@ -135,44 +202,27 @@ export function SongSelector({
             {!loading && !error && tracks.length > 0 && (
               <div className="tracks-grid">
                 {tracks.map((track) => (
-                  <div
+                  <TrackCard
                     key={track.id}
-                    className={`track-card ${selectedTrackId === track.id ? 'selected' : ''}`}
-                    onClick={() => handleTrackSelect(track)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleTrackSelect(track);
-                      }
+                    track={{
+                      id: track.id,
+                      name: track.name,
+                      artists: track.artists.map((name) => ({ name })),
+                      album: {
+                        name: track.album,
+                        images: [{ url: track.albumArt }],
+                      },
+                      duration_ms: track.durationMs,
+                      preview_url: track.previewUrl,
                     }}
-                  >
-                    <div className="track-album-art">
-                      <img
-                        src={track.albumArt}
-                        alt={`${track.album} album cover`}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src =
-                            'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0zMiAyMEM0Mi4yIDIwIDUwIDI3LjggNTAgMzhDNTAgNDguMiA0Mi4yIDU2IDMyIDU2QzIxLjggNTYgMTQgNDguMiAxNCAzOEMxNCAyNy44IDIxLjggMjAgMzIgMjBaIiBmaWxsPSIjRTVFN0VCIi8+CjwvcmVnPgo8L3N2Zz4K';
-                        }}
-                      />
-                    </div>
-                    <div className="track-info">
-                      <h3 className="track-name">{track.name}</h3>
-                      <p className="track-artist">{track.artists.join(', ')}</p>
-                      <p className="track-album">{track.album}</p>
-                      <p className="track-duration">
-                        {formatDuration(track.durationMs)}
-                      </p>
-                    </div>
-                    {selectedTrackId === track.id && (
-                      <div className="selected-indicator" aria-hidden="true">
-                        ✓
-                      </div>
-                    )}
-                  </div>
+                    variant="compact"
+                    isSelected={selectedTrackId === track.id}
+                    onSelect={() => handleTrackSelect(track)}
+                    onPreview={() =>
+                      handlePlayPreview(track, {} as React.MouseEvent)
+                    }
+                    isPlaying={playingTrackId === track.id}
+                  />
                 ))}
               </div>
             )}
@@ -186,17 +236,24 @@ export function SongSelector({
         </div>
 
         <div className="song-selector-actions">
-          <button onClick={onCancel} className="cancel-button">
+          <Button onClick={onCancel} variant="secondary">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleConfirmSelection}
-            className="select-button"
+            variant="primary"
             disabled={!selectedTrackId}
           >
             Select Song
-          </button>
+          </Button>
         </div>
+
+        {/* Hidden audio element for preview playback */}
+        <audio
+          ref={audioRef}
+          onEnded={() => setPlayingTrackId(null)}
+          onError={() => setPlayingTrackId(null)}
+        />
       </div>
     </div>,
     document.body

@@ -6,11 +6,13 @@ import {
   generateCodeVerifier,
   generateCodeChallenge,
   generateState,
+} from '@/modules/auth';
+import {
+  areCookiesAvailable,
   setCookie,
   getCookie,
   deleteCookie,
-  areCookiesAvailable,
-} from '@/modules/auth';
+} from '@/modules/auth/utils/cookies';
 import { AppConfig } from '@/modules/config';
 
 /**

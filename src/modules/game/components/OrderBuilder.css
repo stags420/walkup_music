@@ -1,0 +1,268 @@
+.order-builder {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.order-builder-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .order-builder-columns {
+    flex-direction: row;
+    gap: 3rem;
+  }
+}
+
+.order-builder-column {
+  flex: 1;
+  min-height: 400px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 2px solid #2a2a2a;
+  overflow: hidden;
+}
+
+.lineup-column {
+  border-left: 4px solid #3b82f6;
+}
+
+.available-column {
+  border-left: 4px solid #1db954;
+}
+
+.column-header {
+  padding: 1rem 1.5rem;
+  background: #252525;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.column-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.lineup-column .column-header h2 {
+  color: #3b82f6;
+}
+
+.available-column .column-header h2 {
+  color: #1db954;
+}
+
+.player-count {
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  background: #2a2a2a;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+.column-content {
+  padding: 1rem;
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.order-builder-player-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #1e1e1e;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+  width: 100%;
+  max-width: 100%; /* Allow full width */
+}
+
+.order-builder-player-wrapper:hover {
+  background: #252525;
+  border-color: #3a3a3a;
+}
+
+.left-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.player-card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0; /* Allow flex shrinking */
+}
+
+.player-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.move-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  background: #2a2a2a;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.action-button.add-button {
+  background: #1db954;
+}
+
+.action-button.add-button:hover {
+  background: #1ed760;
+}
+
+.action-button.remove-button {
+  background: #ef4444;
+}
+
+.action-button.remove-button:hover {
+  background: #f87171;
+}
+
+.action-button.move-button {
+  background: #3b82f6;
+  font-size: 10px;
+}
+
+.action-button.move-button:hover:not(:disabled) {
+  background: #60a5fa;
+}
+
+.action-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+  background: #1a1a1a;
+}
+
+.batting-position {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  flex-shrink: 0;
+}
+
+.available-column .batting-position {
+  background: transparent;
+  color: transparent;
+}
+
+.empty-message {
+  color: #666666;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+  line-height: 1.4;
+  background: rgba(26, 26, 26, 0.5);
+  border-radius: 8px;
+  border: 2px dashed #3a3a3a;
+}
+
+/* Order builder specific player card styling */
+.order-builder-player-card {
+  width: 320px; /* Fixed width for consistent sizing */
+  flex-shrink: 0;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 1023px) {
+  .order-builder-columns {
+    gap: 1.5rem;
+  }
+
+  .order-builder-column {
+    min-height: 300px;
+  }
+
+  .column-content {
+    min-height: 250px;
+    padding: 0.75rem;
+  }
+
+  .order-builder-player-wrapper {
+    gap: 0.5rem;
+    padding: 0.6rem;
+  }
+
+  .batting-position {
+    min-width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.8rem;
+  }
+
+  .action-button {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .order-builder-player-card {
+    width: 280px; /* Smaller fixed width on mobile */
+  }
+}
+
+/* Touch device improvements */
+@media (pointer: coarse) {
+  .order-builder-player-wrapper {
+    padding: 0.75rem;
+    min-height: 44px;
+  }
+
+  .action-button {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .action-button:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}

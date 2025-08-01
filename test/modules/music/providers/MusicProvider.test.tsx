@@ -14,7 +14,18 @@ describe('MusicProvider', () => {
   });
 
   it('should accept injected service for testing', () => {
-    const mockService = { searchTracks: jest.fn() };
+    const mockService = {
+      searchTracks: jest.fn(),
+      playTrack: jest.fn(),
+      previewTrack: jest.fn(),
+      pause: jest.fn(),
+      resume: jest.fn(),
+      seek: jest.fn(),
+      getCurrentTrack: jest.fn(),
+      isPlaybackReady: jest.fn(),
+      getCurrentState: jest.fn(),
+      isPlaybackConnected: jest.fn(),
+    };
 
     render(
       <MusicProvider musicService={mockService}>

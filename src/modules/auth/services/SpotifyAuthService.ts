@@ -70,12 +70,14 @@ export class SpotifyAuthService implements AuthService {
       maxAge: 600, // 10 minutes
       secure: isSecure,
       sameSite: 'lax', // Allow cross-site for OAuth callback
+      path: this.config.basePath || '/', // Consistent path for OAuth flow
     });
 
     setCookie(SpotifyAuthService.COOKIE_NAMES.STATE, state, {
       maxAge: 600, // 10 minutes
       secure: isSecure,
       sameSite: 'lax',
+      path: this.config.basePath || '/', // Consistent path for OAuth flow
     });
 
     // Build authorization URL
@@ -115,9 +117,10 @@ export class SpotifyAuthService implements AuthService {
       );
     }
 
-    // Clean up temporary cookies
-    deleteCookie(SpotifyAuthService.COOKIE_NAMES.CODE_VERIFIER);
-    deleteCookie(SpotifyAuthService.COOKIE_NAMES.STATE);
+    // Clean up temporary cookies using the same path they were stored with
+    const cookiePath = this.config.basePath || '/';
+    deleteCookie(SpotifyAuthService.COOKIE_NAMES.CODE_VERIFIER, cookiePath);
+    deleteCookie(SpotifyAuthService.COOKIE_NAMES.STATE, cookiePath);
 
     // Exchange code for tokens
     const tokenResponse = await this.exchangeCodeForTokens(code, codeVerifier);
@@ -135,9 +138,10 @@ export class SpotifyAuthService implements AuthService {
   async logout(): Promise<void> {
     this.tokens = null;
 
-    // Clear all auth-related cookies
+    // Clear all auth-related cookies using the same path they were stored with
+    const cookiePath = this.config.basePath || '/';
     Object.values(SpotifyAuthService.COOKIE_NAMES).forEach((cookieName) => {
-      deleteCookie(cookieName);
+      deleteCookie(cookieName, cookiePath);
     });
   }
 
@@ -288,6 +292,7 @@ export class SpotifyAuthService implements AuthService {
       secure: isSecure,
       sameSite: 'strict' as const,
       maxAge: 3600, // 1 hour
+      path: this.config.basePath || '/', // Explicitly set path to match app base path
     };
 
     setCookie(

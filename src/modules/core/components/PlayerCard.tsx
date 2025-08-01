@@ -7,16 +7,7 @@ import { Button } from '@/modules/core/components/Button';
 import './PlayerCard.css';
 
 export interface PlayerCardProps {
-  player: {
-    id: string;
-    name: string;
-    song?: {
-      title: string;
-      artist: string;
-      albumArt?: string;
-      timing?: string;
-    };
-  };
+  player: Player;
   header?: string;
   displayAlbumArt?: boolean;
   size?: 'small' | 'medium' | 'large';
@@ -45,7 +36,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [fullPlayer, setFullPlayer] = useState<Player | null>(null);
 
-  const hasSong = player.song && player.song.title;
+  const hasSong = player.song && player.song.track;
   const canPlayMusic = allowPlayMusic && hasSong;
 
   const handleEdit = async () => {
@@ -80,7 +71,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       if (playerData && playerData.song) {
         // Convert start time to milliseconds
         const startTimeMs = playerData.song.startTime * 1000;
-        await musicService.playTrack(playerData.song.track.uri, startTimeMs);
+        // Convert duration to milliseconds for automatic stopping
+        const durationMs = playerData.song.duration * 1000;
+
+        // Use previewTrack with duration for automatic stopping and callback to reset button state
+        await musicService.previewTrack(
+          playerData.song.track.uri,
+          startTimeMs,
+          durationMs,
+          () => {
+            // Reset the playing state when the track ends
+            setIsPlaying(false);
+          }
+        );
         setIsPlaying(true);
       }
     } catch (error) {
@@ -140,11 +143,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         </div>
 
         {/* Album Art */}
-        {displayAlbumArt && player.song?.albumArt && (
+        {displayAlbumArt && player.song?.track.albumArt && (
           <div className="player-card__album-art">
             <img
-              src={player.song.albumArt}
-              alt={`Album art for ${player.song.title}`}
+              src={player.song.track.albumArt}
+              alt={`Album art for ${player.song.track.name}`}
               className="player-card__album-art-img"
             />
           </div>
@@ -154,16 +157,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         {hasSong && player.song ? (
           <div className="player-card__song-info">
             <h5 className="player-card__song-title song-title">
-              {player.song.title}
+              {player.song.track.name}
             </h5>
             <p className="player-card__song-artist artist-name">
-              by {player.song.artist}
+              by {player.song.track.artists.join(', ')}
             </p>
-            {player.song.timing && (
-              <p className="player-card__song-timing timing-info">
-                {player.song.timing}
-              </p>
-            )}
+            <p className="player-card__song-timing timing-info">
+              {player.song.startTime}s -{' '}
+              {player.song.startTime + player.song.duration}s
+            </p>
           </div>
         ) : (
           <div className="player-card__no-song">

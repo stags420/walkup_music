@@ -8,13 +8,15 @@ import {
   AuthServiceProvider,
 } from '@/modules/auth';
 import {
-  PlayerManager,
+  BattingOrderManager,
   PlayerServiceProvider,
   GameMode,
   LineupServiceProvider,
 } from '@/modules/game';
 import { MusicServiceProvider } from '@/modules/music';
 import { StorageServiceProvider } from '@/modules/storage';
+import { GlobalPlaybackControl } from '@/modules/core';
+import { appConfigProvider } from '@/modules/config';
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -103,6 +105,9 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
       <header className="App-header">
         <div className="header-content">
           <h1>Walk Up Music</h1>
+          <div className="header-center">
+            <GlobalPlaybackControl musicService={musicService} />
+          </div>
           <p className="welcome-text">
             Welcome, {auth.state.user?.displayName}!
           </p>
@@ -117,7 +122,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
             onEndGame={handleEndGame}
           />
         ) : (
-          <PlayerManager
+          <BattingOrderManager
             playerService={playerService}
             musicService={musicService}
             lineupService={lineupService}
@@ -137,8 +142,11 @@ function AppContainer() {
 
 export function App() {
   const authService = AuthServiceProvider.getOrCreate();
+  const config = appConfigProvider.get();
+  const basename = config.basePath || '/';
+
   return (
-    <Router basename="/">
+    <Router basename={basename}>
       <AuthProvider authService={authService}>
         <AppContainer />
       </AuthProvider>

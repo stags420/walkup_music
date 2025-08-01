@@ -34,6 +34,7 @@ describe('SpotifyAuthService', () => {
       redirectUri: 'http://127.0.0.1:8000/callback',
       maxSegmentDuration: 10,
       tokenRefreshBufferMinutes: 15,
+      basePath: '',
     };
 
     // Mock cookie utilities
@@ -164,9 +165,13 @@ describe('SpotifyAuthService', () => {
 
       // Then cookies should be cleaned up and the user should be authenticated
       expect(mockCookies.deleteCookie).toHaveBeenCalledWith(
-        'spotify_code_verifier'
+        'spotify_code_verifier',
+        '/'
       );
-      expect(mockCookies.deleteCookie).toHaveBeenCalledWith('spotify_state');
+      expect(mockCookies.deleteCookie).toHaveBeenCalledWith(
+        'spotify_state',
+        '/'
+      );
       expect(authService.isAuthenticated()).toBe(true);
     });
 

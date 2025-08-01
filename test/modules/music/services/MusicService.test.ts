@@ -4,18 +4,31 @@ import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 // Mock SpotifyApiService before importing SpotifyMusicService
 const mockSpotifyApiService = {
   searchTracks: jest.fn(),
-};
+  lastRequestTime: 0,
+  requestQueue: [],
+  isProcessingQueue: false,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authService: {} as any,
+  getAccessToken: jest.fn(),
+  isAuthenticated: jest.fn(),
+  refreshToken: jest.fn(),
+  handleCallback: jest.fn(),
+  login: jest.fn(),
+  logout: jest.fn(),
+  getUserInfo: jest.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
 
 jest.mock('@/modules/music/services/SpotifyApiService', () => ({
   SpotifyApiService: jest.fn().mockImplementation(() => mockSpotifyApiService),
 }));
 
 // Mock SpotifyPlaybackService
-const mockPlaybackService: SpotifyPlaybackService = {
+const mockPlaybackService = {
   play: jest.fn(),
   pause: jest.fn(),
   isReady: jest.fn(),
-};
+} as jest.Mocked<SpotifyPlaybackService>;
 
 jest.mock('@/modules/music/services/SpotifyPlaybackService', () => ({
   SpotifyPlaybackServiceImpl: jest

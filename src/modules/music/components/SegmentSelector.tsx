@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal as defaultCreatePortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
@@ -32,8 +32,13 @@ export function SegmentSelector({
   );
   const [isPlayingSelection, setIsPlayingSelection] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartTime, setDragStartTime] = useState(0);
   const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isPlayingRef = useRef(false);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 
@@ -55,7 +60,10 @@ export function SegmentSelector({
       } catch (error) {
         console.debug('Playback pause failed:', error);
       }
-      setIsPlayingSelection(false);
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlayingSelection(false);
+      }
       isPlayingRef.current = false;
     }
     if (playbackTimeoutRef.current) {
@@ -67,6 +75,7 @@ export function SegmentSelector({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       stopPlayback();
     };
   }, [stopPlayback]);
@@ -83,10 +92,101 @@ export function SegmentSelector({
       });
   };
 
+  // Touch and mouse handling functions
+  const handleSegmentStart = useCallback(
+    (clientX: number) => {
+      if (!timelineRef.current) return;
+
+      setIsDragging(true);
+      setDragStartX(clientX);
+      setDragStartTime(startTime);
+    },
+    [startTime]
+  );
+
+  const handleSegmentMove = useCallback(
+    (clientX: number) => {
+      if (!timelineRef.current || !isDragging) return;
+
+      const rect = timelineRef.current.getBoundingClientRect();
+      const deltaX = clientX - dragStartX;
+      const timelineWidth = rect.width;
+      const deltaTime = (deltaX / timelineWidth) * trackDurationSeconds;
+
+      let newStartTime = dragStartTime + deltaTime;
+
+      // Constrain to valid bounds
+      newStartTime = Math.max(0, newStartTime);
+      newStartTime = Math.min(trackDurationSeconds - duration, newStartTime);
+
+      setStartTime(Math.round(newStartTime * 10) / 10); // Round to 1 decimal place
+    },
+    [isDragging, dragStartX, dragStartTime, trackDurationSeconds, duration]
+  );
+
+  const handleSegmentEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Mouse event handlers
+  const handleSegmentMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      handleSegmentStart(e.clientX);
+
+      const handleMouseMove = (e: MouseEvent) => {
+        handleSegmentMove(e.clientX);
+      };
+
+      const handleMouseUp = () => {
+        handleSegmentEnd();
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [handleSegmentStart, handleSegmentMove, handleSegmentEnd]
+  );
+
+  // Touch event handlers for mobile
+  const handleSegmentTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleSegmentStart(touch.clientX);
+    },
+    [handleSegmentStart]
+  );
+
+  const handleSegmentTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleSegmentMove(touch.clientX);
+    },
+    [handleSegmentMove]
+  );
+
+  const handleSegmentTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      handleSegmentEnd();
+    },
+    [handleSegmentEnd]
+  );
+
+  // Prevent dragging when modal is being dragged
+  const handleTimelineMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only allow dragging if clicking directly on the segment
+    e.stopPropagation();
+  }, []);
+
   const handleStartTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newStartTime = Math.max(
       0,
-      Math.min(trackDurationSeconds - 1, parseInt(e.target.value) || 0)
+      Math.min(trackDurationSeconds - 1, parseFloat(e.target.value) || 0)
     );
     setStartTime(newStartTime);
   };
@@ -94,7 +194,7 @@ export function SegmentSelector({
   const handleDurationChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDuration = Math.max(
       1,
-      Math.min(maxDuration, parseInt(e.target.value) || 1)
+      Math.min(maxDuration, parseFloat(e.target.value) || 1)
     );
     setDuration(newDuration);
   };
@@ -237,6 +337,7 @@ export function SegmentSelector({
                       value={startTime}
                       onChange={handleStartTimeChange}
                       className="timing-input"
+                      step="0.1"
                     />
                     <span className="input-unit">seconds</span>
                   </div>
@@ -250,6 +351,26 @@ export function SegmentSelector({
                     Duration
                   </label>
                   <div className="input-with-unit">
+                    <button
+                      type="button"
+                      className="increment-btn"
+                      onClick={() => {
+                        const newDuration = Math.min(
+                          maxDuration,
+                          Math.min(
+                            trackDurationSeconds - startTime,
+                            duration + 0.5
+                          )
+                        );
+                        setDuration(newDuration);
+                      }}
+                      disabled={
+                        duration >=
+                        Math.min(maxDuration, trackDurationSeconds - startTime)
+                      }
+                    >
+                      +
+                    </button>
                     <input
                       id="duration"
                       type="number"
@@ -261,7 +382,19 @@ export function SegmentSelector({
                       value={duration}
                       onChange={handleDurationChange}
                       className="timing-input"
+                      step="0.1"
                     />
+                    <button
+                      type="button"
+                      className="increment-btn"
+                      onClick={() => {
+                        const newDuration = Math.max(1, duration - 0.5);
+                        setDuration(newDuration);
+                      }}
+                      disabled={duration <= 1}
+                    >
+                      −
+                    </button>
                     <span className="input-unit">seconds</span>
                   </div>
                   <div className="control-hint">
@@ -274,13 +407,21 @@ export function SegmentSelector({
 
               <div className="segment-preview">
                 <div className="segment-timeline">
-                  <div className="timeline-track">
+                  <div
+                    ref={timelineRef}
+                    className="timeline-track"
+                    onMouseDown={handleTimelineMouseDown}
+                  >
                     <div
-                      className="timeline-segment"
+                      className={`timeline-segment ${isDragging ? 'dragging' : ''}`}
                       style={{
                         left: `${(startTime / trackDurationSeconds) * 100}%`,
                         width: `${(duration / trackDurationSeconds) * 100}%`,
                       }}
+                      onMouseDown={handleSegmentMouseDown}
+                      onTouchStart={handleSegmentTouchStart}
+                      onTouchMove={handleSegmentTouchMove}
+                      onTouchEnd={handleSegmentTouchEnd}
                     />
                   </div>
                   <div className="timeline-labels">
@@ -318,7 +459,7 @@ export function SegmentSelector({
           <Button onClick={handleCancel} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleConfirm} className="btn-success">
+          <Button onClick={handleConfirm} variant="success">
             Confirm
           </Button>
         </div>

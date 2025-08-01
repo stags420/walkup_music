@@ -109,6 +109,7 @@ const mockConfig: AppConfig = {
   spotifyClientId: 'test-client-id',
   redirectUri: 'http://127.0.0.1:8000/callback',
   tokenRefreshBufferMinutes: 15,
+  basePath: '',
 };
 
 describe('AuthContext', () => {

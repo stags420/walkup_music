@@ -5,21 +5,36 @@ import { appConfigProvider } from '@/modules/config';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
+// Detect the base path based on the current location
+const detectBasePath = (): string => {
+  const currentPath = globalThis.location.pathname;
+  // Check if we're running on GitHub Pages with /walkup_music/ base path
+  if (currentPath.startsWith('/walkup_music/')) {
+    return '/walkup_music';
+  }
+  // Default to no base path for local development
+  return '';
+};
+
 // Get the current origin and convert localhost to 127.0.0.1 for Spotify compatibility
-const getRedirectUri = () => {
+const getRedirectUri = (basePath: string = '') => {
   const origin = globalThis.location.origin;
   // Replace localhost with 127.0.0.1 as required by Spotify
   const spotifyCompatibleOrigin = origin.replace('localhost', '127.0.0.1');
-  return `${spotifyCompatibleOrigin}/callback`;
+
+  return `${spotifyCompatibleOrigin}${basePath}/callback`;
 };
 
 // Initialize global app configuration at startup
 const initializeAppConfig = () => {
+  const basePath = detectBasePath();
+
   const config = {
     maxSegmentDuration: 10,
     spotifyClientId: '7534de4cf2c14614846f1b0ca26a5400',
-    redirectUri: getRedirectUri(),
+    redirectUri: getRedirectUri(basePath),
     tokenRefreshBufferMinutes: 15,
+    basePath,
   };
 
   appConfigProvider.initialize(config);

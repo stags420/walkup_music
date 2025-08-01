@@ -17,7 +17,6 @@ jest.mock('@/modules/music/components/SongSelector', () => {
   const MockSongSelector = ({
     onSelectTrack,
     onCancel,
-    ..._props
   }: MockSongSelectorProps) => {
     return (
       <div data-testid="song-selector">

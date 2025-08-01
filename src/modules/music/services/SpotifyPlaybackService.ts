@@ -11,7 +11,7 @@ interface SpotifyPlayerCallbackData {
 interface SpotifyPlayer {
   addListener: (
     event: string,
-    callback: (data: SpotifyPlayerCallbackData) => void
+    callback: (data: SpotifyPlayerCallbackData | { message: string }) => void
   ) => void;
   connect: () => Promise<boolean>;
   resume: () => Promise<void>;
@@ -56,13 +56,12 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
   private isReadyFlag = false;
   private deviceId: string | null = null;
   private authService: AuthService;
+  private initializationPromise: Promise<void> | null = null;
+  private isInitializing = false;
 
   constructor(authService: AuthService) {
     this.authService = authService;
-    // Initialize asynchronously but don't wait for it
-    this.initialize().catch((error) => {
-      console.error('Failed to initialize Spotify playback:', error);
-    });
+    // Don't initialize immediately - wait for user interaction on mobile
   }
 
   private async initialize(): Promise<void> {
@@ -101,6 +100,10 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
         if (data.device_id) {
           this.deviceId = data.device_id;
           this.isReadyFlag = true;
+          console.log(
+            'Spotify Web Playback SDK is ready with device ID:',
+            data.device_id
+          );
         }
       });
 
@@ -115,6 +118,33 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
           console.log('Player state changed:', state);
         }
       );
+
+      // Handle autoplay failures (important for mobile browsers)
+      this.player.addListener('autoplay_failed', () => {
+        console.warn(
+          'Autoplay failed due to browser autoplay policy. User interaction is required.'
+        );
+      });
+
+      // Handle initialization errors
+      this.player.addListener('initialization_error', ({ message }) => {
+        console.error('Spotify Player initialization error:', message);
+      });
+
+      // Handle authentication errors
+      this.player.addListener('authentication_error', ({ message }) => {
+        console.error('Spotify Player authentication error:', message);
+      });
+
+      // Handle account errors (e.g., non-premium users)
+      this.player.addListener('account_error', ({ message }) => {
+        console.error('Spotify Player account error:', message);
+      });
+
+      // Handle playback errors
+      this.player.addListener('playback_error', ({ message }) => {
+        console.error('Spotify Player playback error:', message);
+      });
 
       // Connect to Spotify
       const success = await this.player.connect();
@@ -151,6 +181,11 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
   }
 
   async play(uri: string, startPositionMs: number = 0): Promise<void> {
+    // Initialize on first play call (user interaction) to satisfy mobile browser autoplay policies
+    if (!this.player && !this.isInitializing) {
+      await this.ensureInitialized();
+    }
+
     // Wait for the service to be ready if it's not already
     if (!this.isReadyFlag) {
       await this.waitForReady();
@@ -162,10 +197,8 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
 
     try {
       // Load the track using Spotify Web API with start position
+      // The loadTrack method already starts playback, so we don't need to call resume
       await this.loadTrack(uri, startPositionMs);
-
-      // Resume playback
-      await this.player.resume();
     } catch (error) {
       console.error('Failed to play track:', error);
       throw error;
@@ -173,25 +206,54 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
   }
 
   async pause(): Promise<void> {
-    // Wait for the service to be ready if it's not already
-    if (!this.isReadyFlag) {
-      await this.waitForReady();
+    // Only pause if we have an initialized player
+    if (!this.player) {
+      console.debug('No player to pause');
+      return;
     }
 
-    if (!this.player || !this.isReadyFlag) {
-      throw new Error('Spotify Web Playback SDK is not ready');
+    // Wait for the service to be ready if it's not already
+    if (!this.isReadyFlag) {
+      try {
+        await this.waitForReady();
+      } catch {
+        console.debug("Player not ready for pause, but that's okay");
+        return;
+      }
+    }
+
+    if (!this.isReadyFlag) {
+      console.debug('Player not ready for pause');
+      return;
     }
 
     try {
       await this.player.pause();
+      console.debug('Successfully paused playback');
     } catch (error) {
       console.error('Failed to pause:', error);
-      throw error;
+      // Don't throw error for pause failures - just log them
     }
   }
 
   isReady(): boolean {
     return this.isReadyFlag;
+  }
+
+  /**
+   * Ensures the player is initialized, handling mobile browser autoplay policies
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.isInitializing = true;
+    this.initializationPromise = this.initialize().finally(() => {
+      this.isInitializing = false;
+    });
+
+    return this.initializationPromise;
   }
 
   private async waitForReady(): Promise<void> {
@@ -279,7 +341,8 @@ declare global {
 // Initialize the global callback function immediately
 if (globalThis.window !== undefined) {
   // Set up the callback function before the SDK loads
-  globalThis.onSpotifyWebPlaybackSDKReady = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).onSpotifyWebPlaybackSDKReady = () => {
     console.log('Spotify Web Playback SDK is ready');
   };
 }

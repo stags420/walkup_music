@@ -6,6 +6,7 @@ describe('AppConfigProvider', () => {
     spotifyClientId: 'test-client-id',
     redirectUri: 'http://test.example.com/callback',
     tokenRefreshBufferMinutes: 15,
+    basePath: '',
   };
 
   beforeEach(() => {

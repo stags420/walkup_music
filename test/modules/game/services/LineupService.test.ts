@@ -11,7 +11,13 @@ const mockPlayerService = {
   createPlayer: jest.fn(),
   updatePlayer: jest.fn(),
   deletePlayer: jest.fn(),
-} as jest.Mocked<PlayerService>;
+  storageKey: 'players',
+  storageService: {
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+  },
+} as unknown as jest.Mocked<PlayerService>;
 
 const mockMusicService = {
   previewTrack: jest.fn(),
@@ -22,7 +28,9 @@ const mockMusicService = {
   seek: jest.fn(),
   getCurrentTrack: jest.fn(),
   isPlaybackReady: jest.fn(),
-} as jest.Mocked<MusicService>;
+  getCurrentState: jest.fn(),
+  isPlaybackConnected: jest.fn(),
+} as unknown as jest.Mocked<MusicService>;
 
 const mockStorageService = {
   save: jest.fn(),

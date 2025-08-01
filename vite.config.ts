@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: '/walkup_music/',
   build: {
     outDir: 'dist',
     sourcemap: true,

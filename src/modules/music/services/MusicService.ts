@@ -11,7 +11,8 @@ export interface MusicService {
   previewTrack(
     uri: string,
     startPositionMs?: number,
-    durationMs?: number
+    durationMs?: number,
+    onTrackEnd?: () => void
   ): Promise<void>;
   pause(): Promise<void>;
   resume(): Promise<void>;
@@ -27,6 +28,7 @@ export interface MusicService {
 export class SpotifyMusicService implements MusicService {
   private spotifyApiService: SpotifyApiService;
   private playbackService: SpotifyPlaybackService;
+  private previewTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     spotifyApiService: SpotifyApiService,
@@ -41,29 +43,49 @@ export class SpotifyMusicService implements MusicService {
   }
 
   async playTrack(uri: string, startPositionMs?: number): Promise<void> {
+    // Clear any existing preview timeout to prevent interference
+    this.clearPreviewTimeout();
     return this.playbackService.play(uri, startPositionMs);
   }
 
   async previewTrack(
     uri: string,
     startPositionMs?: number,
-    durationMs?: number
+    durationMs?: number,
+    onTrackEnd?: () => void
   ): Promise<void> {
+    // Clear any existing preview timeout
+    this.clearPreviewTimeout();
+
     // Load and play the track
     await this.playbackService.play(uri, startPositionMs);
 
-    // Auto-pause after duration
-    setTimeout(async () => {
-      try {
-        await this.playbackService.pause();
-      } catch (error) {
-        console.error('Failed to auto-pause preview:', error);
-      }
-    }, durationMs);
+    // Auto-pause after duration if one is specified
+    if (durationMs) {
+      this.previewTimeoutId = setTimeout(async () => {
+        try {
+          await this.playbackService.pause();
+          this.previewTimeoutId = null;
+          // Call the callback when the track ends
+          onTrackEnd?.();
+        } catch (error) {
+          console.error('Failed to auto-pause preview:', error);
+        }
+      }, durationMs);
+    }
   }
 
   async pause(): Promise<void> {
+    // Clear any existing preview timeout since we're manually pausing
+    this.clearPreviewTimeout();
     return this.playbackService.pause();
+  }
+
+  private clearPreviewTimeout(): void {
+    if (this.previewTimeoutId) {
+      clearTimeout(this.previewTimeoutId);
+      this.previewTimeoutId = null;
+    }
   }
 
   async resume(): Promise<void> {
@@ -99,6 +121,7 @@ export class SpotifyMusicService implements MusicService {
  * Provides realistic track data for development and testing
  */
 export class MockMusicService implements MusicService {
+  private previewTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private readonly mockTracks: SpotifyTrack[] = [
     {
       id: 'track1',
@@ -252,29 +275,49 @@ export class MockMusicService implements MusicService {
   }
 
   async playTrack(uri: string, startPositionMs?: number): Promise<void> {
+    // Clear any existing preview timeout to prevent interference
+    this.clearPreviewTimeout();
     return this.playbackService.play(uri, startPositionMs);
   }
 
   async previewTrack(
     uri: string,
     startPositionMs?: number,
-    durationMs?: number
+    durationMs?: number,
+    onTrackEnd?: () => void
   ): Promise<void> {
+    // Clear any existing preview timeout
+    this.clearPreviewTimeout();
+
     // Load and play the track
     await this.playbackService.play(uri, startPositionMs);
 
-    // Auto-pause after duration
-    setTimeout(async () => {
-      try {
-        await this.playbackService.pause();
-      } catch (error) {
-        console.error('Failed to auto-pause preview:', error);
-      }
-    }, durationMs);
+    // Auto-pause after duration if one is specified
+    if (durationMs) {
+      this.previewTimeoutId = setTimeout(async () => {
+        try {
+          await this.playbackService.pause();
+          this.previewTimeoutId = null;
+          // Call the callback when the track ends
+          onTrackEnd?.();
+        } catch (error) {
+          console.error('Failed to auto-pause preview:', error);
+        }
+      }, durationMs);
+    }
   }
 
   async pause(): Promise<void> {
+    // Clear any existing preview timeout since we're manually pausing
+    this.clearPreviewTimeout();
     return this.playbackService.pause();
+  }
+
+  private clearPreviewTimeout(): void {
+    if (this.previewTimeoutId) {
+      clearTimeout(this.previewTimeoutId);
+      this.previewTimeoutId = null;
+    }
   }
 
   async resume(): Promise<void> {

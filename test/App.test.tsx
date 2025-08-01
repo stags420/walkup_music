@@ -263,7 +263,7 @@ describe('App Component Rendering', () => {
         expect(screen.getByText('Welcome, John Doe!')).toBeInTheDocument();
       });
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getAllByRole('heading', { level: 1 })[0]).toHaveTextContent(
         'Walk Up Music'
       );
     });
@@ -293,7 +293,7 @@ describe('App Component Rendering', () => {
       expect(MusicServiceProvider.getOrCreate).toHaveBeenCalled();
 
       await waitFor(() => {
-        expect(screen.getByTestId('player-manager')).toBeInTheDocument();
+        expect(screen.getByText('Lineup')).toBeInTheDocument();
       });
     });
 

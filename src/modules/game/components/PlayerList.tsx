@@ -92,13 +92,9 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
               player={{
                 id: player.id,
                 name: player.name,
-                song: player.song
-                  ? {
-                      title: player.song.track.name,
-                      artist: player.song.track.artists.join(', '),
-                      timing: `${player.song.startTime}s - ${player.song.startTime + player.song.duration}s`,
-                    }
-                  : undefined,
+                song: player.song,
+                createdAt: player.createdAt,
+                updatedAt: player.updatedAt,
               }}
               size="medium"
               displayAlbumArt={false}

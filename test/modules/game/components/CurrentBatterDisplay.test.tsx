@@ -12,7 +12,16 @@ const mockLineupService = {
   getInTheHoleBatter: jest.fn(),
   playWalkUpMusic: jest.fn(),
   stopMusic: jest.fn(),
-} as jest.Mocked<LineupService>;
+  createBattingOrder: jest.fn(),
+  updateBattingOrder: jest.fn(),
+  nextBatter: jest.fn(),
+  startGame: jest.fn(),
+  getGameState: jest.fn(),
+  loadGameState: jest.fn(),
+  endGame: jest.fn(),
+  isGameInProgress: jest.fn(),
+  getCurrentBattingOrder: jest.fn(),
+} as unknown as jest.Mocked<LineupService>;
 
 const mockPlayerService = {
   getAllPlayers: jest.fn(),
@@ -43,7 +52,13 @@ const mockMusicService = {
 
 // Mock the PlayerForm and SegmentSelector components
 jest.mock('@/modules/game/components/PlayerForm', () => ({
-  PlayerForm: ({ onSave, onCancel }: unknown) => (
+  PlayerForm: ({
+    onSave,
+    onCancel,
+  }: {
+    onSave: () => void;
+    onCancel: () => void;
+  }) => (
     <div data-testid="player-form">
       <button onClick={onSave}>Save Player</button>
       <button onClick={onCancel}>Cancel</button>
@@ -52,7 +67,13 @@ jest.mock('@/modules/game/components/PlayerForm', () => ({
 }));
 
 jest.mock('@/modules/music', () => ({
-  SegmentSelector: ({ onConfirm, onCancel }: unknown) => (
+  SegmentSelector: ({
+    onConfirm,
+    onCancel,
+  }: {
+    onConfirm: (segment: unknown) => void;
+    onCancel: () => void;
+  }) => (
     <div data-testid="segment-selector">
       <button onClick={() => onConfirm({ startTime: 10, duration: 30 })}>
         Confirm Segment
@@ -73,11 +94,15 @@ describe('CurrentBatterDisplay', () => {
         artists: ['Test Artist'],
         album: 'Test Album',
         albumArt: 'test-art.jpg',
+        previewUrl: 'https://example.com/preview.mp3',
+        durationMs: 180000,
         uri: 'spotify:track:track1',
       },
       startTime: 10,
       duration: 30,
     },
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(() => {

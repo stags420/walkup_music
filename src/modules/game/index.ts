@@ -10,6 +10,8 @@ export { default as LineupServiceProvider } from './providers/LineupServiceProvi
 
 // Components
 export { PlayerManager } from './components/PlayerManager';
+export { BattingOrderManager } from './components/BattingOrderManager';
+export { OrderBuilder } from './components/OrderBuilder';
 export { PlayerList } from './components/PlayerList';
 export { PlayerForm } from './components/PlayerForm';
 export { GameMode } from './components/GameMode';

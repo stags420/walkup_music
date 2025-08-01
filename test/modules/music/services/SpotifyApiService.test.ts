@@ -9,6 +9,9 @@ globalThis.fetch = mockFetch;
 interface MockResponse {
   ok: boolean;
   status?: number;
+  headers?: {
+    get: jest.MockedFunction<(name: string) => string | null>;
+  };
   json: jest.MockedFunction<() => Promise<unknown>>;
 }
 
@@ -20,6 +23,7 @@ const mockAuthService: jest.Mocked<AuthService> = {
   isAuthenticated: jest.fn(),
   refreshToken: jest.fn(),
   handleCallback: jest.fn(),
+  getUserInfo: jest.fn(),
 };
 
 describe('SpotifyApiService', () => {
@@ -291,6 +295,7 @@ describe('SpotifyApiService', () => {
           headers: {
             get: jest.fn().mockReturnValue('1'), // Retry-After: 1 second
           },
+          json: jest.fn().mockResolvedValue({}),
         } as MockResponse)
         .mockResolvedValueOnce({
           ok: true,

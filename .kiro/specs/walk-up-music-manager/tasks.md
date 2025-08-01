@@ -87,10 +87,12 @@
   - Write component tests for game mode interface
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [ ] 12. Build batting order management UI
-  - Create BattingOrderManager component for editing lineup. Lineup starts as current player list.
+- [x] 12. Build batting order management UI
+  - Create BattingOrderManager component for editing lineup. This is going to replace the current 
+    Player Management UI - "Player Management" -> "Lineup".
   - Implement OrderBuilder. Left column is lineup. Right column is players that are not in lineup.
     You can drag and drop players anywhere.
+  - Add Player button adds into the right column. 
   - Write component tests for batting order interface
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
 

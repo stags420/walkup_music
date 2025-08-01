@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerList } from '@/modules/game/components/PlayerList';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
+import { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock PlayerService
 const mockPlayerService = {
@@ -11,6 +12,20 @@ const mockPlayerService = {
   deletePlayer: jest.fn(),
   getPlayer: jest.fn(),
 } as unknown as jest.Mocked<PlayerService>;
+
+// Mock MusicService
+const mockMusicService = {
+  searchTracks: jest.fn(),
+  playTrack: jest.fn(),
+  previewTrack: jest.fn(),
+  pause: jest.fn(),
+  resume: jest.fn(),
+  seek: jest.fn(),
+  getCurrentTrack: jest.fn(),
+  isPlaybackReady: jest.fn(),
+  getCurrentState: jest.fn(),
+  isPlaybackConnected: jest.fn(),
+} as unknown as jest.Mocked<MusicService>;
 
 // Mock players data
 const mockPlayers: Player[] = [
@@ -54,7 +69,12 @@ describe('PlayerList', () => {
     ); // Never resolves
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should show a loading state
     expect(screen.getByText('Loading players...')).toBeInTheDocument();
@@ -66,7 +86,12 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue(mockPlayers);
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should display the players
     await waitFor(() => {
@@ -82,7 +107,12 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([]);
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should display an empty state message
     await waitFor(() => {
@@ -101,7 +131,12 @@ describe('PlayerList', () => {
     );
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should display an error message
     await waitFor(() => {
@@ -116,7 +151,12 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should display the player with a no song message
     await waitFor(() => {
@@ -131,7 +171,12 @@ describe('PlayerList', () => {
     mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[1]]);
 
     // When I render the player list
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     // Then it should display the player with song information
     await waitFor(() => {
@@ -155,7 +200,12 @@ describe('PlayerList', () => {
       .mockRejectedValueOnce(new Error('Failed to load'))
       .mockResolvedValueOnce(mockPlayers);
 
-    render(<PlayerList playerService={mockPlayerService} />);
+    render(
+      <PlayerList
+        playerService={mockPlayerService}
+        musicService={mockMusicService}
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();

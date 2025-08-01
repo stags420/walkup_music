@@ -20,6 +20,14 @@
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
 }
 
 .App-header h1 {

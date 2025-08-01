@@ -179,8 +179,10 @@ export class LineupServiceImpl implements LineupService {
 
   endGame(): void {
     this.isGameActive = false;
-    this.currentBattingOrder = null;
-    this.storageService.delete(this.storageKey);
+    // Keep the batting order persistent - don't clear it
+    // this.currentBattingOrder = null;
+    // this.storageService.delete(this.storageKey);
+    this.saveGameState();
   }
 
   isGameInProgress(): boolean {

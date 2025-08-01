@@ -5,19 +5,17 @@
   "type": "module",
   "homepage": "https://stags420.github.io/walkup_music",
   "scripts": {
-    "dev": "vite --host=127.0.0.1",
-    "build": "tsc && vite build",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --report-unused-disable-directives --max-warnings 0 --fix",
+    "dev": "vite --host=127.0.0.1",
+    "build": "tsc && vite build",
+    "test": "npm run build && jest",
+    "predeploy": "npm run test",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview",
-    "test": "jest",
     "test:watch": "jest --watch",
     "format": "prettier --write \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

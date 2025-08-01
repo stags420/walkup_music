@@ -3,6 +3,7 @@ export interface AppConfig {
   spotifyClientId: string;
   redirectUri: string;
   tokenRefreshBufferMinutes: number; // minutes, default 15
+  basePath: string; // base path for the app (e.g., '/walkup_music' for GitHub Pages)
 }
 
 function isValidUrl(url: string): boolean {
@@ -27,6 +28,7 @@ export const AppConfig = {
     const spotifyClientId = obj.spotifyClientId ?? '';
     const redirectUri = obj.redirectUri ?? 'http://127.0.0.1:8000/callback';
     const tokenRefreshBufferMinutes = obj.tokenRefreshBufferMinutes ?? 15;
+    const basePath = obj.basePath ?? '';
 
     if (
       typeof maxSegmentDuration !== 'number' ||
@@ -66,11 +68,16 @@ export const AppConfig = {
       );
     }
 
+    if (typeof basePath !== 'string') {
+      throw new Error('Invalid app config data: basePath must be a string');
+    }
+
     return {
       maxSegmentDuration,
       spotifyClientId: spotifyClientId.trim(),
       redirectUri: redirectUri.trim(),
       tokenRefreshBufferMinutes,
+      basePath: basePath.trim(),
     };
   },
 };

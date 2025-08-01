@@ -406,4 +406,68 @@ describe('SegmentSelector', () => {
     // Then pause should not be called again (timeout was cleared)
     expect(mockMusicService.pause).toHaveBeenCalledTimes(1);
   });
+
+  test('allows dragging the segment to change start time', async () => {
+    // Given a segment selector with initial segment
+    render(
+      <SegmentSelector
+        track={mockTrack}
+        musicService={mockMusicService}
+        initialSegment={mockSegment}
+        onConfirm={mockOnConfirm}
+        onCancel={mockOnCancel}
+        createPortal={mockCreatePortal}
+      />
+    );
+
+    // Find the timeline segment element
+    const segmentElement = document.querySelector('.timeline-segment');
+    expect(segmentElement).toBeInTheDocument();
+
+    // Find the timeline track for positioning calculations
+    const timelineTrack = document.querySelector('.timeline-track');
+    expect(timelineTrack).toBeInTheDocument();
+
+    // Mock getBoundingClientRect for positioning calculations
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      left: 100,
+      width: 300,
+      top: 0,
+      height: 8,
+      right: 400,
+      bottom: 8,
+    }));
+
+    Object.defineProperty(timelineTrack, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+
+    // Initial start time should be 30 seconds (from mockSegment)
+    expect(screen.getByDisplayValue('30')).toBeInTheDocument();
+
+    // When I start dragging the segment (mousedown at position 150, drag to 200)
+    fireEvent.mouseDown(segmentElement!, {
+      clientX: 150,
+      bubbles: true,
+    });
+
+    // Simulate mouse move (drag to position 200 = 50px right)
+    // 50px out of 300px width = 1/6 of track = 30 seconds movement (180s total / 6 = 30s)
+    // So start time should change from 30 to 60 seconds
+    fireEvent.mouseMove(document, {
+      clientX: 200,
+    });
+
+    // Mouse up to end drag
+    fireEvent.mouseUp(document);
+
+    // The start time should have changed from the initial 30 seconds
+    await waitFor(() => {
+      const startTimeInput = screen.getByDisplayValue(/^[^3]/); // Any value that doesn't start with 3
+      expect(startTimeInput).toBeInTheDocument();
+    });
+
+    // Duration should remain unchanged at 8 seconds
+    expect(screen.getByDisplayValue('8')).toBeInTheDocument();
+  });
 });

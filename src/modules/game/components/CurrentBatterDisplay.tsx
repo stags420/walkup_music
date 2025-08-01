@@ -58,14 +58,9 @@ export function CurrentBatterDisplay({
         player={{
           id: currentBatter.id,
           name: currentBatter.name,
-          song: currentBatter.song
-            ? {
-                title: currentBatter.song.track.name,
-                artist: currentBatter.song.track.artists.join(', '),
-                albumArt: currentBatter.song.track.albumArt,
-                timing: `${currentBatter.song.startTime}s - ${currentBatter.song.startTime + currentBatter.song.duration}s`,
-              }
-            : undefined,
+          song: currentBatter.song,
+          createdAt: currentBatter.createdAt,
+          updatedAt: currentBatter.updatedAt,
         }}
         header="BATTER UP"
         size="large"
@@ -107,13 +102,9 @@ export function CurrentBatterDisplay({
         player={{
           id: batter.id,
           name: batter.name,
-          song: batter.song
-            ? {
-                title: batter.song.track.name,
-                artist: batter.song.track.artists.join(', '),
-                timing: `${batter.song.startTime}s - ${batter.song.startTime + batter.song.duration}s`,
-              }
-            : undefined,
+          song: batter.song,
+          createdAt: batter.createdAt,
+          updatedAt: batter.updatedAt,
         }}
         header={positionLabels[position]}
         size="medium"

@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Code Review and Task Generation",
+  "description": "Automatically reviews code changes to identify bugs, security vulnerabilities, and performance issues, then generates actionable tasks",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.js",
+      "*.html",
+      "*.css"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the recent code changes for:\n1. Potential bugs and edge cases\n2. Security vulnerabilities\n3. Performance optimization opportunities\n4. Code quality and maintainability issues\n\nFor each issue found, create a specific, actionable task in the tasks file. Format each task with:\n- A clear title describing the issue\n- The file path and line number(s) where the issue occurs\n- A brief explanation of the problem\n- A suggested approach to fix it\n\nBe thorough but focus on meaningful issues rather than stylistic preferences. Prioritize security vulnerabilities and bugs over minor optimizations."
+  }
+}

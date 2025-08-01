@@ -4,6 +4,7 @@ export { useAuth, AuthContext } from './hooks/useAuth';
 export { LoginPage } from './components/LoginPage';
 export { CallbackPage } from './components/CallbackPage';
 export { SpotifyAuthService } from './services/SpotifyAuthService';
+export { MockAuthService } from './services/MockAuthService';
 export type { AuthService } from './services/AuthService';
 export type { AuthContextType } from './models/AuthContextType';
 export type { AuthState } from './models/AuthState';

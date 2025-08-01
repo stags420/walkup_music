@@ -35,6 +35,7 @@ describe('SpotifyAuthService', () => {
       maxSegmentDuration: 10,
       tokenRefreshBufferMinutes: 15,
       basePath: '',
+      mockAuth: false,
     };
 
     // Mock cookie utilities

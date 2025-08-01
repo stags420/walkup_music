@@ -312,17 +312,113 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
 }
 
 /**
- * Mock implementation for testing
+ * Mock implementation for testing with audio jingle support
  */
 export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
+  private audioContext: AudioContext | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
+  private isPlaying = false;
+
+  private async getAudioContext(): Promise<AudioContext> {
+    if (!this.audioContext) {
+      this.audioContext = new (globalThis.AudioContext ||
+        globalThis.webkitAudioContext ||
+        AudioContext)();
+    }
+
+    // Resume context if it's suspended (required by some browsers)
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
+
+    return this.audioContext;
+  }
+
+  private async createJingleBuffer(): Promise<AudioBuffer> {
+    const audioContext = await this.getAudioContext();
+    const sampleRate = audioContext.sampleRate;
+    const duration = 2; // 2 seconds
+    const buffer = audioContext.createBuffer(
+      1,
+      sampleRate * duration,
+      sampleRate
+    );
+    const data = buffer.getChannelData(0);
+
+    // Create a simple melody with multiple tones
+    const notes = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+    const noteDuration = duration / notes.length;
+
+    for (const [noteIndex, frequency] of notes.entries()) {
+      const startSample = Math.floor(noteIndex * noteDuration * sampleRate);
+      const endSample = Math.floor((noteIndex + 1) * noteDuration * sampleRate);
+
+      for (let i = startSample; i < endSample && i < data.length; i++) {
+        const time = i / sampleRate;
+        const noteTime = time - noteIndex * noteDuration;
+
+        // Create a more musical tone with envelope
+        const envelope = Math.exp(-noteTime * 3); // Exponential decay
+        const tone = Math.sin(2 * Math.PI * frequency * noteTime) * envelope;
+
+        // Add some harmonics for richer sound
+        const harmonic2 =
+          Math.sin(2 * Math.PI * frequency * 2 * noteTime) * envelope * 0.3;
+        const harmonic3 =
+          Math.sin(2 * Math.PI * frequency * 3 * noteTime) * envelope * 0.1;
+
+        data[i] = (tone + harmonic2 + harmonic3) * 0.3; // Keep volume reasonable
+      }
+    }
+
+    return buffer;
+  }
+
   async play(_uri: string, _startPositionMs: number = 0): Promise<void> {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Stop any currently playing audio
+    await this.pause();
+
+    try {
+      const audioContext = await this.getAudioContext();
+      const buffer = await this.createJingleBuffer();
+
+      // Create and configure audio source
+      this.currentSource = audioContext.createBufferSource();
+      this.currentSource.buffer = buffer;
+      this.currentSource.connect(audioContext.destination);
+
+      // Set up cleanup when audio ends
+      this.currentSource.addEventListener('ended', () => {
+        this.currentSource = null;
+        this.isPlaying = false;
+      });
+
+      // Start playback
+      this.currentSource.start();
+      this.isPlaying = true;
+
+      console.log('Playing mock audio jingle');
+    } catch (error) {
+      console.warn('Failed to play mock audio jingle:', error);
+      // Fallback to just simulation
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
   }
 
   async pause(): Promise<void> {
+    if (this.currentSource && this.isPlaying) {
+      try {
+        this.currentSource.stop();
+        this.currentSource = null;
+        this.isPlaying = false;
+        console.log('Paused mock audio jingle');
+      } catch (error) {
+        console.warn('Failed to stop mock audio:', error);
+      }
+    }
+
     // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 
   isReady(): boolean {
@@ -330,12 +426,16 @@ export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
   }
 }
 
-// Extend Window interface to include Spotify SDK
+// Extend Window interface to include Spotify SDK and WebKit AudioContext
 declare global {
   interface Window {
     Spotify: SpotifySDK;
     onSpotifyWebPlaybackSDKReady: () => void;
+    webkitAudioContext?: typeof AudioContext;
   }
+
+  // Extend globalThis to include webkitAudioContext
+  var webkitAudioContext: typeof AudioContext | undefined;
 }
 
 // Initialize the global callback function immediately

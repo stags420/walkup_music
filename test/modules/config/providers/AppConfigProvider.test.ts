@@ -7,6 +7,7 @@ describe('AppConfigProvider', () => {
     redirectUri: 'http://test.example.com/callback',
     tokenRefreshBufferMinutes: 15,
     basePath: '',
+    mockAuth: false,
   };
 
   beforeEach(() => {

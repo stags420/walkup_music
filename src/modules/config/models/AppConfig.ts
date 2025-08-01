@@ -4,6 +4,7 @@ export interface AppConfig {
   redirectUri: string;
   tokenRefreshBufferMinutes: number; // minutes, default 15
   basePath: string; // base path for the app (e.g., '/walkup_music' for GitHub Pages)
+  mockAuth: boolean; // whether to use mock authentication for development/testing
 }
 
 function isValidUrl(url: string): boolean {
@@ -29,6 +30,7 @@ export const AppConfig = {
     const redirectUri = obj.redirectUri ?? 'http://127.0.0.1:8000/callback';
     const tokenRefreshBufferMinutes = obj.tokenRefreshBufferMinutes ?? 15;
     const basePath = obj.basePath ?? '';
+    const mockAuth = obj.mockAuth ?? false;
 
     if (
       typeof maxSegmentDuration !== 'number' ||
@@ -72,12 +74,17 @@ export const AppConfig = {
       throw new Error('Invalid app config data: basePath must be a string');
     }
 
+    if (typeof mockAuth !== 'boolean') {
+      throw new Error('Invalid app config data: mockAuth must be a boolean');
+    }
+
     return {
       maxSegmentDuration,
       spotifyClientId: spotifyClientId.trim(),
       redirectUri: redirectUri.trim(),
       tokenRefreshBufferMinutes,
       basePath: basePath.trim(),
+      mockAuth,
     };
   },
 };

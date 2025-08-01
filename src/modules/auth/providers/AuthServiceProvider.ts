@@ -1,5 +1,6 @@
 import { AuthService } from '@/modules/auth';
 import { SpotifyAuthService } from '@/modules/auth/services/SpotifyAuthService';
+import { MockAuthService } from '@/modules/auth/services/MockAuthService';
 import { appConfigProvider } from '@/modules/config';
 
 /**
@@ -15,7 +16,10 @@ export class AuthServiceProvider {
     if (!this.instance) {
       // Get config from global config singleton
       const config = appConfigProvider.get();
-      this.instance = new SpotifyAuthService(config);
+
+      this.instance = config.mockAuth
+        ? new MockAuthService()
+        : new SpotifyAuthService(config);
     }
     return this.instance;
   }

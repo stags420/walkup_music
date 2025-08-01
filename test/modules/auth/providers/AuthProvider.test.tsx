@@ -110,6 +110,7 @@ const mockConfig: AppConfig = {
   redirectUri: 'http://127.0.0.1:8000/callback',
   tokenRefreshBufferMinutes: 15,
   basePath: '',
+  mockAuth: false,
 };
 
 describe('AuthContext', () => {

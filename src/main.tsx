@@ -5,6 +5,9 @@ import { appConfigProvider } from '@/modules/config';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
+// Environment variables
+const VITE_MOCK_AUTH = import.meta.env.VITE_MOCK_AUTH === 'true';
+
 // Detect the base path based on the current location
 const detectBasePath = (): string => {
   const currentPath = globalThis.location.pathname;
@@ -29,12 +32,16 @@ const getRedirectUri = (basePath: string = '') => {
 const initializeAppConfig = () => {
   const basePath = detectBasePath();
 
+  // Mock auth is determined at build time via environment variable
+  const mockAuth = VITE_MOCK_AUTH;
+
   const config = {
     maxSegmentDuration: 10,
     spotifyClientId: '7534de4cf2c14614846f1b0ca26a5400',
     redirectUri: getRedirectUri(basePath),
     tokenRefreshBufferMinutes: 15,
     basePath,
+    mockAuth,
   };
 
   appConfigProvider.initialize(config);

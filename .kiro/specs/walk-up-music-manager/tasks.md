@@ -96,6 +96,27 @@
   - Write component tests for batting order interface
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.3, 5.4_
 
+- [ ] 13. Add mock authentication and fake data support for development
+- [ ] 13.1 Implement mock authentication infrastructure
+  - Update AppConfig interface to include mockAuth flag for build-time configuration
+  - Create MockAuthService that bypasses Spotify OAuth and provides fake user data if mockAuth flag is true.
+  - Modify main.tsx bootstrap logic to accept args and add npm scripts to pass mockAuth flag
+  - Update MusicServiceProvider to automatically use MockMusicService when in mock auth mode
+  - Ensure mock mode works completely offline without any Spotify API calls
+  - Create simple audio jingle (short beep/tone) that plays for all fake songs in mock mode
+  - Write unit tests for mock auth service and mock mode initialization
+  - _Requirements: Support development workflow with automated testing_
+
+- [ ] 13.2 Create Playwright e2e test suite for mock mode
+  - Set up Playwright testing framework with TypeScript configuration
+  - Write e2e tests for complete user workflows using mock auth mode
+  - Test player management: create, edit, delete players with song selection
+  - Test lineup creation: drag-and-drop ordering, adding/removing players
+  - Test game mode transitions: start game, next batter, end game functionality
+  - Add test scenarios that automatically catch UI issues found during manual testing
+  - Create test data fixtures and page object models for maintainable tests
+  - _Requirements: Automated validation of user workflows and UI behavior_
+
 - [ ] 14. Build configuration management
   - Create ConfigService for managing application settings
   - Implement configurable segment duration with validation
@@ -124,11 +145,13 @@
   - Write tests for error handling scenarios
   - _Requirements: 1.4, 1.5, 4.5, 8.5_
 
-- [ ] 18. Create integration tests
-  - Write end-to-end tests for complete user workflows
-  - Test Spotify API integration with real API calls
-  - Add cross-browser compatibility testing
-  - Test GitHub Pages deployment configuration
+- [ ] 18. Integrate Playwright tests into GitHub Pages deployment workflow
+  - Configure GitHub Actions to run Playwright tests on pull requests and deployments
+  - Set up cross-browser testing (Chromium, Firefox, WebKit) in CI pipeline
+  - Add test reporting and artifact collection for failed test screenshots/videos
+  - Configure test environment to use mock auth mode for reliable CI testing
+  - Add deployment gates that prevent broken builds from reaching GitHub Pages
+  - Set up test result notifications and integration with PR status checks
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
 - [ ] 19. Optimize for production deployment

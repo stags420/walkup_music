@@ -20,7 +20,7 @@
     "preview": "vite preview",
     "preview:mock": "VITE_MOCK_AUTH=true vite preview",
     "test:watch": "jest --watch",
-    "test:e2e": "npm run build:mock && playwright test tests/completeWorkflow.spec.ts --headed",
+    "test:e2e": "npm run build:mock && playwright test",
     "format": "prettier --write \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },

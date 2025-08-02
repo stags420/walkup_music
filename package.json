@@ -12,7 +12,7 @@
     "fixup": "npm run lint:fix && npm run format",
     "build": "npm run fixup && tsc && vite build",
     "build:mock": "tsc && VITE_MOCK_AUTH=true vite build",
-    "test": "npm run build && jest --passWithNoTests",
+    "test": "npm run build && jest --passWithNoTests --silent",
     "test:all": "npm run test && npm run test:e2e",
     "predeploy": "npm run test:all",
     "precommit": "npm run predeploy",
@@ -20,7 +20,7 @@
     "preview": "vite preview",
     "preview:mock": "VITE_MOCK_AUTH=true vite preview",
     "test:watch": "jest --watch",
-    "test:e2e": "npm run build:mock && playwright test e2e/tests/completeWorkflow.spec.ts --headed",
+    "test:e2e": "npm run build:mock && playwright test tests/completeWorkflow.spec.ts --headed",
     "format": "prettier --write \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },

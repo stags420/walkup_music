@@ -91,4 +91,4 @@ spotify-credentials.json
 
 .todo
 
-e2e/playwright/*
+*/e2e/playwright/*

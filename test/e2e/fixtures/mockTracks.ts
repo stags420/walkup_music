@@ -1,4 +1,4 @@
-import { SpotifyTrack } from '../../src/modules/music/models/SpotifyTrack';
+import { SpotifyTrack } from '../../../src/modules/music/models/SpotifyTrack';
 
 /**
  * Mock Spotify tracks that align with e2e test data

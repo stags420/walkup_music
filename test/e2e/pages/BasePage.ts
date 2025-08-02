@@ -77,8 +77,12 @@ export class BasePage {
    */
   async getTextContent(selector: string): Promise<string | null>;
   async getTextContent(locator: Locator): Promise<string | null>;
-  async getTextContent(selectorOrLocator: string | Locator): Promise<string | null> {
-    return await (typeof selectorOrLocator === 'string' ? this.page.textContent(selectorOrLocator) : selectorOrLocator.textContent());
+  async getTextContent(
+    selectorOrLocator: string | Locator
+  ): Promise<string | null> {
+    return await (typeof selectorOrLocator === 'string'
+      ? this.page.textContent(selectorOrLocator)
+      : selectorOrLocator.textContent());
   }
 
   /**

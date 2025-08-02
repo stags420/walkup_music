@@ -10,10 +10,12 @@ export class GameModePage extends BasePage {
   }
 
   // Selectors
-  private readonly currentBatterDisplay = '[data-testid="current-batter-display"]';
+  private readonly currentBatterDisplay =
+    '[data-testid="current-batter-display"]';
   private readonly currentBatterName = '[data-testid="current-batter-name"]';
   private readonly onDeckBatterName = '[data-testid="on-deck-batter-name"]';
-  private readonly inTheHoleBatterName = '[data-testid="in-the-hole-batter-name"]';
+  private readonly inTheHoleBatterName =
+    '[data-testid="in-the-hole-batter-name"]';
   private readonly nextBatterButton = '[data-testid="next-batter-button"]';
   private readonly endGameButton = '[data-testid="end-game-button"]';
   private readonly playButton = '[data-testid="play-button"]';
@@ -35,7 +37,9 @@ export class GameModePage extends BasePage {
    */
   async getCurrentBatterName(): Promise<string | null> {
     // Get the player name from within the current batter display
-    const playerNameElement = this.page.locator(`${this.currentBatterName} [data-testid="player-name"]`);
+    const playerNameElement = this.page.locator(
+      `${this.currentBatterName} [data-testid="player-name"]`
+    );
     return await this.getTextContent(playerNameElement);
   }
 
@@ -44,7 +48,9 @@ export class GameModePage extends BasePage {
    */
   async getOnDeckBatterName(): Promise<string | null> {
     // Get the player name from within the on-deck batter display
-    const playerNameElement = this.page.locator(`${this.onDeckBatterName} [data-testid="player-name"]`);
+    const playerNameElement = this.page.locator(
+      `${this.onDeckBatterName} [data-testid="player-name"]`
+    );
     return await this.getTextContent(playerNameElement);
   }
 
@@ -53,7 +59,9 @@ export class GameModePage extends BasePage {
    */
   async getInTheHoleBatterName(): Promise<string | null> {
     // Get the player name from within the in-the-hole batter display
-    const playerNameElement = this.page.locator(`${this.inTheHoleBatterName} [data-testid="player-name"]`);
+    const playerNameElement = this.page.locator(
+      `${this.inTheHoleBatterName} [data-testid="player-name"]`
+    );
     return await this.getTextContent(playerNameElement);
   }
 
@@ -71,11 +79,11 @@ export class GameModePage extends BasePage {
   async clickEndGame() {
     // Click the initial end game button
     await this.clickWithRetry(this.endGameButton);
-    
+
     // Wait for confirmation modal to appear and click confirm
     await this.page.waitForSelector('.confirm-button', { state: 'visible' });
     await this.page.click('.confirm-button');
-    
+
     // Wait for the game mode to end
     await this.page.waitForTimeout(1000);
   }
@@ -183,13 +191,13 @@ export class GameModePage extends BasePage {
    */
   async completeGameCycle(expectedBatterCount: number) {
     const initialBatter = await this.getCurrentBatterName();
-    
+
     // Advance through all batters
     for (let i = 0; i < expectedBatterCount; i++) {
       await this.clickNextBatter();
       await this.waitForBatterTransition();
     }
-    
+
     // Should be back to the first batter
     const finalBatter = await this.getCurrentBatterName();
     return finalBatter === initialBatter;

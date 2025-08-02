@@ -1,6 +1,6 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { TestPlayer } from '../fixtures/test-data';
+import { TestPlayer } from '../fixtures/testData';
 
 /**
  * Page object for player management functionality
@@ -19,11 +19,13 @@ export class PlayerManagementPage extends BasePage {
   private readonly playerCard = '[data-testid="player-card"]';
   private readonly editPlayerButton = '[data-testid="edit-player-button"]';
   private readonly deletePlayerButton = '[data-testid="delete-player-button"]';
-  private readonly confirmDeleteButton = '[data-testid="confirm-delete-button"]';
+  private readonly confirmDeleteButton =
+    '[data-testid="confirm-delete-button"]';
   private readonly selectSongButton = '[data-testid="select-song-button"]';
   private readonly songSearchInput = '[data-testid="song-search-input"]';
   private readonly songResult = '[data-testid="song-result"]';
-  private readonly selectSongResultButton = '[data-testid="select-song-result-button"]';
+  private readonly selectSongResultButton =
+    '[data-testid="select-song-result-button"]';
   private readonly segmentSelector = '[data-testid="segment-selector"]';
   private readonly confirmSongButton = '[data-testid="confirm-song-button"]';
   private readonly playerForm = '[data-testid="player-form"]';
@@ -83,11 +85,11 @@ export class PlayerManagementPage extends BasePage {
   async createPlayerWithSong(player: TestPlayer) {
     await this.clickAddPlayer();
     await this.fillPlayerName(player.name);
-    
+
     if (player.song) {
       await this.selectSong(player.song.title, player.song.artist);
     }
-    
+
     await this.savePlayer();
   }
 
@@ -97,18 +99,18 @@ export class PlayerManagementPage extends BasePage {
   async selectSong(title: string, artist: string) {
     await this.clickWithRetry(this.selectSongButton);
     await this.waitForSelector(this.songSearchInput);
-    
+
     // Search for the song (no search button, it's automatic)
     await this.fillWithRetry(this.songSearchInput, `${title} ${artist}`);
-    
+
     // Wait for results to load (search is automatic with debounce)
     await this.page.waitForTimeout(1000);
     await this.waitForSelector(this.songResult);
-    
+
     // Select the first result
     await this.clickWithRetry(this.songResult);
     await this.clickWithRetry(this.selectSongResultButton);
-    
+
     // Wait for segment selector and confirm
     await this.waitForSelector(this.segmentSelector);
     await this.clickWithRetry(this.confirmSongButton);
@@ -128,13 +130,13 @@ export class PlayerManagementPage extends BasePage {
   async getPlayerNames(): Promise<string[]> {
     const cards = await this.getPlayerCards();
     const names: string[] = [];
-    
+
     for (const card of cards) {
       const nameElement = card.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
       if (name) names.push(name);
     }
-    
+
     return names;
   }
 
@@ -143,18 +145,18 @@ export class PlayerManagementPage extends BasePage {
    */
   async editPlayer(playerName: string) {
     const cards = await this.getPlayerCards();
-    
+
     for (const card of cards) {
       const nameElement = card.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
-      
+
       if (name === playerName) {
         await card.locator(this.editPlayerButton).click();
         await this.waitForSelector(this.playerForm);
         return;
       }
     }
-    
+
     throw new Error(`Player "${playerName}" not found`);
   }
 
@@ -163,11 +165,11 @@ export class PlayerManagementPage extends BasePage {
    */
   async deletePlayer(playerName: string) {
     const cards = await this.getPlayerCards();
-    
+
     for (const card of cards) {
       const nameElement = card.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
-      
+
       if (name === playerName) {
         await card.locator(this.deletePlayerButton).click();
         await this.waitForSelector(this.confirmDeleteButton);
@@ -176,7 +178,7 @@ export class PlayerManagementPage extends BasePage {
         return;
       }
     }
-    
+
     throw new Error(`Player "${playerName}" not found`);
   }
 

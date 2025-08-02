@@ -11,21 +11,26 @@ export class LineupManagementPage extends BasePage {
 
   // Selectors
   private readonly lineupColumn = '[data-testid="lineup-column"]';
-  private readonly availablePlayersColumn = '[data-testid="available-players-column"]';
+  private readonly availablePlayersColumn =
+    '[data-testid="available-players-column"]';
   private readonly lineupPlayer = '[data-testid="lineup-player"]';
   private readonly availablePlayer = '[data-testid="available-player"]';
   private readonly startGameButton = '[data-testid="start-game-button"]';
   private readonly addPlayerButton = '[data-testid="add-player-button"]';
-  private readonly addToLineupButton = '.add-button';
-  private readonly removeFromLineupButton = '.remove-button';
-  private readonly moveUpButton = '.move-button:has-text("↑")';
-  private readonly moveDownButton = '.move-button:has-text("↓")';
+  // Button selectors for future use
+  // private readonly addToLineupButton = '.add-button';
+  // private readonly removeFromLineupButton = '.remove-button';
+  // private readonly moveUpButton = '.move-button:has-text("↑")';
+  // private readonly moveDownButton = '.move-button:has-text("↓")';
 
   /**
    * Check if we're on the lineup management page
    */
   async isOnLineupManagementPage(): Promise<boolean> {
-    return await this.isVisible(this.lineupColumn) && await this.isVisible(this.availablePlayersColumn);
+    return (
+      (await this.isVisible(this.lineupColumn)) &&
+      (await this.isVisible(this.availablePlayersColumn))
+    );
   }
 
   /**
@@ -33,15 +38,17 @@ export class LineupManagementPage extends BasePage {
    */
   async getLineupPlayers(): Promise<string[]> {
     await this.waitForSelector(this.lineupColumn);
-    const players = await this.page.locator(`${this.lineupColumn} ${this.lineupPlayer}`).all();
+    const players = await this.page
+      .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
+      .all();
     const names: string[] = [];
-    
+
     for (const player of players) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
       if (name) names.push(name);
     }
-    
+
     return names;
   }
 
@@ -50,15 +57,17 @@ export class LineupManagementPage extends BasePage {
    */
   async getAvailablePlayers(): Promise<string[]> {
     await this.waitForSelector(this.availablePlayersColumn);
-    const players = await this.page.locator(`${this.availablePlayersColumn} ${this.availablePlayer}`).all();
+    const players = await this.page
+      .locator(`${this.availablePlayersColumn} ${this.availablePlayer}`)
+      .all();
     const names: string[] = [];
-    
+
     for (const player of players) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
       if (name) names.push(name);
     }
-    
+
     return names;
   }
 
@@ -66,8 +75,10 @@ export class LineupManagementPage extends BasePage {
    * Add a player from available to lineup using the + button
    */
   async addPlayerToLineup(playerName: string) {
-    const availablePlayers = await this.page.locator(`${this.availablePlayersColumn} ${this.availablePlayer}`).all();
-    
+    const availablePlayers = await this.page
+      .locator(`${this.availablePlayersColumn} ${this.availablePlayer}`)
+      .all();
+
     let sourcePlayer: Locator | null = null;
     for (const player of availablePlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
@@ -77,7 +88,7 @@ export class LineupManagementPage extends BasePage {
         break;
       }
     }
-    
+
     if (!sourcePlayer) {
       throw new Error(`Available player "${playerName}" not found`);
     }
@@ -92,8 +103,10 @@ export class LineupManagementPage extends BasePage {
    * Remove a player from lineup to available using the - button
    */
   async removePlayerFromLineup(playerName: string) {
-    const lineupPlayers = await this.page.locator(`${this.lineupColumn} ${this.lineupPlayer}`).all();
-    
+    const lineupPlayers = await this.page
+      .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
+      .all();
+
     let sourcePlayer: Locator | null = null;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
@@ -103,7 +116,7 @@ export class LineupManagementPage extends BasePage {
         break;
       }
     }
-    
+
     if (!sourcePlayer) {
       throw new Error(`Lineup player "${playerName}" not found`);
     }
@@ -118,8 +131,10 @@ export class LineupManagementPage extends BasePage {
    * Move a player up in the lineup using the ↑ button
    */
   async movePlayerUp(playerName: string) {
-    const lineupPlayers = await this.page.locator(`${this.lineupColumn} ${this.lineupPlayer}`).all();
-    
+    const lineupPlayers = await this.page
+      .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
+      .all();
+
     let sourcePlayer: Locator | null = null;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
@@ -129,7 +144,7 @@ export class LineupManagementPage extends BasePage {
         break;
       }
     }
-    
+
     if (!sourcePlayer) {
       throw new Error(`Lineup player "${playerName}" not found`);
     }
@@ -144,8 +159,10 @@ export class LineupManagementPage extends BasePage {
    * Move a player down in the lineup using the ↓ button
    */
   async movePlayerDown(playerName: string) {
-    const lineupPlayers = await this.page.locator(`${this.lineupColumn} ${this.lineupPlayer}`).all();
-    
+    const lineupPlayers = await this.page
+      .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
+      .all();
+
     let sourcePlayer: Locator | null = null;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
@@ -155,7 +172,7 @@ export class LineupManagementPage extends BasePage {
         break;
       }
     }
-    
+
     if (!sourcePlayer) {
       throw new Error(`Lineup player "${playerName}" not found`);
     }

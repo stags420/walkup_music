@@ -11,7 +11,7 @@ export class LoginPage extends BasePage {
 
   // Selectors
   private readonly loginButton = '[data-testid="spotify-login-button"]';
-  private readonly welcomeMessage = '.welcome-message';
+  // private readonly welcomeMessage = '.welcome-message';
   private readonly errorMessage = '.alert-danger';
 
   /**
@@ -54,6 +54,8 @@ export class LoginPage extends BasePage {
     await this.clickLogin();
     // In mock mode, authentication happens immediately without redirect
     // Wait for authenticated content to appear
-    await this.page.waitForSelector('[data-testid="add-player-button"]', { timeout: 10000 });
+    await this.page.waitForSelector('[data-testid="add-player-button"]', {
+      timeout: 10000,
+    });
   }
 }

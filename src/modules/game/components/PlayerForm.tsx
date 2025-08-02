@@ -231,7 +231,6 @@ export function PlayerForm({
                   placeholder="Enter player name"
                   disabled={loading}
                   required
-                  autoFocus
                   data-testid="player-name-input"
                 />
               </Form.Group>

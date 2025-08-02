@@ -25,7 +25,7 @@ jest.mock('@/modules/game/components/OrderBuilder', () => ({
 // Mock the PlayerForm component
 jest.mock('@/modules/game/components/PlayerForm', () => ({
   PlayerForm: jest.fn(({ onSave, onCancel }) => (
-    <div data-testid="player-form">
+    <div>
       <button onClick={onSave} data-testid="save-player">
         Save
       </button>

@@ -3,11 +3,11 @@ import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvide
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
 import { MockAuthService } from '@/modules/auth/services/MockAuthService';
 import { MockMusicService } from '@/modules/music/services/MusicService';
-import { appConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/config';
 
 // Mock the global config provider
 jest.mock('@/modules/config', () => ({
-  appConfigProvider: {
+  AppConfigProvider: {
     get: jest.fn(),
     initialize: jest.fn(),
   },
@@ -105,7 +105,7 @@ describe('Mock Mode Initialization', () => {
         basePath: '',
         mockAuth: true,
       };
-      (appConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
+      (AppConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
 
       // When getting auth service
       const authService = AuthServiceProvider.getOrCreate();
@@ -124,7 +124,7 @@ describe('Mock Mode Initialization', () => {
         basePath: '',
         mockAuth: false,
       };
-      (appConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
+      (AppConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
 
       // When getting auth service
       const authService = AuthServiceProvider.getOrCreate();
@@ -146,7 +146,7 @@ describe('Mock Mode Initialization', () => {
         basePath: '',
         mockAuth: true,
       };
-      (appConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
+      (AppConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
 
       // When getting music service
       const musicService = MusicServiceProvider.getOrCreate();
@@ -165,7 +165,7 @@ describe('Mock Mode Initialization', () => {
         basePath: '',
         mockAuth: false,
       };
-      (appConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
+      (AppConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
 
       // When getting music service without auth service
       const musicService = MusicServiceProvider.getOrCreate();
@@ -184,7 +184,7 @@ describe('Mock Mode Initialization', () => {
         basePath: '',
         mockAuth: true,
       };
-      (appConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
+      (AppConfigProvider.get as jest.Mock).mockReturnValue(mockConfig);
 
       // Create a mock auth service
       const mockAuthService = new MockAuthService();

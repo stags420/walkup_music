@@ -16,7 +16,7 @@ import {
 import { MusicServiceProvider } from '@/modules/music';
 import { StorageServiceProvider } from '@/modules/storage';
 import { GlobalPlaybackControl } from '@/modules/core';
-import { appConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/config';
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -54,7 +54,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
   const playerService = PlayerServiceProvider.getOrCreate();
   const authService = AuthServiceProvider.getOrCreate();
   const storageService = StorageServiceProvider.getOrCreate();
-  const musicService = MusicServiceProvider.getOrCreate(authService, false); // Use real Spotify integration
+  const musicService = MusicServiceProvider.getOrCreate(authService); // Will use mock if config.mockAuth is true
   const lineupService = LineupServiceProvider.getOrCreate(
     playerService,
     musicService,
@@ -142,7 +142,7 @@ function AppContainer() {
 
 export function App() {
   const authService = AuthServiceProvider.getOrCreate();
-  const config = appConfigProvider.get();
+  const config = AppConfigProvider.get();
   const basename = config.basePath || '/';
 
   return (

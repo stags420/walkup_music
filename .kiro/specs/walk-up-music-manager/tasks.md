@@ -107,7 +107,7 @@
   - Write unit tests for mock auth service and mock mode initialization
   - _Requirements: Support development workflow with automated testing_
 
-- [ ] 13.2 Create Playwright e2e test suite for mock mode
+- [x] 13.2 Create Playwright e2e test suite for mock mode
   - Set up Playwright testing framework with TypeScript configuration
   - Write e2e tests for complete user workflows using mock auth mode
   - Test player management: create, edit, delete players with song selection
@@ -115,6 +115,11 @@
   - Test game mode transitions: start game, next batter, end game functionality
   - Add test scenarios that automatically catch UI issues found during manual testing
   - Create test data fixtures and page object models for maintainable tests
+  - _Requirements: Automated validation of user workflows and UI behavior_
+
+- [ ] 13.3 Finish e2e testing
+  - Review playwright steering guidance and improve tests where needed
+  - Make tests pass
   - _Requirements: Automated validation of user workflows and UI behavior_
 
 - [ ] 14. Build configuration management

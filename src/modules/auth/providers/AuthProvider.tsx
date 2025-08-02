@@ -74,7 +74,19 @@ export function AuthProvider({ children, authService }: AuthProviderProps) {
   const login = useCallback(async () => {
     try {
       await authService.login();
-      // Note: login() redirects to Spotify, so we won't reach this point
+
+      // For mock auth, login completes immediately without redirect
+      // Check if we're now authenticated and get user info
+      if (authService.isAuthenticated()) {
+        const userInfo = await authService.getUserInfo();
+        if (userInfo) {
+          dispatch({
+            type: 'LOGIN_SUCCESS',
+            user: userInfo,
+          });
+        }
+      }
+      // Note: For real Spotify auth, login() redirects to Spotify, so we won't reach this point
       // The success handling happens in handleCallback
     } catch (error) {
       console.error('Login failed:', error);

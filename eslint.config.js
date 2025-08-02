@@ -45,9 +45,7 @@ export default [
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': ["warn", {
-        fixToUnknown: true,
-      }],
+      '@typescript-eslint/no-explicit-any': ["error"],
 
       // React hooks rules
       ...reactHooks.configs.recommended.rules,
@@ -90,6 +88,17 @@ export default [
     languageOptions: {
       globals: {
         ...globals.jest,
+        ...globals.browser,
+      },
+    },
+  },
+
+  // Config files configuration (Playwright, Vite, etc.)
+  {
+    files: ['*.config.{ts,js}', '**/*.config.{ts,js}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
         ...globals.browser,
       },
     },

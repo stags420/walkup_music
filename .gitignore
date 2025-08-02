@@ -90,3 +90,5 @@ spotify-credentials.json
 .cursor/
 
 .todo
+
+e2e/playwright/*

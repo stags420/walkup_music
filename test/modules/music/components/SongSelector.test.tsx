@@ -61,11 +61,10 @@ jest.mock('@/modules/core', () => ({
   TrackCard: ({
     track,
     onSelect,
-    _onPreview,
+    onPreview: _onPreview,
     isSelected,
     isPlaying,
-    _variant,
-    ...props
+    variant: _variant,
   }: {
     track: {
       id: string;
@@ -79,18 +78,16 @@ jest.mock('@/modules/core', () => ({
       preview_url?: string;
     };
     onSelect?: () => void;
-    _onPreview?: () => void;
+    onPreview?: () => void;
     isSelected?: boolean;
     isPlaying?: boolean;
-    _variant?: string;
-    [key: string]: unknown;
+    variant?: string;
   }) => (
     <div
       className={`track-card ${isSelected ? 'selected' : ''} ${isPlaying ? 'playing' : ''}`}
       onClick={() => {
         onSelect?.();
       }}
-      {...props}
     >
       <div className="track-info">
         <div className="track-name">{track.name}</div>

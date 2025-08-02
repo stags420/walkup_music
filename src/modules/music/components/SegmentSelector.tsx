@@ -285,7 +285,7 @@ export function SegmentSelector({
 
   return createPortal(
     <div className="segment-selector-overlay">
-      <div className="segment-selector-modal">
+      <div className="segment-selector-modal" data-testid="segment-selector">
         <div className="segment-selector-header">
           <h2>Select Timing</h2>
           <button
@@ -459,7 +459,11 @@ export function SegmentSelector({
           <Button onClick={handleCancel} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleConfirm} variant="success">
+          <Button
+            onClick={handleConfirm}
+            variant="success"
+            data-testid="confirm-song-button"
+          >
             Confirm
           </Button>
         </div>

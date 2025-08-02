@@ -158,6 +158,7 @@ export function SongSelector({
               className="search-input"
               placeholder="e.g., Eye of the Tiger, Queen, Metallica..."
               autoFocus
+              data-testid="song-search-input"
             />
           </div>
 
@@ -221,6 +222,7 @@ export function SongSelector({
                         handlePlayPreview(track, {} as React.MouseEvent)
                       }
                       isPlaying={playingTrackId === track.id}
+                      data-testid="song-result"
                     />
                   ))}
               </div>
@@ -242,6 +244,7 @@ export function SongSelector({
             onClick={handleConfirmSelection}
             variant="primary"
             disabled={!selectedTrackId}
+            data-testid="select-song-result-button"
           >
             Select Song
           </Button>

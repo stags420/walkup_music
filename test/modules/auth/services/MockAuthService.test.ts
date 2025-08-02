@@ -4,7 +4,14 @@ describe('MockAuthService', () => {
   let mockAuthService: MockAuthService;
 
   beforeEach(() => {
+    // Clear localStorage before each test to ensure clean state
+    localStorage.clear();
     mockAuthService = new MockAuthService();
+  });
+
+  afterEach(() => {
+    // Clean up localStorage after each test
+    localStorage.clear();
   });
 
   describe('authentication state', () => {

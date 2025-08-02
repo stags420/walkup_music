@@ -132,7 +132,11 @@ export function BattingOrderManager({
       {/* Start Game button - only show when there are players in lineup or available */}
       {canStartGame && (
         <div className="start-game-section">
-          <button onClick={handleStartGame} className="start-game-button">
+          <button
+            onClick={handleStartGame}
+            className="start-game-button"
+            data-testid="start-game-button"
+          >
             Start Game
           </button>
         </div>
@@ -141,30 +145,38 @@ export function BattingOrderManager({
       <div className="batting-order-manager-header">
         <h1>Lineup</h1>
         <div className="header-actions">
-          <button onClick={handleAddPlayer} className="add-player-button">
+          <button
+            onClick={handleAddPlayer}
+            className="add-player-button"
+            data-testid="add-player-button"
+          >
             Add Player
           </button>
         </div>
       </div>
 
-      <OrderBuilder
-        ref={orderBuilderRef}
-        lineup={lineup}
-        availablePlayers={availablePlayers}
-        onLineupChange={handleLineupChange}
-        musicService={musicService}
-        playerService={playerService}
-      />
+      <div data-testid="player-list">
+        <OrderBuilder
+          ref={orderBuilderRef}
+          lineup={lineup}
+          availablePlayers={availablePlayers}
+          onLineupChange={handleLineupChange}
+          musicService={musicService}
+          playerService={playerService}
+        />
+      </div>
 
       {showForm && (
-        <PlayerForm
-          playerService={playerService}
-          musicService={musicService}
-          player={editingPlayer}
-          segmentEditOnly={editingSegmentOnly}
-          onSave={handleSavePlayer}
-          onCancel={handleCancelForm}
-        />
+        <div data-testid="player-form">
+          <PlayerForm
+            playerService={playerService}
+            musicService={musicService}
+            player={editingPlayer}
+            segmentEditOnly={editingSegmentOnly}
+            onSave={handleSavePlayer}
+            onCancel={handleCancelForm}
+          />
+        </div>
       )}
 
       {showSegmentSelector && editingPlayer?.song && (

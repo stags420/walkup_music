@@ -232,6 +232,7 @@ export function PlayerForm({
                   disabled={loading}
                   required
                   autoFocus
+                  data-testid="player-name-input"
                 />
               </Form.Group>
             )}
@@ -322,6 +323,7 @@ export function PlayerForm({
                       variant="primary"
                       onClick={handleSelectSong}
                       disabled={loading}
+                      data-testid="select-song-button"
                     >
                       Select Song
                     </Button>
@@ -339,17 +341,24 @@ export function PlayerForm({
               onClick={() => setShowDeleteConfirm(true)}
               disabled={loading}
               style={{ marginRight: 'auto' }}
+              data-testid="delete-player-button"
             >
               Delete Player
             </Button>
           )}
-          <Button variant="secondary" onClick={handleCancel} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={handleCancel}
+            disabled={loading}
+            data-testid="cancel-player-button"
+          >
             Cancel
           </Button>
           <Button
             variant="success"
             onClick={handleSubmit}
             disabled={loading || (!isSegmentEdit && !name.trim())}
+            data-testid="save-player-button"
           >
             {loading
               ? 'Saving...'
@@ -389,6 +398,7 @@ export function PlayerForm({
             variant="danger"
             onClick={handleDeletePlayer}
             disabled={loading}
+            data-testid="confirm-delete-button"
           >
             {loading ? 'Deleting...' : 'Delete Player'}
           </Button>

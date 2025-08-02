@@ -61,10 +61,15 @@ export function GameMode({
           onClick={handleNextBatter}
           disabled={isLoading}
           className="next-batter-button"
+          data-testid="next-batter-button"
         >
           {isLoading ? 'Advancing...' : 'Next Batter'}
         </button>
-        <button onClick={handleEndGameClick} className="end-game-button">
+        <button
+          onClick={handleEndGameClick}
+          className="end-game-button"
+          data-testid="end-game-button"
+        >
           End Game
         </button>
       </div>

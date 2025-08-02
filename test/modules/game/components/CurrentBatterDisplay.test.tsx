@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
 import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerService } from '@/modules/game/services/PlayerService';
@@ -116,16 +116,20 @@ describe('CurrentBatterDisplay', () => {
     mockLineupService.getOnDeckBatter.mockResolvedValue(null);
     mockLineupService.getInTheHoleBatter.mockResolvedValue(null);
 
-    render(
-      <CurrentBatterDisplay
-        lineupService={mockLineupService}
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
+    await act(async () => {
+      render(
+        <CurrentBatterDisplay
+          lineupService={mockLineupService}
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+        />
+      );
+    });
 
     // Wait for the component to load
-    await screen.findByText('John Doe');
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
 
     // Check that edit button is present
     expect(screen.getByLabelText('Edit player')).toBeInTheDocument();
@@ -136,16 +140,20 @@ describe('CurrentBatterDisplay', () => {
     mockLineupService.getOnDeckBatter.mockResolvedValue(null);
     mockLineupService.getInTheHoleBatter.mockResolvedValue(null);
 
-    render(
-      <CurrentBatterDisplay
-        lineupService={mockLineupService}
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
+    await act(async () => {
+      render(
+        <CurrentBatterDisplay
+          lineupService={mockLineupService}
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+        />
+      );
+    });
 
     // Wait for the component to load
-    await screen.findByText('John Doe');
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
 
     // Check that edit button is present
     expect(screen.getByLabelText('Edit player')).toBeInTheDocument();
@@ -156,17 +164,21 @@ describe('CurrentBatterDisplay', () => {
     mockLineupService.getOnDeckBatter.mockResolvedValue(mockPlayer);
     mockLineupService.getInTheHoleBatter.mockResolvedValue(mockPlayer);
 
-    render(
-      <CurrentBatterDisplay
-        lineupService={mockLineupService}
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
+    await act(async () => {
+      render(
+        <CurrentBatterDisplay
+          lineupService={mockLineupService}
+          playerService={mockPlayerService}
+          musicService={mockMusicService}
+        />
+      );
+    });
 
     // Wait for the component to load
-    const playerNames = await screen.findAllByText('John Doe');
-    expect(playerNames).toHaveLength(2);
+    await waitFor(() => {
+      const playerNames = screen.getAllByText('John Doe');
+      expect(playerNames).toHaveLength(2);
+    });
 
     // Check that edit buttons are present for both secondary batters
     const editButtons = screen.getAllByLabelText('Edit player');

@@ -54,23 +54,25 @@ export function CurrentBatterDisplay({
     }
 
     return (
-      <PlayerCard
-        player={{
-          id: currentBatter.id,
-          name: currentBatter.name,
-          song: currentBatter.song,
-          createdAt: currentBatter.createdAt,
-          updatedAt: currentBatter.updatedAt,
-        }}
-        header="BATTER UP"
-        size="large"
-        displayAlbumArt={true}
-        allowPlayMusic={true}
-        playerService={playerService}
-        musicService={musicService}
-        onPlayerUpdated={refreshBatters}
-        className="current-batter-card"
-      />
+      <div data-testid="current-batter-name">
+        <PlayerCard
+          player={{
+            id: currentBatter.id,
+            name: currentBatter.name,
+            song: currentBatter.song,
+            createdAt: currentBatter.createdAt,
+            updatedAt: currentBatter.updatedAt,
+          }}
+          header="BATTER UP"
+          size="large"
+          displayAlbumArt={true}
+          allowPlayMusic={true}
+          playerService={playerService}
+          musicService={musicService}
+          onPlayerUpdated={refreshBatters}
+          className="current-batter-card"
+        />
+      </div>
     );
   };
 
@@ -98,29 +100,40 @@ export function CurrentBatterDisplay({
     }
 
     return (
-      <PlayerCard
-        player={{
-          id: batter.id,
-          name: batter.name,
-          song: batter.song,
-          createdAt: batter.createdAt,
-          updatedAt: batter.updatedAt,
-        }}
-        header={positionLabels[position]}
-        size="medium"
-        displayAlbumArt={false}
-        allowPlayMusic={false}
-        borderColor={borderColors[position]}
-        playerService={playerService}
-        musicService={musicService}
-        onPlayerUpdated={refreshBatters}
-        className={`secondary-batter-card ${position}`}
-      />
+      <div
+        data-testid={
+          position === 'on-deck'
+            ? 'on-deck-batter-name'
+            : 'in-the-hole-batter-name'
+        }
+      >
+        <PlayerCard
+          player={{
+            id: batter.id,
+            name: batter.name,
+            song: batter.song,
+            createdAt: batter.createdAt,
+            updatedAt: batter.updatedAt,
+          }}
+          header={positionLabels[position]}
+          size="medium"
+          displayAlbumArt={false}
+          allowPlayMusic={false}
+          borderColor={borderColors[position]}
+          playerService={playerService}
+          musicService={musicService}
+          onPlayerUpdated={refreshBatters}
+          className={`secondary-batter-card ${position}`}
+        />
+      </div>
     );
   };
 
   return (
-    <div className="current-batter-display">
+    <div
+      className="current-batter-display"
+      data-testid="current-batter-display"
+    >
       {/* Current batter - prominent display */}
       {renderCurrentBatter()}
 

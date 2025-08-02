@@ -1,26 +1,17 @@
-// Singleton service provider for AppConfig following React concepts guidance
 import { AppConfig } from '@/modules/config/models/AppConfig';
 
 /**
- * Singleton service provider for AppConfig
- * This should be initialized once at app startup with the configuration
- *
- * Usage:
- *   // At startup:
- *   appConfigProvider.initialize(config);
- *
- *   // Anywhere else:
- *   const config = appConfigProvider.get();
+ * Provider for creating AppConfig instances with proper dependencies
  */
-class AppConfigProvider {
-  private instance: AppConfig | null = null;
-  private isInitialized = false;
+export class AppConfigProvider {
+  private static instance: AppConfig | null = null;
+  private static isInitialized = false;
 
   /**
    * Initialize the app config at startup
    * This should be called once at the beginning of the application
    */
-  initialize(config: AppConfig): void {
+  static initialize(config: AppConfig): void {
     if (this.isInitialized) {
       console.warn(
         'AppConfig is already initialized. Skipping re-initialization.'
@@ -37,11 +28,11 @@ class AppConfigProvider {
    * @throws {Error} If config has not been initialized
    * @returns {AppConfig} The initialized configuration
    */
-  get(): AppConfig {
+  static get(): AppConfig {
     if (!this.instance || !this.isInitialized) {
       throw new Error(
         'AppConfig has not been initialized. ' +
-          'Call appConfigProvider.initialize(config) at application startup before using the config.'
+          'Call AppConfigProvider.initialize(config) at application startup before using the config.'
       );
     }
 
@@ -52,14 +43,14 @@ class AppConfigProvider {
    * Create a config instance for testing
    * @param testConfig - Test configuration
    */
-  createForTesting(testConfig: AppConfig): AppConfig {
+  static createForTesting(testConfig: AppConfig): AppConfig {
     return testConfig;
   }
 
   /**
    * Reset the singleton instance (useful for testing)
    */
-  reset(): void {
+  static reset(): void {
     this.instance = null;
     this.isInitialized = false;
   }
@@ -67,13 +58,7 @@ class AppConfigProvider {
   /**
    * Check if the config has been initialized
    */
-  isConfigInitialized(): boolean {
+  static isConfigInitialized(): boolean {
     return this.isInitialized;
   }
 }
-
-// Export a singleton instance of the provider
-const appConfigProvider = new AppConfigProvider();
-
-export default appConfigProvider;
-export { AppConfigProvider };

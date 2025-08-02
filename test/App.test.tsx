@@ -63,8 +63,7 @@ jest.mock('@/modules/storage', () => ({
 }));
 
 jest.mock('@/modules/game/providers/LineupServiceProvider', () => ({
-  __esModule: true,
-  default: {
+  LineupServiceProvider: {
     getOrCreate: jest.fn(() => ({
       createBattingOrder: jest.fn(),
       updateBattingOrder: jest.fn(),

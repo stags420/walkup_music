@@ -1,7 +1,7 @@
 import { AuthService } from '@/modules/auth';
 import { SpotifyAuthService } from '@/modules/auth/services/SpotifyAuthService';
 import { MockAuthService } from '@/modules/auth/services/MockAuthService';
-import { appConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/config';
 
 /**
  * Provider for creating AuthService instances with proper dependencies
@@ -15,7 +15,7 @@ export class AuthServiceProvider {
   static getOrCreate(): AuthService {
     if (!this.instance) {
       // Get config from global config singleton
-      const config = appConfigProvider.get();
+      const config = AppConfigProvider.get();
 
       this.instance = config.mockAuth
         ? new MockAuthService()

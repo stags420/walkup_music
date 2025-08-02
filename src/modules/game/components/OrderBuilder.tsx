@@ -41,7 +41,10 @@ const PlayerCardComponent = ({
   onMoveDown,
 }: PlayerCardProps) => {
   return (
-    <div className="order-builder-player-wrapper">
+    <div
+      className="order-builder-player-wrapper"
+      data-testid={fromLineup ? 'lineup-player' : 'available-player'}
+    >
       <div className="left-actions">
         <div className="batting-position">
           {fromLineup ? `${index + 1}.` : ''}
@@ -157,7 +160,10 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
       <div className="order-builder">
         <div className="order-builder-columns">
           {/* Lineup Column */}
-          <div className="order-builder-column lineup-column">
+          <div
+            className="order-builder-column lineup-column"
+            data-testid="lineup-column"
+          >
             <div className="column-header">
               <h2>Batting Lineup</h2>
               <span className="player-count">{lineup.length} players</span>
@@ -187,7 +193,10 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
           </div>
 
           {/* Bench Column */}
-          <div className="order-builder-column available-column">
+          <div
+            className="order-builder-column available-column"
+            data-testid="available-players-column"
+          >
             <div className="column-header">
               <h2>Bench</h2>
               <span className="player-count">

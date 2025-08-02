@@ -40,6 +40,7 @@ export function LoginPage({ auth }: LoginPageProps) {
               className="spotify-login-button"
               onClick={handleLogin}
               aria-describedby="login-help"
+              data-testid="spotify-login-button"
             >
               <span className="spotify-icon" aria-hidden="true">
                 ♪

@@ -122,7 +122,9 @@ export class SpotifyMusicService implements MusicService {
  */
 export class MockMusicService implements MusicService {
   private previewTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private readonly mockTracks: SpotifyTrack[] = [
+  private readonly mockTracks: SpotifyTrack[];
+
+  private static readonly defaultMockTracks: SpotifyTrack[] = [
     {
       id: 'track1',
       name: 'Eye of the Tiger',
@@ -237,17 +239,35 @@ export class MockMusicService implements MusicService {
 
   private playbackService: SpotifyPlaybackService;
 
-  constructor(playbackService: SpotifyPlaybackService) {
+  constructor(
+    playbackService: SpotifyPlaybackService,
+    injectedTracks?: SpotifyTrack[] | null
+  ) {
     this.playbackService = playbackService;
+    this.mockTracks = injectedTracks || MockMusicService.defaultMockTracks;
+    console.log(
+      'MockMusicService initialized with',
+      this.mockTracks.length,
+      'tracks'
+    );
+    console.log(
+      'First few tracks:',
+      this.mockTracks
+        .slice(0, 3)
+        .map((t) => `${t.name} by ${t.artists.join(', ')}`)
+    );
   }
 
   async searchTracks(query: string): Promise<SpotifyTrack[]> {
+    console.log('MockMusicService.searchTracks called with query:', query);
+
     // Simulate network delay
     await new Promise((resolve) =>
       setTimeout(resolve, 300 + Math.random() * 700)
     );
 
     if (!query.trim()) {
+      console.log('Empty query, returning empty results');
       return [];
     }
 
@@ -262,6 +282,12 @@ export class MockMusicService implements MusicService {
         track.album.toLowerCase().includes(searchTerm)
     );
 
+    console.log(
+      'MockMusicService search results:',
+      results.length,
+      'tracks found'
+    );
+
     // Return a shuffled subset to simulate varied results
     const shuffled = results.sort(() => Math.random() - 0.5);
     const limitedResults = shuffled.slice(0, Math.min(8, shuffled.length));
@@ -271,6 +297,11 @@ export class MockMusicService implements MusicService {
       (track, index, self) => index === self.findIndex((t) => t.id === track.id)
     );
 
+    console.log(
+      'MockMusicService returning:',
+      uniqueResults.length,
+      'unique results'
+    );
     return uniqueResults;
   }
 

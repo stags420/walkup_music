@@ -33,9 +33,14 @@ console.error = (...args) => {
     (message.includes('Not implemented: HTMLMediaElement.prototype.pause') ||
       message.includes('Not implemented: HTMLMediaElement.prototype.play') ||
       message.includes('Error: Not implemented: HTMLMediaElement') ||
-      message.includes('Not implemented: HTMLMediaElement'))
+      message.includes('Not implemented: HTMLMediaElement') ||
+      (message.includes('An update to') &&
+        message.includes('inside a test was not wrapped in act')) ||
+      message.includes(
+        'When testing, code that causes React state updates should be wrapped into act'
+      ))
   ) {
-    // Suppress these specific JSDOM limitations
+    // Suppress these specific JSDOM limitations and React act warnings
     return;
   }
   // Allow all other console.error messages through

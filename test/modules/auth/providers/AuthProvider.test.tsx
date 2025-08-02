@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth, AuthService } from '@/modules/auth';
-import { appConfigProvider, AppConfig } from '@/modules/config';
+import { AppConfigProvider, AppConfig } from '@/modules/config';
 
 // Mock auth service for testing
 class MockAuthService implements AuthService {
@@ -119,13 +119,13 @@ describe('AuthContext', () => {
   beforeEach(() => {
     mockAuthService = new MockAuthService();
     // Initialize global config for tests
-    appConfigProvider.reset();
-    appConfigProvider.initialize(mockConfig);
+    AppConfigProvider.reset();
+    AppConfigProvider.initialize(mockConfig);
   });
 
   afterEach(() => {
     // Clean up global config after each test
-    appConfigProvider.reset();
+    AppConfigProvider.reset();
   });
 
   it('should provide initial unauthenticated state', () => {

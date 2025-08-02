@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
-import { appConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/config';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
@@ -44,7 +44,7 @@ const initializeAppConfig = () => {
     mockAuth,
   };
 
-  appConfigProvider.initialize(config);
+  AppConfigProvider.initialize(config);
 };
 
 // Initialize configuration before rendering the app

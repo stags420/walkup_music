@@ -1,4 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import { GameMode } from '@/modules/game/components/GameMode';
 import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerService } from '@/modules/game/services/PlayerService';
@@ -6,9 +12,9 @@ import { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock the LineupService
 const mockLineupService = {
-  getCurrentBatter: jest.fn(),
-  getOnDeckBatter: jest.fn(),
-  getInTheHoleBatter: jest.fn(),
+  getCurrentBatter: jest.fn().mockResolvedValue(null),
+  getOnDeckBatter: jest.fn().mockResolvedValue(null),
+  getInTheHoleBatter: jest.fn().mockResolvedValue(null),
   nextBatter: jest.fn(),
   playWalkUpMusic: jest.fn(),
   stopMusic: jest.fn(),
@@ -143,6 +149,9 @@ describe('GameMode', () => {
   });
 
   it('should call nextBatter when next batter button is clicked', async () => {
+    // Mock nextBatter to return a resolved promise
+    mockLineupService.nextBatter.mockResolvedValue(undefined);
+
     render(
       <GameMode
         lineupService={mockLineupService}
@@ -153,9 +162,14 @@ describe('GameMode', () => {
     );
 
     const nextBatterButton = screen.getByText('Next Batter');
-    fireEvent.click(nextBatterButton);
 
-    expect(mockLineupService.nextBatter).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(nextBatterButton);
+    });
+
+    await waitFor(() => {
+      expect(mockLineupService.nextBatter).toHaveBeenCalled();
+    });
   });
 
   it('should render CurrentBatterDisplay component', () => {

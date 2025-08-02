@@ -6,7 +6,7 @@ export { PlayerService } from './services/PlayerService';
 export { PlayerServiceProvider } from './providers/PlayerServiceProvider';
 export type { LineupService } from './services/LineupService';
 export { LineupServiceImpl } from './services/LineupService';
-export { default as LineupServiceProvider } from './providers/LineupServiceProvider';
+export { LineupServiceProvider } from './providers/LineupServiceProvider';
 
 // Components
 export { PlayerManager } from './components/PlayerManager';

@@ -114,6 +114,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       <div
         className={`player-card player-card--${size} ${header ? '' : 'player-card--no-header'} ${className}`}
         style={borderColor ? { borderColor } : undefined}
+        data-testid="player-card"
       >
         {/* Edit button - always show when musicService is available */}
         {musicService && (
@@ -121,6 +122,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
             className="player-card__edit-button"
             onClick={handleEdit}
             aria-label="Edit player"
+            data-testid="edit-player-button"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
@@ -139,7 +141,12 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
 
         {/* Player Name */}
         <div className="player-card__name">
-          <h4 className="player-card__name-text player-name">{player.name}</h4>
+          <h4
+            className="player-card__name-text player-name"
+            data-testid="player-name"
+          >
+            {player.name}
+          </h4>
         </div>
 
         {/* Album Art */}
@@ -183,6 +190,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
               onClick={isPlaying ? handleStopMusic : handlePlayMusic}
               disabled={isLoading}
               className="player-card__play-button"
+              data-testid="play-button"
             >
               {isLoading
                 ? isPlaying

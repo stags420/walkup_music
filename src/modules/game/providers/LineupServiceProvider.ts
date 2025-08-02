@@ -3,25 +3,45 @@ import { PlayerService } from '../services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
 import { StorageService } from '@/modules/storage';
 
-const lineupServiceProvider = (() => {
-  let instance: LineupService;
+/**
+ * Provider for creating LineupService instances with proper dependencies
+ */
+export class LineupServiceProvider {
+  private static instance: LineupService | null = null;
 
-  return {
-    getOrCreate(
-      playerService: PlayerService,
-      musicService: MusicService,
-      storageService: StorageService
-    ): LineupService {
-      if (!instance) {
-        instance = new LineupServiceImpl(
-          playerService,
-          musicService,
-          storageService
-        );
-      }
-      return instance;
-    },
-  };
-})();
+  /**
+   * Get a singleton instance of LineupService
+   */
+  static getOrCreate(
+    playerService: PlayerService,
+    musicService: MusicService,
+    storageService: StorageService
+  ): LineupService {
+    if (!this.instance) {
+      this.instance = new LineupServiceImpl(
+        playerService,
+        musicService,
+        storageService
+      );
+    }
+    return this.instance;
+  }
 
-export default lineupServiceProvider;
+  /**
+   * Create a new LineupService instance for testing
+   */
+  static createForTesting(
+    playerService: PlayerService,
+    musicService: MusicService,
+    storageService: StorageService
+  ): LineupService {
+    return new LineupServiceImpl(playerService, musicService, storageService);
+  }
+
+  /**
+   * Reset the singleton instance (useful for testing)
+   */
+  static reset(): void {
+    this.instance = null;
+  }
+}

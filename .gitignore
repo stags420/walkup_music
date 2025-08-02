@@ -11,6 +11,7 @@ coverage/
 
 # Build output
 dist/
+dist-mocked/
 build/
 
 # Environment variables

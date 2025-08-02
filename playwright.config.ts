@@ -43,7 +43,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'VITE_MOCK_AUTH=true npx vite preview --port 4173 --host 127.0.0.1',
+    command: 'npx vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked',
     url: 'http://127.0.0.1:4173/walkup_music/',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

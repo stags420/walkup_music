@@ -174,4 +174,4 @@ Please change the parent <Route path="${y}"> to <Route path="${y==="/"?"*":`${y}
       color: #ffffff !important;
     }
   `,document.head.append(e)};gE();U0.createRoot(document.querySelector("#root")).render(o.jsx(f.StrictMode,{children:o.jsx(dE,{})}));
-//# sourceMappingURL=index-BWskNGad.js.map
+//# sourceMappingURL=index-Cb5xg6wZ.js.map

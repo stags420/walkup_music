@@ -1,6 +1,6 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: "e2e/**/*.ts"
+fileMatchPattern: "**/e2e/**/*.ts"
 ---
 
 # Playwright End-to-End Testing Automation Guide

@@ -87,7 +87,7 @@ export class PlayerManagementPage extends BasePage {
     await this.fillPlayerName(player.name);
 
     if (player.song) {
-      await this.selectSong(player.song.title, player.song.artist);
+      await this.selectSongWithSegment(player.song.title, player.song.artist);
     }
 
     await this.savePlayer();
@@ -113,6 +113,48 @@ export class PlayerManagementPage extends BasePage {
 
     // Wait for segment selector and confirm
     await this.waitForSelector(this.segmentSelector);
+    await this.clickWithRetry(this.confirmSongButton);
+  }
+
+  /**
+   * Select a song with segment selection for the current player
+   */
+  async selectSongWithSegment(title: string, _artist: string) {
+    // Click the select song button to open the song selector modal
+    await this.clickWithRetry(this.selectSongButton);
+    await this.waitForSelector(this.songSearchInput);
+
+    // Search for the song title
+    await this.fillWithRetry(this.songSearchInput, title);
+    await this.page.waitForTimeout(3000); // Wait for debounce + network + processing
+
+    // Wait for at least one result
+    await this.waitForSelector(this.songResult);
+
+    // Select the first matching result
+    await this.clickWithRetry(this.songResult);
+
+    // Wait for the button to become enabled before clicking
+    await this.page.waitForFunction(
+      () => {
+        const button = document.querySelector(
+          '[data-testid="select-song-result-button"]'
+        ) as HTMLButtonElement;
+        return button && !button.disabled;
+      },
+      { timeout: 5000 }
+    );
+
+    await this.clickWithRetry(this.selectSongResultButton);
+
+    // Wait for segment selector to appear
+    await this.waitForSelector(this.segmentSelector);
+
+    // Verify segment selector is visible
+    const segmentSelector = this.page.locator(this.segmentSelector);
+    await segmentSelector.waitFor({ state: 'visible' });
+
+    // Confirm the selected segment (skip playback testing for now)
     await this.clickWithRetry(this.confirmSongButton);
   }
 

@@ -117,7 +117,8 @@
   - Create test data fixtures and page object models for maintainable tests
   - _Requirements: Automated validation of user workflows and UI behavior_
 
-- [ ] 13.3 Finish e2e testing
+- [x] 13.3 Finish e2e testing
+  - Complete the full workflow test, including song selection, segment selection. 
   - Review playwright steering guidance and improve tests where needed
   - Make tests pass
   - _Requirements: Automated validation of user workflows and UI behavior_

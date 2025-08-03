@@ -441,6 +441,9 @@ export function SegmentSelector({
                       className={`play-button selection ${isPlayingSelection ? 'playing' : ''}`}
                       onClick={handlePlaySelection}
                       disabled={!musicService}
+                      data-testid={
+                        isPlayingSelection ? 'pause-button' : 'play-button'
+                      }
                     >
                       {isPlayingSelection ? (
                         <>⏸ STOP SELECTION</>

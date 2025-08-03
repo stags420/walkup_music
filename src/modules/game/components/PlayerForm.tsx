@@ -205,6 +205,7 @@ export function PlayerForm({
         centered
         backdrop="static"
         style={{ backdropFilter: 'blur(4px)' }}
+        data-testid="player-form"
       >
         <Modal.Header closeButton={!loading}>
           <Modal.Title>
@@ -280,6 +281,7 @@ export function PlayerForm({
                           size="sm"
                           onClick={handleChangeSong}
                           disabled={loading}
+                          data-testid="select-song-button"
                         >
                           Change Song
                         </Button>

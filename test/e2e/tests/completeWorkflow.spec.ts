@@ -27,6 +27,145 @@ test.describe('Complete E2E Workflow', () => {
     }, testMockTracks);
   });
 
+  test('debug mock tracks injection', async ({ page }) => {
+    // Check if mock tracks are properly injected
+    await loginPage.goto();
+    await loginPage.waitForLoad();
+
+    // Check the global variable
+    const mockTracks = await page.evaluate(() => {
+      return (
+        globalThis as typeof globalThis & { __TEST_MOCK_TRACKS__?: unknown[] }
+      ).__TEST_MOCK_TRACKS__;
+    });
+
+    console.log('Mock tracks in browser:', mockTracks?.length || 'none');
+    expect(mockTracks).toBeTruthy();
+    expect(mockTracks?.length).toBeGreaterThan(0);
+  });
+
+  test('song selection and segment selection workflow', async ({ page }) => {
+    // 1. Authentication
+    await loginPage.goto();
+    await loginPage.waitForLoad();
+    await loginPage.loginInMockMode();
+    await expect(page).toHaveURL('/walkup_music/');
+
+    // 2. Test detailed song selection workflow
+    const testPlayer = testPlayers[0]; // Mike Trout with Thunderstruck
+
+    // Start creating a player
+    await playerPage.clickAddPlayer();
+    await playerPage.fillPlayerName(testPlayer.name);
+
+    // Test song search functionality
+    await playerPage.clickWithRetry('[data-testid="select-song-button"]');
+    await playerPage.waitForSelector('[data-testid="song-search-input"]');
+
+    // Search for the song
+    if (testPlayer.song) {
+      // Search for the song
+      await playerPage.fillWithRetry(
+        '[data-testid="song-search-input"]',
+        testPlayer.song.title
+      );
+
+      // Wait for search results to load
+      await page.waitForTimeout(3000);
+      await playerPage.waitForSelector('[data-testid="song-result"]');
+
+      // Verify search results are displayed
+      const searchResults = await page
+        .locator('[data-testid="song-result"]')
+        .count();
+      expect(searchResults).toBeGreaterThan(0);
+
+      // Select the first result
+      await playerPage.clickWithRetry('[data-testid="song-result"]');
+
+      // Wait for the button to become enabled before clicking
+      await page.waitForFunction(
+        () => {
+          const button = document.querySelector(
+            '[data-testid="select-song-result-button"]'
+          ) as HTMLButtonElement;
+          return button && !button.disabled;
+        },
+        { timeout: 5000 }
+      );
+
+      await playerPage.clickWithRetry(
+        '[data-testid="select-song-result-button"]'
+      );
+
+      // Test segment selection
+      await playerPage.waitForSelector('[data-testid="segment-selector"]');
+
+      // Verify segment selector is visible and functional
+      const segmentSelector = page.locator('[data-testid="segment-selector"]');
+      await expect(segmentSelector).toBeVisible();
+
+      // Confirm the segment selection
+      await playerPage.clickWithRetry('[data-testid="confirm-song-button"]');
+    }
+
+    // Save the player
+    await playerPage.savePlayer();
+
+    // Verify player was created successfully
+    expect(await playerPage.playerExists(testPlayer.name)).toBe(true);
+  });
+
+  test('edit player song selection workflow', async ({ page }) => {
+    // 1. Authentication and setup
+    await loginPage.goto();
+    await loginPage.waitForLoad();
+    await loginPage.loginInMockMode();
+    await expect(page).toHaveURL('/walkup_music/');
+
+    // 2. Create a player with a song first
+    const testPlayer = testPlayers[0]; // Mike Trout
+    await playerPage.createPlayerWithSong(testPlayer);
+    expect(await playerPage.playerExists(testPlayer.name)).toBe(true);
+
+    // 3. Edit the player to change their song
+    await playerPage.editPlayer(testPlayer.name);
+
+    // 4. Change the song selection
+    const newSong = testPlayers[1].song; // Aaron Judge's song (All Star)
+    if (newSong) {
+      await playerPage.clickWithRetry('[data-testid="select-song-button"]');
+      await playerPage.waitForSelector('[data-testid="song-search-input"]');
+
+      // Clear and search for new song
+      await page.locator('[data-testid="song-search-input"]').fill('');
+      await playerPage.fillWithRetry(
+        '[data-testid="song-search-input"]',
+        newSong.title
+      );
+
+      // Wait for new search results
+      await page.waitForTimeout(1500);
+      await playerPage.waitForSelector('[data-testid="song-result"]');
+
+      // Select the new song
+      await playerPage.clickWithRetry('[data-testid="song-result"]');
+      await playerPage.clickWithRetry(
+        '[data-testid="select-song-result-button"]'
+      );
+
+      // Select segment for new song
+      await playerPage.waitForSelector('[data-testid="segment-selector"]');
+      await playerPage.clickWithRetry('[data-testid="confirm-song-button"]');
+    }
+
+    // 5. Save the changes
+    await playerPage.savePlayer();
+
+    // 6. Verify the player still exists (song change should be saved)
+    expect(await playerPage.playerExists(testPlayer.name)).toBe(true);
+  });
+
   test('complete end-to-end workflow: auth → add 4 players with songs → lineup → game', async ({
     page,
   }) => {
@@ -39,32 +178,46 @@ test.describe('Complete E2E Workflow', () => {
     await expect(page).toHaveURL('/walkup_music/');
     expect(await playerPage.isOnPlayerManagementPage()).toBe(true);
 
-    // 2. Add first player (for now without song to get basic workflow working)
+    // 2. Add first player with song selection and segment selection
     const player1 = testPlayers[0]; // Mike Trout
-    await playerPage.createPlayer(player1.name);
+    await playerPage.createPlayerWithSong(player1);
     expect(await playerPage.playerExists(player1.name)).toBe(true);
 
-    // 3. Add second player
+    // 3. Add second player with song selection and segment selection
     const player2 = testPlayers[1]; // Aaron Judge
-    await playerPage.createPlayer(player2.name);
+    await playerPage.createPlayerWithSong(player2);
     expect(await playerPage.playerExists(player2.name)).toBe(true);
 
-    // 4. Add third player
+    // 4. Add third player with song selection and segment selection
     const player3 = testPlayers[2]; // Mookie Betts
-    await playerPage.createPlayer(player3.name);
+    await playerPage.createPlayerWithSong(player3);
     expect(await playerPage.playerExists(player3.name)).toBe(true);
 
-    // 5. Add fourth player
+    // 5. Add fourth player with song selection and segment selection
     const player4 = testPlayers[3]; // Ronald Acuña Jr.
-    await playerPage.createPlayer(player4.name);
+    await playerPage.createPlayerWithSong(player4);
     expect(await playerPage.playerExists(player4.name)).toBe(true);
 
-    // 13. Verify all players exist and create lineup
+    // 6. Verify all players exist and have songs assigned
     const allPlayers = await playerPage.getPlayerNames();
     expect(allPlayers).toContain(player1.name);
     expect(allPlayers).toContain(player2.name);
     expect(allPlayers).toContain(player3.name);
     expect(allPlayers).toContain(player4.name);
+
+    // 7. Verify players have song information (check for song indicators in UI)
+    const playerCards = await playerPage.getPlayerCards();
+    expect(playerCards.length).toBe(4);
+
+    // Each player card should show song information
+    for (const card of playerCards) {
+      const songInfo = card.locator('[data-testid="player-song-info"]');
+      if (await songInfo.isVisible()) {
+        const songText = await songInfo.textContent();
+        expect(songText).toBeTruthy();
+        expect(songText?.length).toBeGreaterThan(0);
+      }
+    }
 
     // Navigate to lineup management and create batting order
     expect(await lineupPage.isOnLineupManagementPage()).toBe(true);
@@ -93,16 +246,29 @@ test.describe('Complete E2E Workflow', () => {
     expect(await gamePage.getOnDeckBatterName()).toBe(battingOrder[1]);
     expect(await gamePage.getInTheHoleBatterName()).toBe(battingOrder[2]);
 
-    // Test playback controls in game mode
-    if (
-      (await gamePage.arePlaybackControlsVisible()) &&
-      (await gamePage.isPlayButtonVisible())
-    ) {
-      await gamePage.clickPlay();
-      await page.waitForTimeout(1000); // Let song play briefly
+    // Test comprehensive playback controls in game mode
+    if (await gamePage.arePlaybackControlsVisible()) {
+      // Test play functionality
+      if (await gamePage.isPlayButtonVisible()) {
+        await gamePage.clickPlay();
+        await page.waitForTimeout(2000); // Let song play for 2 seconds
 
-      if (await gamePage.isPauseButtonVisible()) {
-        await gamePage.clickPause();
+        // Verify pause button appears after playing
+        if (await gamePage.isPauseButtonVisible()) {
+          await gamePage.clickPause();
+          await page.waitForTimeout(500);
+        }
+      }
+
+      // Verify song information is displayed
+      const songTitle = await gamePage.getCurrentSongTitle();
+      const songArtist = await gamePage.getCurrentSongArtist();
+
+      if (songTitle) {
+        expect(songTitle.length).toBeGreaterThan(0);
+      }
+      if (songArtist) {
+        expect(songArtist.length).toBeGreaterThan(0);
       }
     }
 

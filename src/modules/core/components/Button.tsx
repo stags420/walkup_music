@@ -8,6 +8,7 @@ interface ButtonProps {
   disabled?: boolean;
   type?: 'button' | 'submit';
   className?: string;
+  'data-testid'?: string;
 }
 
 export function Button({
@@ -17,6 +18,7 @@ export function Button({
   disabled = false,
   type = 'button',
   className = '',
+  'data-testid': dataTestId,
 }: ButtonProps) {
   return (
     <button
@@ -24,6 +26,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={`btn btn-${variant} ${className}`}
+      data-testid={dataTestId}
     >
       {children}
     </button>

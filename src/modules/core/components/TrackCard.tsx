@@ -19,6 +19,7 @@ interface TrackCardProps {
   onPreview?: () => void;
   isPlaying?: boolean;
   variant?: 'compact' | 'detailed';
+  'data-testid'?: string;
 }
 
 const formatDuration = (ms: number) => {
@@ -34,6 +35,7 @@ export function TrackCard({
   onPreview,
   isPlaying = false,
   variant = 'compact',
+  'data-testid': dataTestId,
 }: TrackCardProps) {
   const albumArt = track.album.images[0]?.url;
   const artistNames = track.artists.map((artist) => artist.name).join(', ');
@@ -42,6 +44,7 @@ export function TrackCard({
     <div
       className={`track-card track-card-${variant} ${isSelected ? 'selected' : ''}`}
       onClick={onSelect}
+      data-testid={dataTestId}
     >
       {albumArt && (
         <div className="track-album-art">

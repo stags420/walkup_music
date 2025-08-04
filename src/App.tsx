@@ -15,7 +15,7 @@ import {
 } from '@/modules/game';
 import { MusicServiceProvider } from '@/modules/music';
 import { StorageServiceProvider } from '@/modules/storage';
-import { GlobalPlaybackControl } from '@/modules/core';
+import { GlobalPlaybackControl, ModalProvider } from '@/modules/core';
 import { AppConfigProvider } from '@/modules/config';
 import { useState, useEffect } from 'react';
 import './App.css';
@@ -148,7 +148,9 @@ export function App() {
   return (
     <Router basename={basename}>
       <AuthProvider authService={authService}>
-        <AppContainer />
+        <ModalProvider>
+          <AppContainer />
+        </ModalProvider>
       </AuthProvider>
     </Router>
   );

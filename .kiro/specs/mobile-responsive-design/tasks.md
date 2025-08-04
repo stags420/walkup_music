@@ -8,7 +8,7 @@
   - Write unit tests for CSS custom property calculations and responsive behavior
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [-] 2. Implement centralized modal management system
+- [x] 2. Implement centralized modal management system
   - Create ModalProvider context with proper scroll lock management and cleanup
   - Build reusable Modal component with configurable sizes and responsive behavior
   - Add modal overlay system that prevents body scroll and restores it on close
@@ -17,7 +17,7 @@
   - Write unit tests for modal state management and scroll restoration
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 3. Create centralized playback state management
+- [x] 3. Create centralized playback state management
   - Build PlaybackProvider context for global music playback state
   - Implement playback hooks (usePlayback) with consistent state across components
   - Add automatic cleanup of playback timers and proper state synchronization
@@ -26,13 +26,11 @@
   - Write unit tests for playback state management and cleanup
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
-- [ ] 4. Refactor SegmentSelector with responsive design
+- [-] 4. Refactor SegmentSelector with responsive design
   - Replace fixed pixel values with viewport-relative units and CSS custom properties
   - Implement flexible layout using CSS Grid and Flexbox for content areas
-  - Ensure Cancel and Submit buttons are always visible using sticky positioning
   - Add proper touch event handling for mobile timeline interaction
   - Integrate with centralized modal and playback management systems
-  - Write component tests for responsive behavior and button accessibility
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 4.1, 4.2, 4.3_
 
 - [ ] 5. Update TrackPreview component with configurable controls

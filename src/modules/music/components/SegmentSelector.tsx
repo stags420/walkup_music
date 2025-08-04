@@ -1,56 +1,41 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal as defaultCreatePortal } from 'react-dom';
+import React, { useState, useRef, useCallback } from 'react';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
 import { Button, TrackPreview } from '@/modules/core';
-import { MusicService } from '@/modules/music/services/MusicService';
+import { useModal } from '@/modules/core/hooks/useModal';
+import { usePlayback } from '@/modules/music/hooks/usePlayback';
 import './SegmentSelector.css';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
-  musicService?: MusicService;
   initialSegment?: SongSegment;
   onConfirm: (segment: SongSegment) => void;
   onCancel: () => void;
   maxDuration?: number; // seconds, default 10
-  createPortal?: typeof defaultCreatePortal;
 }
 
 export function SegmentSelector({
   track,
-  musicService,
   initialSegment,
   onConfirm,
   onCancel,
   maxDuration = 10,
-  createPortal = defaultCreatePortal,
 }: SegmentSelectorProps) {
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
   );
-  const [isPlayingSelection, setIsPlayingSelection] = useState(false);
-  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartTime, setDragStartTime] = useState(0);
-  const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPlayingRef = useRef(false);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const isMountedRef = useRef(true);
 
+  // Use centralized playback management
+  const { playTrack, stopTrack, isCurrentTrack, isPlaying, hasError, playbackState } = usePlayback();
+  
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    const originalStyle = globalThis.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, []);
+  const isCurrentlyPlaying = isCurrentTrack(track.id) && isPlaying();
 
   // Cleanup function to stop playback
   const stopPlayback = useCallback(async () => {

@@ -1,54 +1,95 @@
+/* CSS Custom Properties for responsive modal system */
+:root {
+  /* Viewport-relative spacing scale */
+  --modal-spacing-xs: 1vmin;
+  --modal-spacing-sm: 2vmin;
+  --modal-spacing-md: 3vmin;
+  --modal-spacing-lg: 4vmin;
+  --modal-spacing-xl: 6vmin;
+
+  /* Responsive container widths */
+  --modal-container-sm: min(90vw, 400px);
+  --modal-container-md: min(90vw, 600px);
+  --modal-container-lg: min(90vw, 800px);
+  --modal-container-xl: min(90vw, 1200px);
+
+  /* Dynamic viewport units with fallbacks */
+  --modal-vh-dynamic: 100vh; /* Fallback */
+  --modal-vh-dynamic: 100dvh; /* Dynamic viewport */
+
+  /* Touch-friendly minimum sizes */
+  --modal-touch-target-min: max(44px, 8vmin);
+}
+
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  width: 100vw;
+  height: var(--modal-vh-dynamic);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  padding: 20px;
+  padding: var(--modal-spacing-md);
+  box-sizing: border-box;
 }
 
-/* Modal container */
+/* Modal container base styles */
 .modal-container {
   background: #1a1a1a;
-  border-radius: 16px;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(42, 42, 42, 0.5);
-  width: 100%;
-  max-width: 480px;
-  max-height: 80vh;
+  border-radius: clamp(8px, 2vmin, 16px);
+  box-shadow: 0 4vmin 8vmin rgba(0, 0, 0, 0.3);
+  width: var(--modal-container-md);
+  max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid #2a2a2a;
+  outline: none; /* Remove focus outline since we handle focus visually */
+}
+
+/* Size variants */
+.modal-container--small {
+  width: var(--modal-container-sm);
+}
+
+.modal-container--medium {
+  width: var(--modal-container-md);
+}
+
+.modal-container--large {
+  width: var(--modal-container-lg);
+}
+
+.modal-container--full {
+  width: var(--modal-container-xl);
+  max-height: 95vh;
+  max-height: 95dvh;
 }
 
 /* Modal header */
 .modal-header {
+  flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 16px;
+  padding: var(--modal-spacing-md);
   border-bottom: 1px solid #2a2a2a;
-  position: relative;
+  min-height: calc(var(--modal-touch-target-min) + var(--modal-spacing-md) * 2);
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: clamp(1.125rem, 3vmin, 1.5rem);
   font-weight: 600;
   color: #ffffff;
   font-family: inherit;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  flex: 1;
   text-align: center;
 }
 
@@ -56,10 +97,10 @@
 .modal-close-button {
   background: none;
   border: none;
-  font-size: 1.5rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  font-size: clamp(1.25rem, 3vmin, 1.75rem);
+  width: var(--modal-touch-target-min);
+  height: var(--modal-touch-target-min);
+  border-radius: clamp(4px, 1vmin, 8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,25 +108,28 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
-.modal-close-button:hover {
+.modal-close-button:hover,
+.modal-close-button:focus {
   background: #2a2a2a;
   color: #ffffff;
+  outline: 2px solid #1db954;
+  outline-offset: 2px;
 }
 
 /* Modal content */
 .modal-content {
-  flex: 1;
-  padding: 20px 24px;
+  flex: 1 1 auto;
+  padding: var(--modal-spacing-md);
   overflow-y: auto;
   min-height: 0;
 }
 
 .modal-content p {
   margin: 0;
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 2.5vmin, 1.125rem);
   line-height: 1.5;
   color: #ffffff;
   font-family: inherit;
@@ -93,37 +137,93 @@
 
 /* Modal actions */
 .modal-actions {
-  padding: 20px 24px;
+  flex: 0 0 auto;
+  padding: var(--modal-spacing-md);
   border-top: 1px solid #2a2a2a;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--modal-spacing-sm);
   background: #1a1a1a;
+  min-height: calc(var(--modal-touch-target-min) + var(--modal-spacing-md) * 2);
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Modal portal container */
+.modal-portal {
+  /* Container for modal instances from ModalProvider */
+}
+
+/* Focus management styles */
+.modal-container:focus {
+  outline: none;
+}
+
+/* Ensure buttons in modal actions meet touch target requirements */
+.modal-actions button {
+  min-height: var(--modal-touch-target-min);
+  min-width: var(--modal-touch-target-min);
+  padding: 0 var(--modal-spacing-md);
+  border-radius: clamp(4px, 1vmin, 8px);
+  font-size: clamp(0.875rem, 2.5vmin, 1rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--modal-spacing-xs);
+}
+
+/* Responsive adjustments using container queries where supported */
+@supports (container-type: inline-size) {
+  .modal-container {
+    container-type: inline-size;
+  }
+
+  @container (max-width: 500px) {
+    .modal-header {
+      padding: var(--modal-spacing-sm);
+    }
+
+    .modal-content {
+      padding: var(--modal-spacing-sm);
+    }
+
+    .modal-actions {
+      padding: var(--modal-spacing-sm);
+      flex-direction: column;
+    }
+
+    .modal-actions button {
+      width: 100%;
+    }
+  }
+}
+
+/* Fallback for browsers without container query support */
+@media (max-width: 500px) {
   .modal-overlay {
-    padding: 16px;
+    padding: var(--modal-spacing-sm);
   }
 
   .modal-container {
-    max-height: 90vh;
-    max-width: 100%;
+    max-height: 95vh;
+    max-height: 95dvh;
   }
 
-  .modal-header,
-  .modal-content,
+  .modal-header {
+    padding: var(--modal-spacing-sm);
+  }
+
+  .modal-content {
+    padding: var(--modal-spacing-sm);
+  }
+
   .modal-actions {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding: var(--modal-spacing-sm);
+    flex-direction: column;
   }
 
-  .modal-header h2 {
-    font-size: 1.125rem;
-  }
-
-  .modal-content p {
-    font-size: 0.95rem;
+  .modal-actions button {
+    width: 100%;
   }
 }

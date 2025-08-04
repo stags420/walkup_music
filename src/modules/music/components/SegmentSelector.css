@@ -555,6 +555,7 @@
     padding: 12px 8px;
     font-size: 1rem;
     /* Improve mobile input experience */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: textfield;
   }

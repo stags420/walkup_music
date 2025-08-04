@@ -21,7 +21,8 @@ test.describe('SegmentSelector Mobile Button Visibility', () => {
   test('should show cancel and submit buttons on mobile viewport', async ({
     page,
   }) => {
-    // Given I am on a mobile viewport (iPhone 15 Pro: 393x852)
+    // Set a very small viewport to simulate virtual keyboard open (iPhone SE with keyboard: 375x375)
+    await page.setViewportSize({ width: 375, height: 375 });
     const viewportSize = page.viewportSize();
     console.log('Viewport size:', viewportSize);
 
@@ -44,10 +45,20 @@ test.describe('SegmentSelector Mobile Button Visibility', () => {
     await page.waitForSelector('[data-testid="song-search-input"]');
 
     // Search for a song (this will use mock data)
-    await page.fill('[data-testid="song-search-input"]', 'test');
+    // Click on the input first to ensure it's focused
+    await page.click('[data-testid="song-search-input"]');
+
+    // Clear any existing content and type
+    await page.fill('[data-testid="song-search-input"]', 'thunder');
 
     // Wait a bit for search results
     await page.waitForTimeout(2000);
+
+    // Debug: Check search input value
+    const searchValue = await page.inputValue(
+      '[data-testid="song-search-input"]'
+    );
+    console.log('Search input value:', searchValue);
 
     // Click on first search result if available
     const searchResults = page.locator('[data-testid="song-result"]');
@@ -145,7 +156,7 @@ test.describe('SegmentSelector Mobile Button Visibility', () => {
     await page.fill('[data-testid="player-name-input"]', 'Test Player');
     await page.click('[data-testid="select-song-button"]');
     await page.waitForSelector('[data-testid="song-search-input"]');
-    await page.fill('[data-testid="song-search-input"]', 'test');
+    await page.fill('[data-testid="song-search-input"]', 'thunder');
     await page.waitForTimeout(2000);
 
     const searchResults = page.locator('[data-testid="song-result"]');

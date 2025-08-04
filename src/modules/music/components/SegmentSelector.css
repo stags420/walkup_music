@@ -36,6 +36,8 @@
   overflow: hidden;
   border: 1px solid #2a2a2a;
   margin: 0;
+  /* Ensure proper flexbox behavior for mobile */
+  min-height: 0;
 }
 
 @media (min-width: 768px) {
@@ -90,6 +92,9 @@
   padding: 0 20px;
   overflow-y: auto;
   min-height: 0;
+  /* Ensure content can scroll while keeping buttons visible */
+  display: flex;
+  flex-direction: column;
 }
 
 .track-preview {
@@ -515,8 +520,11 @@
   }
 
   .segment-selector-modal {
-    max-height: 95vh;
+    max-height: 90vh;
     border-radius: 8px;
+    /* Ensure modal fits within viewport with room for buttons */
+    display: flex;
+    flex-direction: column;
   }
 
   .segment-selector-header,
@@ -596,6 +604,9 @@
     /* Ensure buttons are visible and properly sized */
     position: relative;
     z-index: 1;
+    /* Ensure buttons stay at bottom and are always visible */
+    flex-shrink: 0;
+    margin-top: auto;
   }
 
   .cancel-button,
@@ -610,6 +621,45 @@
   }
 }
 
+/* iPhone and similar devices */
+@media (max-width: 430px) {
+  .segment-selector-overlay {
+    padding: 8px;
+  }
+
+  .segment-selector-modal {
+    max-height: 88vh;
+    /* More conservative height for iPhone-sized devices */
+  }
+
+  .segment-selector-content {
+    /* Ensure content area can scroll if needed */
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .segment-selector-actions {
+    padding: 14px 16px;
+    gap: 10px;
+    /* Ensure buttons are always visible at bottom */
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    background: #1a1a1a;
+    border-top: 1px solid #2a2a2a;
+  }
+
+  .cancel-button,
+  .confirm-button {
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    min-width: 90px;
+    /* Ensure buttons have adequate touch targets */
+    min-height: 44px;
+  }
+}
+
 /* Extra small screens */
 @media (max-width: 480px) {
   .segment-selector-overlay {
@@ -617,7 +667,8 @@
   }
 
   .segment-selector-modal {
-    max-height: 98vh;
+    max-height: 95vh;
+    /* Ensure even more conservative height on very small screens */
   }
 
   .segment-selector-header,

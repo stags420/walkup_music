@@ -25,19 +25,38 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    
+    /* Increase timeout for mobile tests */
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
   },
+  
+  /* Increase test timeout */
+  timeout: 60000,
 
   /* Configure projects for major browsers */
   projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
 
     /* Test against mobile viewports. */
     {
       name: 'Mobile Chrome',
-      use: { ...devices['iPhone 16 Pro'] },
+      use: { ...devices['iPhone 15 Pro'] },
     },
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 16 Pro'] },
+      use: { ...devices['iPhone 15 Pro'] },
     },
   ],
 

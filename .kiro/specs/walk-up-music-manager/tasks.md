@@ -117,9 +117,10 @@
   - Create test data fixtures and page object models for maintainable tests
   - _Requirements: Automated validation of user workflows and UI behavior_
 
-- [x] 13.3 Finish e2e testing
+- [-] 13.3 Finish e2e testing
   - Complete the full workflow test, including song selection, segment selection. 
   - Review playwright steering guidance and improve tests where needed
+  - Reproduce issue with Song Segment selection Submit/Cancel buttons not showing up on iphone 16 pro
   - Make tests pass
   - _Requirements: Automated validation of user workflows and UI behavior_
 

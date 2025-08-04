@@ -58,55 +58,12 @@ test.describe('Complete E2E Workflow', () => {
     await playerPage.clickAddPlayer();
     await playerPage.fillPlayerName(testPlayer.name);
 
-    // Test song search functionality
-    await playerPage.clickWithRetry('[data-testid="select-song-button"]');
-    await playerPage.waitForSelector('[data-testid="song-search-input"]');
-
-    // Search for the song
+    // Test song selection with mobile-aware method
     if (testPlayer.song) {
-      // Search for the song
-      await playerPage.fillWithRetry(
-        '[data-testid="song-search-input"]',
-        testPlayer.song.title
+      await playerPage.selectSongWithSegment(
+        testPlayer.song.title,
+        testPlayer.song.artist
       );
-
-      // Wait for search results to load
-      await page.waitForTimeout(3000);
-      await playerPage.waitForSelector('[data-testid="song-result"]');
-
-      // Verify search results are displayed
-      const searchResults = await page
-        .locator('[data-testid="song-result"]')
-        .count();
-      expect(searchResults).toBeGreaterThan(0);
-
-      // Select the first result
-      await playerPage.clickWithRetry('[data-testid="song-result"]');
-
-      // Wait for the button to become enabled before clicking
-      await page.waitForFunction(
-        () => {
-          const button = document.querySelector(
-            '[data-testid="select-song-result-button"]'
-          ) as HTMLButtonElement;
-          return button && !button.disabled;
-        },
-        { timeout: 5000 }
-      );
-
-      await playerPage.clickWithRetry(
-        '[data-testid="select-song-result-button"]'
-      );
-
-      // Test segment selection
-      await playerPage.waitForSelector('[data-testid="segment-selector"]');
-
-      // Verify segment selector is visible and functional
-      const segmentSelector = page.locator('[data-testid="segment-selector"]');
-      await expect(segmentSelector).toBeVisible();
-
-      // Confirm the segment selection
-      await playerPage.clickWithRetry('[data-testid="confirm-song-button"]');
     }
 
     // Save the player
@@ -134,29 +91,7 @@ test.describe('Complete E2E Workflow', () => {
     // 4. Change the song selection
     const newSong = testPlayers[1].song; // Aaron Judge's song (All Star)
     if (newSong) {
-      await playerPage.clickWithRetry('[data-testid="select-song-button"]');
-      await playerPage.waitForSelector('[data-testid="song-search-input"]');
-
-      // Clear and search for new song
-      await page.locator('[data-testid="song-search-input"]').fill('');
-      await playerPage.fillWithRetry(
-        '[data-testid="song-search-input"]',
-        newSong.title
-      );
-
-      // Wait for new search results
-      await page.waitForTimeout(1500);
-      await playerPage.waitForSelector('[data-testid="song-result"]');
-
-      // Select the new song
-      await playerPage.clickWithRetry('[data-testid="song-result"]');
-      await playerPage.clickWithRetry(
-        '[data-testid="select-song-result-button"]'
-      );
-
-      // Select segment for new song
-      await playerPage.waitForSelector('[data-testid="segment-selector"]');
-      await playerPage.clickWithRetry('[data-testid="confirm-song-button"]');
+      await playerPage.selectSongWithSegment(newSong.title, newSong.artist);
     }
 
     // 5. Save the changes

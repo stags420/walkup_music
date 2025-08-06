@@ -33,7 +33,6 @@ export function SegmentSelector({
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartTime, setDragStartTime] = useState(0);
   const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isPlayingRef = useRef(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
 
@@ -41,18 +40,21 @@ export function SegmentSelector({
 
   // Cleanup function to stop playback
   const stopPlayback = useCallback(async () => {
-    if (isPlayingRef.current && musicService) {
+    // Always try to pause - if we pause twice, who cares?
+    if (musicService) {
       try {
         await musicService.pause();
       } catch (error) {
         console.debug('Playback pause failed:', error);
       }
-      // Only update state if component is still mounted
-      if (isMountedRef.current) {
-        setIsPlayingSelection(false);
-      }
-      isPlayingRef.current = false;
     }
+
+    // Always reset the playing state
+    if (isMountedRef.current) {
+      setIsPlayingSelection(false);
+    }
+
+    // Clear any pending timeout
     if (playbackTimeoutRef.current) {
       clearTimeout(playbackTimeoutRef.current);
       playbackTimeoutRef.current = null;
@@ -193,7 +195,7 @@ export function SegmentSelector({
       return;
     }
 
-    if (isPlayingRef.current) {
+    if (isPlayingSelection) {
       // Stop selection playback
       await stopPlayback();
     } else {
@@ -209,19 +211,19 @@ export function SegmentSelector({
 
         await musicService.playTrack(track.uri, startPositionMs);
         setIsPlayingSelection(true);
-        isPlayingRef.current = true;
         setPlaybackError(null);
 
         // Stop after the selected duration
         playbackTimeoutRef.current = setTimeout(async () => {
-          if (isPlayingRef.current && musicService) {
+          if (musicService) {
             try {
               await musicService.pause();
             } catch (error) {
               console.error('Failed to stop playback after timeout:', error);
             }
-            setIsPlayingSelection(false);
-            isPlayingRef.current = false;
+            if (isMountedRef.current) {
+              setIsPlayingSelection(false);
+            }
           }
           playbackTimeoutRef.current = null;
         }, duration * 1000);
@@ -231,7 +233,6 @@ export function SegmentSelector({
           'Failed to play track. Please check your Spotify Premium subscription.'
         );
         setIsPlayingSelection(false);
-        isPlayingRef.current = false;
         // Clear timeout if playback fails
         if (playbackTimeoutRef.current) {
           clearTimeout(playbackTimeoutRef.current);

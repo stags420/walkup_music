@@ -15,11 +15,13 @@
   - Test scroll restoration works when modal is cancelled or confirmed
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
 
-- [ ] 3. Fix SegmentSelector playback state directly
-  - Add local playback state management within SegmentSelector component
+- [-] 3. Fix SegmentSelector and Game Mode playback state directly
+  - Add local playback state management within SegmentSelector/GameMode component
   - Ensure play/pause button reflects current playback state within the modal
   - Stop playback and reset button state when modal closes
   - Handle playback errors by resetting button to play state
+  - get rid of Global playback controls entirely
+  - Refactor to pull out a play button
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 4. Make PlayerList responsive with Bootstrap grid

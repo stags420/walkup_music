@@ -15,7 +15,7 @@ import {
 } from '@/modules/game';
 import { MusicServiceProvider } from '@/modules/music';
 import { StorageServiceProvider } from '@/modules/storage';
-import { GlobalPlaybackControl } from '@/modules/core';
+
 import { AppConfigProvider } from '@/modules/config';
 import { useState, useEffect } from 'react';
 import './App.css';
@@ -105,9 +105,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
       <header className="App-header">
         <div className="header-content">
           <h1>Walk Up Music</h1>
-          <div className="header-center">
-            <GlobalPlaybackControl musicService={musicService} />
-          </div>
+
           <p className="welcome-text">
             Welcome, {auth.state.user?.displayName}!
           </p>

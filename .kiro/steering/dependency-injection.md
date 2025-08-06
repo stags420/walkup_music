@@ -8,7 +8,7 @@ Apply explicit dependency injection patterns for maintainable, testable code. Pr
 
 ## Core Rules
 
-### Constructor Injection Only
+### (Java) Constructor Injection Only
 
 - Inject ALL dependencies via constructor parameters
 - Never use static access, global state, or service locators

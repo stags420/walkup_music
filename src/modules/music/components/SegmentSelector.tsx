@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal as defaultCreatePortal } from 'react-dom';
+import { Modal, Form, Alert, Card, Button } from 'react-bootstrap';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
-import { Button, TrackPreview } from '@/modules/core';
+import { TrackPreview } from '@/modules/core';
 import { MusicService } from '@/modules/music/services/MusicService';
-import './SegmentSelector.css';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
@@ -14,7 +13,6 @@ interface SegmentSelectorProps {
   onConfirm: (segment: SongSegment) => void;
   onCancel: () => void;
   maxDuration?: number; // seconds, default 10
-  createPortal?: typeof defaultCreatePortal;
 }
 
 export function SegmentSelector({
@@ -24,7 +22,6 @@ export function SegmentSelector({
   onConfirm,
   onCancel,
   maxDuration = 10,
-  createPortal = defaultCreatePortal,
 }: SegmentSelectorProps) {
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
@@ -41,16 +38,6 @@ export function SegmentSelector({
   const isMountedRef = useRef(true);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    const originalStyle = globalThis.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = originalStyle;
-    };
-  }, []);
 
   // Cleanup function to stop playback
   const stopPlayback = useCallback(async () => {
@@ -283,195 +270,179 @@ export function SegmentSelector({
 
   const maxStartTime = Math.max(0, trackDurationSeconds - duration);
 
-  return createPortal(
-    <div className="segment-selector-overlay">
-      <div className="segment-selector-modal" data-testid="segment-selector">
-        <div className="segment-selector-header">
-          <h2>Select Timing</h2>
-          <button
-            onClick={handleCancel}
-            className="close-button"
-            aria-label="Close segment selector"
-          >
-            ×
-          </button>
-        </div>
+  return (
+    <Modal
+      show={true}
+      onHide={handleCancel}
+      centered
+      backdrop="static"
+      size="lg"
+      data-testid="segment-selector"
+    >
+      <Modal.Header closeButton>
+        <Modal.Title>Select Timing</Modal.Title>
+      </Modal.Header>
 
-        <div className="segment-selector-content">
-          <TrackPreview
-            track={{
-              id: track.id,
-              name: track.name,
-              artists: track.artists.map((name) => ({ name })),
-              album: {
-                name: track.album,
-                images: [{ url: track.albumArt }],
-              },
-              duration_ms: track.durationMs,
-              preview_url: track.previewUrl,
-            }}
-          />
+      <Modal.Body>
+        <TrackPreview
+          track={{
+            id: track.id,
+            name: track.name,
+            artists: track.artists.map((name) => ({ name })),
+            album: {
+              name: track.album,
+              images: [{ url: track.albumArt }],
+            },
+            duration_ms: track.durationMs,
+            preview_url: track.previewUrl,
+          }}
+        />
 
-          {playbackError && (
-            <div className="playback-error">
-              <p className="error-message">{playbackError}</p>
-              <p className="error-hint">
-                Note: Spotify Premium is required for full playback control.
-              </p>
+        {playbackError && (
+          <Alert variant="danger" className="mt-3">
+            <div>{playbackError}</div>
+            <small className="text-muted">
+              Note: Spotify Premium is required for full playback control.
+            </small>
+          </Alert>
+        )}
+
+        <div className="mt-4">
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <Form.Label htmlFor="start-time">Start Time</Form.Label>
+              <div className="input-group">
+                <Form.Control
+                  id="start-time"
+                  type="number"
+                  min="0"
+                  max={maxStartTime}
+                  value={startTime}
+                  onChange={handleStartTimeChange}
+                  step="0.1"
+                />
+                <span className="input-group-text">seconds</span>
+              </div>
+              <Form.Text className="text-muted">
+                Range: 0 - {formatTime(maxStartTime)}
+              </Form.Text>
             </div>
-          )}
 
-          <div className="segment-controls">
-            <div className="timing-section">
-              <div className="timing-controls">
-                <div className="control-group">
-                  <label htmlFor="start-time" className="control-label">
-                    Start Time
-                  </label>
-                  <div className="input-with-unit">
-                    <input
-                      id="start-time"
-                      type="number"
-                      min="0"
-                      max={maxStartTime}
-                      value={startTime}
-                      onChange={handleStartTimeChange}
-                      className="timing-input"
-                      step="0.1"
-                    />
-                    <span className="input-unit">seconds</span>
-                  </div>
-                  <div className="control-hint">
-                    Range: 0 - {formatTime(maxStartTime)}
-                  </div>
-                </div>
-
-                <div className="control-group">
-                  <label htmlFor="duration" className="control-label">
-                    Duration
-                  </label>
-                  <div className="input-with-unit">
-                    <button
-                      type="button"
-                      className="increment-btn"
-                      onClick={() => {
-                        const newDuration = Math.min(
-                          maxDuration,
-                          Math.min(
-                            trackDurationSeconds - startTime,
-                            duration + 0.5
-                          )
-                        );
-                        setDuration(newDuration);
-                      }}
-                      disabled={
-                        duration >=
-                        Math.min(maxDuration, trackDurationSeconds - startTime)
-                      }
-                    >
-                      +
-                    </button>
-                    <input
-                      id="duration"
-                      type="number"
-                      min="1"
-                      max={Math.min(
-                        maxDuration,
-                        trackDurationSeconds - startTime
-                      )}
-                      value={duration}
-                      onChange={handleDurationChange}
-                      className="timing-input"
-                      step="0.1"
-                    />
-                    <button
-                      type="button"
-                      className="increment-btn"
-                      onClick={() => {
-                        const newDuration = Math.max(1, duration - 0.5);
-                        setDuration(newDuration);
-                      }}
-                      disabled={duration <= 1}
-                    >
-                      −
-                    </button>
-                    <span className="input-unit">seconds</span>
-                  </div>
-                  <div className="control-hint">
-                    Max:{' '}
-                    {Math.min(maxDuration, trackDurationSeconds - startTime)}{' '}
-                    seconds
-                  </div>
-                </div>
+            <div className="col-md-6">
+              <Form.Label htmlFor="duration">Duration</Form.Label>
+              <div className="input-group">
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => {
+                    const newDuration = Math.min(
+                      maxDuration,
+                      Math.min(trackDurationSeconds - startTime, duration + 0.5)
+                    );
+                    setDuration(newDuration);
+                  }}
+                  disabled={
+                    duration >=
+                    Math.min(maxDuration, trackDurationSeconds - startTime)
+                  }
+                >
+                  +
+                </Button>
+                <Form.Control
+                  id="duration"
+                  type="number"
+                  min="1"
+                  max={Math.min(maxDuration, trackDurationSeconds - startTime)}
+                  value={duration}
+                  onChange={handleDurationChange}
+                  className="text-center"
+                  step="0.1"
+                />
+                <Button
+                  variant="outline-secondary"
+                  onClick={() => {
+                    const newDuration = Math.max(1, duration - 0.5);
+                    setDuration(newDuration);
+                  }}
+                  disabled={duration <= 1}
+                >
+                  −
+                </Button>
+                <span className="input-group-text">seconds</span>
               </div>
-
-              <div className="segment-preview">
-                <div className="segment-timeline">
-                  <div
-                    ref={timelineRef}
-                    className="timeline-track"
-                    onMouseDown={handleTimelineMouseDown}
-                  >
-                    <div
-                      className={`timeline-segment ${isDragging ? 'dragging' : ''}`}
-                      style={{
-                        left: `${(startTime / trackDurationSeconds) * 100}%`,
-                        width: `${(duration / trackDurationSeconds) * 100}%`,
-                      }}
-                      onMouseDown={handleSegmentMouseDown}
-                      onTouchStart={handleSegmentTouchStart}
-                      onTouchMove={handleSegmentTouchMove}
-                      onTouchEnd={handleSegmentTouchEnd}
-                    />
-                  </div>
-                  <div className="timeline-labels">
-                    <span>0:00</span>
-                    <span>{formatTime(trackDurationSeconds)}</span>
-                  </div>
-                </div>
-                <div className="segment-info">
-                  <p>
-                    <strong>Selected segment:</strong> {formatTime(startTime)} -{' '}
-                    {formatTime(startTime + duration)}
-                  </p>
-
-                  {/* Play Selection Button moved inside segment-info */}
-                  <div className="play-selection-section">
-                    <button
-                      className={`play-button selection ${isPlayingSelection ? 'playing' : ''}`}
-                      onClick={handlePlaySelection}
-                      disabled={!musicService}
-                      data-testid={
-                        isPlayingSelection ? 'pause-button' : 'play-button'
-                      }
-                    >
-                      {isPlayingSelection ? (
-                        <>⏸ STOP SELECTION</>
-                      ) : (
-                        <>▶ PLAY SELECTION</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <Form.Text className="text-muted">
+                Max: {Math.min(maxDuration, trackDurationSeconds - startTime)}{' '}
+                seconds
+              </Form.Text>
             </div>
           </div>
-        </div>
 
-        <div className="segment-selector-actions">
-          <Button onClick={handleCancel} variant="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            variant="success"
-            data-testid="confirm-song-button"
-          >
-            Confirm
-          </Button>
+          <Card className="mt-3">
+            <Card.Body>
+              <div className="segment-timeline mb-3">
+                <div
+                  ref={timelineRef}
+                  className="timeline-track"
+                  onMouseDown={handleTimelineMouseDown}
+                >
+                  <div
+                    className={`timeline-segment ${isDragging ? 'dragging' : ''}`}
+                    style={{
+                      left: `${(startTime / trackDurationSeconds) * 100}%`,
+                      width: `${(duration / trackDurationSeconds) * 100}%`,
+                    }}
+                    onMouseDown={handleSegmentMouseDown}
+                    onTouchStart={handleSegmentTouchStart}
+                    onTouchMove={handleSegmentTouchMove}
+                    onTouchEnd={handleSegmentTouchEnd}
+                  />
+                </div>
+                <div className="d-flex justify-content-between">
+                  <small className="text-muted">0:00</small>
+                  <small className="text-muted">
+                    {formatTime(trackDurationSeconds)}
+                  </small>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <p className="mb-3">
+                  <strong>Selected segment:</strong> {formatTime(startTime)} -{' '}
+                  {formatTime(startTime + duration)}
+                </p>
+
+                <Button
+                  variant={isPlayingSelection ? 'danger' : 'success'}
+                  size="lg"
+                  onClick={handlePlaySelection}
+                  disabled={!musicService}
+                  data-testid={
+                    isPlayingSelection ? 'pause-button' : 'play-button'
+                  }
+                >
+                  {isPlayingSelection ? (
+                    <>⏸ Stop Selection</>
+                  ) : (
+                    <>▶ Play Selection</>
+                  )}
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
         </div>
-      </div>
-    </div>,
-    document.body
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button
+          variant="success"
+          onClick={handleConfirm}
+          data-testid="confirm-song-button"
+        >
+          Confirm
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }

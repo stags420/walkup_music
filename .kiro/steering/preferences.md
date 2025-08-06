@@ -8,24 +8,35 @@ inclusion: always
 
 ### Backend
 
-- **Primary**: Java for production backends
+- **Primary**: Java for production backends, Google Guice for DI
 - **Alternative**: Python or TypeScript for small/prototype backends only
-- Use Google Guice with explicit configuration over annotations when possible
 
 ### Frontend
 
-- **Primary**: TypeScript for all frontend development
+- **WebApps**: TypeScript React for all frontend development
+- **Mobile Apps**: React Native
 - Prefer React with functional components and hooks
+- Avoid using React Context. Prefer Zustand. Don't manage beans within React ecosystem if not needed (if they are not created based on some state within the UI).
 - Use strict TypeScript configuration with no implicit any
+
+### Frameworks/Libraries
+- Prefer well-known libraries and frameworks to achieve your goal rather than hand-rolling your own code. This is more reliable and makes changes smaller.
+- Only use libraries from well-established sources:
+  - Official framework libraries (React, Angular, Vue ecosystems)
+  - Major tech companies (Google, Microsoft, Facebook, etc.)
+  - Established open-source organizations
+  - Libraries with significant community adoption (high GitHub stars, npm downloads)
+- **CSS**: Bootstrap
+- **React**: Zustand for state management, Playwright for e2e tests
+
+## Change Guidelines
+- YAGNI: "You aren't gonna need it". Don't add code that is not yet used in an active codepath. Don't write "extra" code. Someone needs to read the code you create.
+- Don't create documentation unless you are asked to. Anything worth documenting should either be captured in a code comment or automated in a script.
+- Before completing any task, ensure any precommit scripts succeed. Fix all issues, even if unrelated. When fixing, do not suppress or ignore, actually fix. 
 
 ## Code Architecture Principles
 
-### Dependency Injection
-
-- Constructor injection only - no field or setter injection
-- Explicit dependency wiring in composition root
-- Depend on interfaces/abstractions, not concrete implementations
-- Manual dependency management preferred over framework magic
+#[[file:.kiro/steering/dependency-injection.md]]
 
 ### Single Responsibility Principle
 
@@ -42,6 +53,7 @@ inclusion: always
 - **Naming**: Use intention-revealing names, avoid abbreviations
 - **Comments**: Code should be self-documenting, comments explain why not what
 - **Globals**: Usage of globals should be avoided. Dependencies should be injected.
+- **Isolate Dependencies**: Wrap external dependencies in our own types/classes to avoid dependencies spreading through code. When possible, provide a facade with a simple interface to abstract details the client doesn't care about. 
 
 ## Code Organization
 
@@ -51,19 +63,47 @@ inclusion: always
 - Keep related functionality together
 - Use clear module boundaries with defined interfaces
 
-### Error Handling
+## Error Handling
 
 - Use checked exceptions in Java for recoverable errors
 - Fail fast with meaningful error messages
 - No swallowed exceptions - always log or propagate
 
-### Testing
+## Configuration
 
-- Unit tests for all business logic
-- Integration tests for external dependencies
+- AppConfig initialized at the front door of each app
+- Takes in "stage" (prod, beta, local, test, etc) at the bare minimum to resolve correct config
+
+## Testing
+
+- Simple, locally-runnable end-to-end test created from the start to test happy-case with mock data. Test is built up as features are added.
+- Ability to run app locally with mock data. Likely shares some setup with e2e test. For mobile app dev, requires device simulation. For webapp, playwright.
+- MEANINGFUL unit tests for all business logic. Don't test very simple things like setters and getters.
+- Mock out dependencies in unit tests. Do not test through multiple layers unless the units are so simple that you need a "module" test to ensure proper behavior.
+- Don't exhaustively test validation - you can just test that it's validated at all with one invalid case.
 - Test behavior, not implementation details
 - Use descriptive test names that explain the scenario
-- Tests are production: they should also be clean
+- Tests are treated as production code: they should also be clean
+- All tests must follow the Given-When-Then structure with clear comment sections:
+
+```typescript
+test('should remove player from storage when deleted', async () => {
+  // Given we have players in storage
+  const players = [
+    { id: '1', name: 'Player 1' },
+    { id: '2', name: 'Player 2' }
+  ];
+  await storage.saveAll(players);
+
+  // When I delete a player from storage
+  await playerService.deletePlayer('1');
+
+  // Then storage does not contain that player
+  const remainingPlayers = await storage.loadAll();
+  expect(remainingPlayers).toHaveLength(1);
+  expect(remainingPlayers[0].id).toBe('2');
+});
+```
 
 ## Performance & Quality
 

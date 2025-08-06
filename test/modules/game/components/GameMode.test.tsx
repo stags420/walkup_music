@@ -122,7 +122,7 @@ describe('GameMode', () => {
     expect(mockOnEndGame).toHaveBeenCalled();
   });
 
-  it('should close confirmation dialog when cancel is clicked', () => {
+  it('should close confirmation dialog when cancel is clicked', async () => {
     render(
       <GameMode
         lineupService={mockLineupService}
@@ -139,11 +139,15 @@ describe('GameMode', () => {
     const cancelButton = screen.getByText('Cancel');
     fireEvent.click(cancelButton);
 
-    expect(
-      screen.queryByText(
-        'End the current game? This will clear all game progress.'
-      )
-    ).not.toBeInTheDocument();
+    // Wait for the modal to be removed from the DOM
+    await waitFor(() => {
+      expect(
+        screen.queryByText(
+          'End the current game? This will clear all game progress.'
+        )
+      ).not.toBeInTheDocument();
+    });
+
     expect(mockLineupService.endGame).not.toHaveBeenCalled();
     expect(mockOnEndGame).not.toHaveBeenCalled();
   });

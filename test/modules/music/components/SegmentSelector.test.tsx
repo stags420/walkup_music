@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SegmentSelector } from '@/modules/music/components/SegmentSelector';
 import { SpotifyTrack, SongSegment } from '@/modules/music';
 import { MusicService } from '@/modules/music/services/MusicService';
-import React from 'react';
 
 const mockTrack: SpotifyTrack = {
   id: 'track1',
@@ -33,15 +32,6 @@ const mockMusicService: MusicService = {
   isPlaybackConnected: jest.fn().mockReturnValue(true),
   isPlaybackReady: jest.fn().mockReturnValue(true),
 };
-
-// Mock createPortal function
-const mockCreatePortal = jest.fn(
-  (
-    children: React.ReactNode,
-    _container?: Element | DocumentFragment,
-    _key?: React.Key | null | undefined
-  ) => children as React.ReactPortal
-);
 
 describe('SegmentSelector', () => {
   const mockOnConfirm = jest.fn();
@@ -74,7 +64,6 @@ describe('SegmentSelector', () => {
         musicService={mockMusicService}
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}
-        createPortal={mockCreatePortal}
         {...props}
       />
     );
@@ -251,7 +240,7 @@ describe('SegmentSelector', () => {
   it('should handle close button action', async () => {
     renderSegmentSelector();
 
-    const closeButton = screen.getByLabelText('Close segment selector');
+    const closeButton = screen.getByLabelText('Close');
     fireEvent.click(closeButton);
 
     await waitFor(() => {
@@ -416,7 +405,6 @@ describe('SegmentSelector', () => {
         initialSegment={mockSegment}
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}
-        createPortal={mockCreatePortal}
       />
     );
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { Modal, Button } from 'react-bootstrap';
 import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
-import { Modal } from '@/modules/core/components';
 import { CurrentBatterDisplay } from './CurrentBatterDisplay';
 import './GameMode.css';
 
@@ -83,21 +83,29 @@ export function GameMode({
       </div>
 
       <Modal
-        isOpen={showEndGameConfirmation}
-        onClose={handleCancelEndGame}
-        title="End Game"
-        actions={
-          <div className="modal-actions">
-            <button onClick={handleCancelEndGame} className="cancel-button">
-              Cancel
-            </button>
-            <button onClick={handleConfirmEndGame} className="confirm-button">
-              End Game
-            </button>
-          </div>
-        }
+        show={showEndGameConfirmation}
+        onHide={handleCancelEndGame}
+        centered
+        backdrop="static"
       >
-        <p>End the current game? This will clear all game progress.</p>
+        <Modal.Header closeButton>
+          <Modal.Title>End Game</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>End the current game? This will clear all game progress.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelEndGame}>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleConfirmEndGame}
+            className="confirm-button"
+          >
+            End Game
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

@@ -1,201 +1,288 @@
 ---
-inclusion: always
+inclusion: fileMatch
+fileMatchPattern: '**/*.{ts,tsx}'
 ---
 
 ## 🧭 React Architecture Guidance
 
 ---
 
-### **Singleton Services (aka Spring-like Beans)**
+### **State Management with Zustand**
 
-If you have app-wide services or logic that are **stateless or singleton** (e.g. API clients, auth manager, config loaders) — **do not use React Context**.
+Use Zustand for all state management needs — both global and shared local state.
 
-Instead, define a `*ServiceProvider` module:
-
+**Global State:**
 ```ts
-// authServiceProvider.ts
-class AuthService { /* ... */ }
+// stores/authStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-const authServiceProvider = (() => {
-  let instance: AuthService;
-  return {
-    getOrCreate(): AuthService {
-      if (!instance) instance = new AuthService();
-      return instance;
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  setAuthData: (user: User, token: string) => void;
+  clearAuthData: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      setAuthData: (user, token) => set({ user, token }),
+      clearAuthData: () => set({ user: null, token: null }),
+    }),
+    {
+      name: 'auth-storage', // localStorage key
     }
-  };
-})();
-
-export default authServiceProvider;
+  )
+);
 ```
 
-Then use it anywhere:
-
+**Business Logic Separate:**
 ```ts
-const auth = authServiceProvider.getOrCreate();
-```
+// services/AuthService.ts
+export class AuthService {
+  async login(credentials: LoginCredentials): Promise<void> {
+    const response = await api.post('/auth/login', credentials);
+    const { user, token } = response.data;
+    
+    // Store the result in Zustand
+    useAuthStore.getState().setAuthData(user, token);
+  }
 
-> ✅ These services never change at runtime and don't need to trigger re-renders.
->
-> 🧼 Keep them outside React. No Providers. No context. No hooks. Just clean instantiation and reuse.
-
----
-
-### **Providers**
-
-Components that wrap part of your app and surface context values to their children via `useContext(SomeContext)`.
-
-Usually, a custom hook like `useAuth()` wraps `useContext(AuthContext)` to make usage cleaner and centralize typing/testing logic.
-
-> 🧼 **Best practice:** Don’t yank context values all the way to the top of the app.
-> Instead, **extract dependencies from context as close as possible to where the provider is introduced** — ideally in the same file/layer. Then **push them down as props**.
-
-That way:
-
-* Your wiring is modular
-* You avoid prop soup
-* Each subtree has clean, scoped dependencies — like Spring `@Configuration` modules
-
-> ❌ Do **not** use Providers for registering singleton-like services. Those should live in standalone `*ServiceProvider` modules.
-
----
-
-### **Hooks**
-
-Functions that tap into React's reactivity and lifecycle (e.g., `useState`, `useEffect`, `useContext`).
-You can also write **custom hooks** (`useForm`, `useAuth`, `usePolling`) to encapsulate reusable stateful logic.
-
-> 🧠 Prefer calling hooks at the composition root (or inside containers), and then **pass the values down** as props. This makes your components decoupled, testable, and unaware of global state.
-
----
-
-### **Context**
-
-Think of React Context as a scoped event bus or reactive config — **not a bean container**.
-
-Use it to:
-
-* Share reactive state like “current user” or “theme”
-* Scope config/state to a subtree
-
-Don’t use it to:
-
-* Register singleton services
-* Store static dependencies
-* Replace constructor injection
-
-> 🔍 Think of Context like a service locator — useful, but keep it **at the edges**. Inside your app, **pass values explicitly** rather than reaching out to global context everywhere.
-
----
-
-### **Mocking in Tests**
-
-Wrap your component in a `XContext.Provider` and pass in mock values (fakes, stubs, spies) — OR
-**Better yet:** if your component accepts dependencies as props, just pass the mock directly. No providers, no wrappers, no global knowledge required.
-
-```tsx
-render(<MyComponent auth={fakeAuth} />);
-```
-
-> ✅ Pushing dependencies down as props makes your components **easier to test, easier to reuse, and harder to break.**
-
----
-
-### ✅ Example: Preferred Prop Injection
-
-Instead of:
-
-```tsx
-<AuthProvider>
-  <SomeShit />
-  <SomeOtherShit />
-</AuthProvider>
-```
-
-Where both `SomeShit` and `SomeOtherShit` call `useAuth()` internally...
-
-Prefer this:
-
-```tsx
-<AuthProvider>
-  {() => {
-    const auth = useAuth(); // extract once, right after AuthProvider
-    return (
-      <>
-        <SomeShit auth={auth} />
-        <SomeOtherShit auth={auth} />
-      </>
-    );
-  }}
-</AuthProvider>
-```
-
-This:
-
-* Keeps dependencies close to the provider
-* Makes `auth` a **real, visible prop** (not a hidden context)
-* Enables **clean, context-free testing** of both components
-
----
-
-### 🧩 Avoiding Prop Explosion
-
-When passing many dependencies down, group them into cohesive objects:
-
-```tsx
-const userDeps = { auth, userService, featureFlags };
-return <SomePage userContext={userDeps} />;
-```
-
-Or use a **feature-scoped dependency container**:
-
-```ts
-interface DashboardServices {
-  chartBuilder: ChartService;
-  metricsClient: MetricsApi;
-  userInfo: AuthContext;
+  async logout(): Promise<void> {
+    await api.post('/auth/logout');
+    useAuthStore.getState().clearAuthData();
+  }
 }
 ```
 
-> 🧠 Group related dependencies and pass them as a single object — don’t be afraid to treat a prop as your DI container for that component tree.
+**Shared Local State:**
+```ts
+// stores/playerFormStore.ts
+import { create } from 'zustand';
+
+interface PlayerFormState {
+  players: Player[];
+  selectedPlayer: Player | null;
+  setPlayers: (players: Player[]) => void;
+  selectPlayer: (player: Player) => void;
+}
+
+export const usePlayerFormStore = create<PlayerFormState>((set) => ({
+  players: [],
+  selectedPlayer: null,
+  setPlayers: (players) => set({ players }),
+  selectPlayer: (player) => set({ selectedPlayer: player }),
+}));
+```
+
+> ✅ Zustand handles persistence, subscriptions, and re-renders automatically.
+>
+> 🧼 No providers, no context, no prop drilling. Just clean state management.
 
 ---
 
-### 🔗 Injecting Children for Testability
+### **Dependency Injection with Hooks**
 
-Don’t hardcode your subcomponents inside parents.
+Create custom hooks for dependency injection. Pull all dependencies at the top of components to make them explicit.
 
-🚫 Avoid:
+```ts
+// hooks/useServices.ts
+export const useAuthService = () => {
+  return useMemo(() => new AuthService(), []);
+};
 
+export const usePlayerService = () => {
+  const storage = useStorageService();
+  return useMemo(() => new PlayerService(storage), [storage]);
+};
+
+export const useStorageService = () => {
+  return useMemo(() => new LocalStorageService(), []);
+};
+```
+
+**Component Usage:**
 ```tsx
-export function Page() {
+function PlayerList() {
+  // Pull all dependencies at the top
+  const playerService = usePlayerService();
+  const authService = useAuthService();
+  const { players, setPlayers } = usePlayerFormStore();
+  const { user } = useAuthStore();
+  
+  // Component logic here
+  const handleAddPlayer = async (player: Player) => {
+    await playerService.save(player);
+    setPlayers([...players, player]);
+  };
+
+  const handleLogout = async () => {
+    await authService.logout(); // Business logic, not just state mutation
+  };
+
   return (
-    <Layout>
-      <Dashboard />
-    </Layout>
+    <div>
+      <button onClick={handleLogout}>Logout</button>
+      {/* JSX here */}
+    </div>
   );
 }
 ```
 
-✅ Prefer:
+> 🧠 Dependencies are clear and visible at the top of each component.
+>
+> 🧪 Easy to test by mocking the hooks directly.
+
+---
+
+### **Avoid React Context**
+
+Don't use React Context for:
+* State management (use Zustand)
+* Dependency injection (use custom hooks)
+* Service registration (use hook-based DI)
+
+Context adds complexity without benefits when you have Zustand and custom hooks.
+
+---
+
+### **Testing with Mock Hooks**
+
+Mock the dependency hooks directly in tests:
 
 ```tsx
-export function Page({ children }: { children: ReactNode }) {
-  return <Layout>{children}</Layout>;
-}
+// PlayerList.test.tsx
+import { render, screen } from '@testing-library/react';
+import { PlayerList } from './PlayerList';
+
+// Mock the hooks
+jest.mock('../hooks/useServices', () => ({
+  usePlayerService: () => ({
+    save: jest.fn(),
+    loadAll: jest.fn().mockResolvedValue([]),
+  }),
+}));
+
+jest.mock('../stores/playerFormStore', () => ({
+  usePlayerFormStore: () => ({
+    players: [],
+    setPlayers: jest.fn(),
+  }),
+}));
+
+test('renders player list', () => {
+  render(<PlayerList />);
+  // Test component behavior
+});
 ```
 
-Now you can test or reuse `Page` with any child component:
+> ✅ No providers, no context setup, no global mocking. Just mock the hooks.
 
-```tsx
-render(
-  <Page>
-    <FakeDashboard />
-  </Page>
+---
+
+### **Persistence with Zustand**
+
+Use Zustand's persist middleware for localStorage and cookies:
+
+```ts
+// For localStorage
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      theme: 'light',
+      setTheme: (theme) => set({ theme }),
+    }),
+    {
+      name: 'app-settings',
+    }
+  )
+);
+
+// For cookies with custom storage
+import { createJSONStorage } from 'zustand/middleware';
+
+const cookieStorage = {
+  getItem: (name: string) => {
+    const value = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(`${name}=`))
+      ?.split('=')[1];
+    return value ? JSON.parse(decodeURIComponent(value)) : null;
+  },
+  setItem: (name: string, value: any) => {
+    document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; path=/`;
+  },
+  removeItem: (name: string) => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+  },
+};
+
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      sessionId: null,
+      setSessionId: (id) => set({ sessionId: id }),
+    }),
+    {
+      name: 'session-data',
+      storage: createJSONStorage(() => cookieStorage),
+    }
+  )
 );
 ```
 
-> 🧪 Injecting children (like Java collaborators) makes components **more composable and testable**, and breaks dependency chains between unrelated components.
+---
+
+### **Component State vs Zustand**
+
+**Use `useState` for:**
+* Form input values
+* UI state (modals, dropdowns)
+* Component-specific state that doesn't need sharing
+
+**Use Zustand for:**
+* State shared between components
+* Global application state
+* State that needs persistence
+* Complex state with multiple actions
+
+```tsx
+function PlayerForm() {
+  // Local form state
+  const [name, setName] = useState('');
+  const [position, setPosition] = useState('');
+  
+  // Dependencies and state
+  const playerService = usePlayerService();
+  const { players, setPlayers } = usePlayerStore();
+  const { user } = useAuthStore();
+  
+  const handleSubmit = async () => {
+    const newPlayer = { name, position, userId: user.id };
+    
+    // Business logic in service
+    await playerService.create(newPlayer);
+    
+    // Update state with new data
+    setPlayers([...players, newPlayer]);
+    
+    // Reset form
+    setName('');
+    setPosition('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <input value={position} onChange={(e) => setPosition(e.target.value)} />
+      <button type="submit">Add Player</button>
+    </form>
+  );
+}
+```
 
 ---
 
@@ -207,38 +294,39 @@ render(
 
 * `useState`
 * `useReducer`
-* `useContext` value
+* Zustand store subscriptions
 * Props passed to a component
 
 ### A component is re-rendered if:
 
 * It **calls one of those hooks**, and the value changes
 * It **receives** a new value as a prop
+* A **Zustand store it subscribes to** changes
 
 ---
 
-### Children and Re-renders
+### Zustand and Re-renders
 
-When a parent re-renders:
+Zustand automatically handles subscriptions and only re-renders components that use changed state:
 
-* All JSX inside is re-evaluated
-* All child components are re-invoked
-* But children **will only re-render** if:
+```tsx
+// Only re-renders when user changes, not when theme changes
+function UserProfile() {
+  const { user } = useAuthStore((state) => ({ user: state.user }));
+  return <div>{user?.name}</div>;
+}
 
-  * They’re not memoized
-  * Or their props are different by reference
-
-Wrap with `React.memo(Component)` (outside the parent!) to skip re-renders when props haven't changed.
-
----
-
-### React Doesn’t Track:
-
-* `useRef.current`
-* Internal mutation of objects in state
-* Non-hook variables (e.g. plain `let` or `const`)
-
-Use `useRef` for stateful values you don’t want triggering a re-render.
+// Only re-renders when theme changes, not when user changes  
+function ThemeToggle() {
+  const { theme, setTheme } = useSettingsStore((state) => ({ 
+    theme: state.theme, 
+    setTheme: state.setTheme 
+  }));
+  return <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+    {theme}
+  </button>;
+}
+```
 
 ---
 
@@ -248,112 +336,81 @@ Use `useRef` for stateful values you don’t want triggering a re-render.
 
 * Tracked by React
 * Changing value with `setState()` causes component to re-render
-* Use when the value affects rendering/UI
-
----
-
-### `useReducer`
-
-* Like `useState`, but with more explicit state transitions
-* Great for complex or grouped state
-* Tracked by React
-
----
+* Use for local component state
 
 ### `useRef`
 
 * Not tracked
 * `.current` can be updated freely without triggering re-render
-* Use for:
+* Use for DOM refs and mutable values
 
-  * DOM refs (`ref={...}`)
-  * Mutable logic-only values (timestamps, call counts, flags)
+### Zustand hooks
 
----
-
-### `useContext`
-
-* Subscribes to a value from a Provider
-* Re-renders if the context’s `.value` prop changes (by reference)
-* Often wrapped in a custom hook like `useAuth()`
-
-> ✅ Use `useContext` in container components and **pass the values as props**. Don’t couple every component to global context directly.
-
----
+* Automatically tracked and optimized
+* Only re-render when subscribed state changes
+* Use for shared and global state
 
 ### `useMemo`
 
-* Memoizes the **result** of a function
-* Only re-executes if dependency array changes
-* Use for:
-
-  * Expensive calculations
-  * Singleton-style service creation (if local to a component)
-  * Stable props to memoized children
+* Memoizes expensive calculations
+* Use sparingly for actual performance issues
 
 ```tsx
-const service = useMemo(() => new MyService(), []);
+const expensiveValue = useMemo(() => {
+  return heavyCalculation(data);
+}, [data]);
 ```
-
----
 
 ### `useCallback`
 
-* Memoizes the **function itself**
-* Avoids redefining a callback on every render
-* Mostly useful when passing callbacks to `React.memo` children or inside effects
+* Memoizes functions to prevent child re-renders
+* Use when passing callbacks to `React.memo` components
 
 ```tsx
-const handleClick = useCallback(() => doStuff(), [deps]);
+const handleClick = useCallback((id: string) => {
+  deletePlayer(id);
+}, [deletePlayer]);
 ```
-
----
 
 ### `useEffect`
 
-* Runs **after render**
-* Use for side effects like:
-
-  * Data fetching
-  * Subscriptions
-  * Timers
-  * DOM interaction
-* Cleanup runs before the next effect or on unmount
+* Runs after render for side effects
+* Use for data fetching, subscriptions, DOM manipulation
 
 ```tsx
 useEffect(() => {
-  subscribe();
-  return () => unsubscribe();
-}, [dep]);
+  const subscription = api.subscribe(handleUpdate);
+  return () => subscription.unsubscribe();
+}, []);
 ```
 
 ---
 
 ## ✅ Final Thoughts
 
-React’s reactivity is **reference-based**. It only knows something changed if the pointer changes.
+**State Management:**
+* Use Zustand for shared state and persistence
+* Use `useState` for local component state
+* Avoid React Context entirely
 
-When in doubt:
+**Dependencies:**
+* Pull all dependencies at the top of components using custom hooks
+* Mock hooks directly in tests
+* Keep dependencies explicit and visible
 
-* If you want to **track and re-render**, use `useState` or `useContext`
-* If you want to **track without re-render**, use `useRef`
-* If you want to **compute or define once**, use `useMemo` or `useCallback`
-* If you want to **react to changes**, use `useEffect`
-* If you want **cleaner, testable components**, prefer:
-
-  * **Passing values as props**
-  * **Injecting children instead of hardcoding them**
-  * **Grouping related props into containers**
-  * **Extracting context values just below the provider, not globally**
-  * **Using `*ServiceProvider.getOrCreate()` for singleton services**
+**Performance:**
+* Zustand handles subscriptions efficiently
+* Use `React.memo` for expensive components
+* Don't over-optimize with `useMemo`/`useCallback`
 
 ---
 
 ### 🧼 Final Rule of Thumb
 
-> **Use React Context for reactive scoped data.**
-> **Use `*ServiceProvider.getOrCreate()` for singleton-like services.**
-> **Pass dependencies as props instead of coupling to global context.**
-> **Inject children. Group related props. Keep wiring modular.**
+> **Use Zustand for state storage, not business logic.**
+> **Name store methods for what they do: set/clear/update, not business operations.**
+> **Keep business logic in services, accessed via custom hooks.**
+> **Pull dependencies at the top of components.**
+> **Mock hooks directly in tests.**
 
 ---

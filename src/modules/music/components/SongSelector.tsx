@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal, Form, Alert, Spinner, Button } from 'react-bootstrap';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { MusicService } from '@/modules/music/services/MusicService';
-import { Button, TrackCard } from '@/modules/core';
-import './SongSelector.css';
+import { TrackCard } from '@/modules/core';
 
 interface SongSelectorProps {
   musicService: MusicService;
@@ -131,126 +130,114 @@ export function SongSelector({
     setPlayingTrackId(null);
   }, [tracks, musicService]);
 
-  return createPortal(
-    <div className="song-selector-overlay">
-      <div className="song-selector-modal">
-        <div className="song-selector-header">
-          <h2>Select Walk-up Song</h2>
-          <button
-            onClick={onCancel}
-            className="close-button"
-            aria-label="Close song selector"
-          >
-            ×
-          </button>
+  return (
+    <Modal show={true} onHide={onCancel} centered backdrop="static" size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>Select Walk-up Song</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="song-search">
+            Search for songs, artists, or albums
+          </Form.Label>
+          <Form.Control
+            id="song-search"
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="e.g., Eye of the Tiger, Queen, Metallica..."
+            autoFocus
+            data-testid="song-search-input"
+          />
+        </Form.Group>
+
+        <div
+          style={{ minHeight: '300px', maxHeight: '400px', overflowY: 'auto' }}
+        >
+          {loading && (
+            <div className="text-center py-4">
+              <Spinner animation="border" role="status" className="me-2" />
+              <span>Searching for songs...</span>
+            </div>
+          )}
+
+          {error && (
+            <Alert variant="danger">
+              <Alert.Heading>Error: {error}</Alert.Heading>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={() => setSearchQuery(searchQuery + ' ')}
+              >
+                Retry
+              </Button>
+            </Alert>
+          )}
+
+          {!loading && !error && searchQuery.trim() && tracks.length === 0 && (
+            <div className="text-center py-4 text-muted">
+              <p>
+                No songs found for "{searchQuery}". Try a different search term.
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && tracks.length > 0 && (
+            <div className="d-flex flex-column gap-2">
+              {tracks
+                .filter(
+                  (track, index, self) =>
+                    index === self.findIndex((t) => t.id === track.id)
+                )
+                .map((track) => (
+                  <TrackCard
+                    key={track.id}
+                    track={{
+                      id: track.id,
+                      name: track.name,
+                      artists: track.artists.map((name) => ({ name })),
+                      album: {
+                        name: track.album,
+                        images: [{ url: track.albumArt }],
+                      },
+                      duration_ms: track.durationMs,
+                      preview_url: track.previewUrl,
+                    }}
+                    variant="compact"
+                    isSelected={selectedTrackId === track.id}
+                    onSelect={() => handleTrackSelect(track)}
+                    onPreview={() =>
+                      handlePlayPreview(track, {} as React.MouseEvent)
+                    }
+                    isPlaying={playingTrackId === track.id}
+                    data-testid="song-result"
+                  />
+                ))}
+            </div>
+          )}
+
+          {!searchQuery.trim() && (
+            <div className="text-center py-4 text-muted">
+              <p>Start typing to search for songs...</p>
+            </div>
+          )}
         </div>
+      </Modal.Body>
 
-        <div className="song-selector-content">
-          <div className="search-section">
-            <label htmlFor="song-search" className="search-label">
-              Search for songs, artists, or albums
-            </label>
-            <input
-              id="song-search"
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="search-input"
-              placeholder="e.g., Eye of the Tiger, Queen, Metallica..."
-              autoFocus
-              data-testid="song-search-input"
-            />
-          </div>
-
-          <div className="results-section">
-            {loading && (
-              <div className="loading-state">
-                <div className="loading-spinner" aria-hidden="true"></div>
-                <p>Searching for songs...</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="error-state">
-                <p className="error-message">Error: {error}</p>
-                <button
-                  onClick={() => setSearchQuery(searchQuery + ' ')}
-                  className="retry-button"
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-
-            {!loading &&
-              !error &&
-              searchQuery.trim() &&
-              tracks.length === 0 && (
-                <div className="no-results-state">
-                  <p>
-                    No songs found for "{searchQuery}". Try a different search
-                    term.
-                  </p>
-                </div>
-              )}
-
-            {!loading && !error && tracks.length > 0 && (
-              <div className="tracks-grid">
-                {tracks
-                  .filter(
-                    (track, index, self) =>
-                      index === self.findIndex((t) => t.id === track.id)
-                  )
-                  .map((track) => (
-                    <TrackCard
-                      key={track.id}
-                      track={{
-                        id: track.id,
-                        name: track.name,
-                        artists: track.artists.map((name) => ({ name })),
-                        album: {
-                          name: track.album,
-                          images: [{ url: track.albumArt }],
-                        },
-                        duration_ms: track.durationMs,
-                        preview_url: track.previewUrl,
-                      }}
-                      variant="compact"
-                      isSelected={selectedTrackId === track.id}
-                      onSelect={() => handleTrackSelect(track)}
-                      onPreview={() =>
-                        handlePlayPreview(track, {} as React.MouseEvent)
-                      }
-                      isPlaying={playingTrackId === track.id}
-                      data-testid="song-result"
-                    />
-                  ))}
-              </div>
-            )}
-
-            {!searchQuery.trim() && (
-              <div className="empty-state">
-                <p>Start typing to search for songs...</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="song-selector-actions">
-          <Button onClick={onCancel} variant="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmSelection}
-            variant="primary"
-            disabled={!selectedTrackId}
-            data-testid="select-song-result-button"
-          >
-            Select Song
-          </Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleConfirmSelection}
+          disabled={!selectedTrackId}
+          data-testid="select-song-result-button"
+        >
+          Select Song
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 }

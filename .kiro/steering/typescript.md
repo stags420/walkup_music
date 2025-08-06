@@ -1,3 +1,8 @@
+---
+inclusion: fileMatch
+fileMatchPattern: '**/*.{ts,tsx}'
+---
+
 # TypeScript Guidelines
 
 ## Core Philosophy
@@ -72,7 +77,7 @@ class ApiService {
 ### Module Structure
 
 - Types go in `models/` directories within modules
-- Use ES2015 module syntax with const objects for validation
+- Use ES2022 module syntax with const objects for validation
 - No separate Model classes - keep interfaces and validation together
 
 ### External Data Validation Pattern
@@ -120,4 +125,3 @@ const player: Player = {
 1. **Module imports**: Use `@/modules/name` pattern
 2. **Trust TypeScript**: No runtime checks for typed parameters
 3. **Validate boundaries**: External data only
-4. **ES2015 modules**: Const objects over classes for validation

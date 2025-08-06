@@ -27,23 +27,6 @@ test.describe('Complete E2E Workflow', () => {
     }, testMockTracks);
   });
 
-  test('debug mock tracks injection', async ({ page }) => {
-    // Check if mock tracks are properly injected
-    await loginPage.goto();
-    await loginPage.waitForLoad();
-
-    // Check the global variable
-    const mockTracks = await page.evaluate(() => {
-      return (
-        globalThis as typeof globalThis & { __TEST_MOCK_TRACKS__?: unknown[] }
-      ).__TEST_MOCK_TRACKS__;
-    });
-
-    console.log('Mock tracks in browser:', mockTracks?.length || 'none');
-    expect(mockTracks).toBeTruthy();
-    expect(mockTracks?.length).toBeGreaterThan(0);
-  });
-
   test('song selection and segment selection workflow', async ({ page }) => {
     // 1. Authentication
     await loginPage.goto();

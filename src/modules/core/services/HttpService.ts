@@ -11,4 +11,9 @@ export interface HttpService {
     form: Record<string, string>,
     init?: HttpRequestOptions
   ): Promise<HttpResponse<T>>;
+  put<T>(
+    endpointOrUrl: string,
+    jsonBody?: unknown,
+    init?: HttpRequestOptions
+  ): Promise<HttpResponse<T>>;
 }

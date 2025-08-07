@@ -1,4 +1,5 @@
 import { AuthService } from '@/modules/auth';
+import { getContainer } from '@/container';
 
 /**
  * Spotify Web Playback SDK types
@@ -287,26 +288,15 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
       throw new Error('No access token available');
     }
 
-    const response = await fetch(
+    const { httpService } = getContainer();
+    const { status } = await httpService.put<unknown>(
       `https://api.spotify.com/v1/me/player/play?device_id=${this.deviceId}`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uris: [uri],
-          position_ms: startPositionMs,
-        }),
-      }
+      { uris: [uri], position_ms: startPositionMs },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Failed to load track: ${response.statusText} - ${errorText}`
-      );
+    if (status < 200 || status >= 300) {
+      throw new Error(`Failed to load track: ${status}`);
     }
   }
 }

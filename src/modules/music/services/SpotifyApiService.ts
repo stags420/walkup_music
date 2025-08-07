@@ -1,6 +1,7 @@
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { AuthService } from '@/modules/auth';
 import { getContainer } from '@/container';
+import type { HttpService } from '@/modules/core/services/HttpService';
 
 // Internal light response used when we do not want to pass through the raw fetch Response
 interface LightweightResponse {
@@ -10,14 +11,7 @@ interface LightweightResponse {
   json: () => Promise<unknown>;
 }
 
-/**
- * Rate limiting configuration for Spotify API
- */
-interface RateLimitConfig {
-  maxRequestsPerSecond: number;
-  retryDelayMs: number;
-  maxRetries: number;
-}
+// Removed internal rate limiting; rely on caller or external wrappers if needed
 
 /**
  * Spotify Web API search response structure
@@ -52,20 +46,14 @@ interface SpotifyApiTrack {
  */
 export class SpotifyApiService {
   private static readonly SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1';
-  private static readonly DEFAULT_RATE_LIMIT: RateLimitConfig = {
-    maxRequestsPerSecond: 10,
-    retryDelayMs: 1000,
-    maxRetries: 3,
-  };
+  // Default to container http service if not supplied
+  private readonly httpService: HttpService;
+  private readonly authService: AuthService;
 
-  private lastRequestTime = 0;
-  private requestQueue: Array<() => void> = [];
-  private isProcessingQueue = false;
-
-  constructor(
-    private authService: AuthService,
-    private rateLimitConfig: RateLimitConfig = SpotifyApiService.DEFAULT_RATE_LIMIT
-  ) {}
+  constructor(authService: AuthService, httpService?: HttpService) {
+    this.authService = authService;
+    this.httpService = httpService ?? getContainer().httpService;
+  }
 
   /**
    * Search for tracks using Spotify Web API
@@ -81,17 +69,26 @@ export class SpotifyApiService {
     }
 
     const searchUrl = this.buildSearchUrl(query, limit);
-    const response = await this.makeRateLimitedRequest(searchUrl, accessToken);
+    const { data, status, headers } = await this.httpService.get<unknown>(
+      searchUrl,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    if (!response.ok) {
+    if (status < 200 || status >= 300) {
       await this.handleApiError({
-        ok: response.ok,
-        status: response.status,
-        json: response.json,
+        ok: status >= 200 && status < 300,
+        status,
+        headers,
+        json: async () => data,
       } as unknown as Response);
     }
 
-    const searchData = await response.json();
+    const searchData = data;
     const searchResponse = this.validateSearchResponse(searchData);
 
     // Transform tracks and deduplicate by ID
@@ -121,109 +118,7 @@ export class SpotifyApiService {
     return `${SpotifyApiService.SPOTIFY_API_BASE_URL}/search?${params.toString()}`;
   }
 
-  /**
-   * Make a rate-limited request to Spotify API
-   */
-  private async makeRateLimitedRequest(
-    url: string,
-    accessToken: string
-  ): Promise<LightweightResponse> {
-    return new Promise((resolve, reject) => {
-      this.requestQueue.push(async () => {
-        try {
-          const response = await this.executeRequest(url, accessToken);
-          resolve(response);
-        } catch (error) {
-          reject(error);
-        }
-      });
-
-      this.processQueue();
-    });
-  }
-
-  /**
-   * Process the request queue with rate limiting
-   */
-  private async processQueue(): Promise<void> {
-    if (this.isProcessingQueue || this.requestQueue.length === 0) {
-      return;
-    }
-
-    this.isProcessingQueue = true;
-
-    while (this.requestQueue.length > 0) {
-      const request = this.requestQueue.shift();
-      if (!request) continue;
-
-      // Enforce rate limiting
-      const now = Date.now();
-      const timeSinceLastRequest = now - this.lastRequestTime;
-      const minInterval = 1000 / this.rateLimitConfig.maxRequestsPerSecond;
-
-      if (timeSinceLastRequest < minInterval) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, minInterval - timeSinceLastRequest)
-        );
-      }
-
-      this.lastRequestTime = Date.now();
-      await request();
-    }
-
-    this.isProcessingQueue = false;
-  }
-
-  /**
-   * Execute the actual HTTP request with retry logic
-   */
-  private async executeRequest(
-    url: string,
-    accessToken: string,
-    retryCount = 0
-  ): Promise<LightweightResponse> {
-    try {
-      const { httpService } = getContainer();
-      // Use HttpService and check status via response model
-      const { data, status, headers } = await httpService.get<unknown>(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      // Lightweight response for internal flow
-      const response: LightweightResponse = {
-        ok: status >= 200 && status < 300,
-        status,
-        headers,
-        json: async () => data,
-      };
-
-      // Handle rate limiting (429) with exponential backoff
-      if (
-        response.status === 429 &&
-        retryCount < this.rateLimitConfig.maxRetries
-      ) {
-        const retryAfter = response.headers.get('Retry-After');
-        const delayMs = retryAfter
-          ? parseInt(retryAfter, 10) * 1000
-          : this.rateLimitConfig.retryDelayMs * Math.pow(2, retryCount);
-
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        return this.executeRequest(url, accessToken, retryCount + 1);
-      }
-
-      return response;
-    } catch (error) {
-      if (retryCount < this.rateLimitConfig.maxRetries) {
-        const delayMs =
-          this.rateLimitConfig.retryDelayMs * Math.pow(2, retryCount);
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        return this.executeRequest(url, accessToken, retryCount + 1);
-      }
-      throw error;
-    }
-  }
+  // Removed rate-limited queue and retries; allow errors to surface
 
   /**
    * Handle API errors with appropriate error messages

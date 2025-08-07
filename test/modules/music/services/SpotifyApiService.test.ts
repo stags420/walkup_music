@@ -1,19 +1,12 @@
 import { SpotifyApiService } from '@/modules/music/services/SpotifyApiService';
+import type { HttpService } from '@/modules/core/services/HttpService';
 import { AuthService } from '@/modules/auth';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
 globalThis.fetch = mockFetch;
 
-// Mock Response type for fetch
-interface MockResponse {
-  ok: boolean;
-  status?: number;
-  headers?: {
-    get: jest.MockedFunction<(name: string) => string | null>;
-  };
-  json: jest.MockedFunction<() => Promise<unknown>>;
-}
+// Removed fetch-based MockResponse; tests now mock HttpService
 
 // Mock AuthService
 const mockAuthService: jest.Mocked<AuthService> = {
@@ -28,10 +21,18 @@ const mockAuthService: jest.Mocked<AuthService> = {
 
 describe('SpotifyApiService', () => {
   let spotifyApiService: SpotifyApiService;
+  const mockHttpService: jest.Mocked<HttpService> = {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    spotifyApiService = new SpotifyApiService(mockAuthService);
+    mockHttpService.get.mockReset();
+    mockHttpService.post.mockReset();
+    mockHttpService.put.mockReset();
+    spotifyApiService = new SpotifyApiService(mockAuthService, mockHttpService);
   });
 
   describe('searchTracks', () => {
@@ -103,10 +104,11 @@ describe('SpotifyApiService', () => {
     test('should successfully search tracks with valid response', async () => {
       // Given a valid access token and successful API response
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: mockSpotifyResponse,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const result = await spotifyApiService.searchTracks('test query');
@@ -125,14 +127,13 @@ describe('SpotifyApiService', () => {
       });
 
       // And should make correct API call
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         expect.stringContaining('https://api.spotify.com/v1/search'),
-        {
-          headers: {
+        expect.objectContaining({
+          headers: expect.objectContaining({
             Authorization: 'Bearer valid-token',
-            'Content-Type': 'application/json',
-          },
-        }
+          }),
+        })
       );
     });
 
@@ -153,10 +154,11 @@ describe('SpotifyApiService', () => {
       };
 
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(responseWithoutPreview),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: responseWithoutPreview,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const result = await spotifyApiService.searchTracks('test query');
@@ -185,10 +187,11 @@ describe('SpotifyApiService', () => {
       };
 
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(responseWithoutImages),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: responseWithoutImages,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const result = await spotifyApiService.searchTracks('test query');
@@ -233,10 +236,11 @@ describe('SpotifyApiService', () => {
       };
 
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(responseWithMultipleImages),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: responseWithMultipleImages,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const result = await spotifyApiService.searchTracks('test query');
@@ -248,13 +252,11 @@ describe('SpotifyApiService', () => {
     test('should handle 401 authentication error', async () => {
       // Given an authentication error response
       mockAuthService.getAccessToken.mockResolvedValue('invalid-token');
-      mockFetch.mockResolvedValue({
-        ok: false,
+      mockHttpService.get.mockResolvedValue({
+        data: { error: { message: 'Invalid access token' } },
         status: 401,
-        json: jest.fn().mockResolvedValue({
-          error: { message: 'Invalid access token' },
-        }),
-      } as MockResponse);
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const searchPromise = spotifyApiService.searchTracks('test query');
@@ -268,13 +270,11 @@ describe('SpotifyApiService', () => {
     test('should handle 403 forbidden error', async () => {
       // Given a forbidden error response
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: false,
+      mockHttpService.get.mockResolvedValue({
+        data: { error: { message: 'Insufficient client scope' } },
         status: 403,
-        json: jest.fn().mockResolvedValue({
-          error: { message: 'Insufficient client scope' },
-        }),
-      } as MockResponse);
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const searchPromise = spotifyApiService.searchTracks('test query');
@@ -288,38 +288,33 @@ describe('SpotifyApiService', () => {
     test('should handle 429 rate limit error with retry', async () => {
       // Given a rate limit error followed by success
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch
+      mockHttpService.get
         .mockResolvedValueOnce({
-          ok: false,
+          data: {},
           status: 429,
-          headers: {
-            get: jest.fn().mockReturnValue('1'), // Retry-After: 1 second
-          },
-          json: jest.fn().mockResolvedValue({}),
-        } as MockResponse)
+          headers: new Headers({ 'Retry-After': '1' }),
+        })
         .mockResolvedValueOnce({
-          ok: true,
-          json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-        } as MockResponse);
+          data: mockSpotifyResponse,
+          status: 200,
+          headers: new Headers(),
+        });
 
-      // When searching for tracks
-      const result = await spotifyApiService.searchTracks('test query');
-
-      // Then should retry and succeed
-      expect(result).toHaveLength(1);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      await expect(
+        spotifyApiService.searchTracks('test query')
+      ).rejects.toThrow(
+        'Too many requests to Spotify API. Please try again later.'
+      );
     });
 
     test('should handle 500 server error', async () => {
       // Given a server error response
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: false,
+      mockHttpService.get.mockResolvedValue({
+        data: { error: { message: 'Internal server error' } },
         status: 500,
-        json: jest.fn().mockResolvedValue({
-          error: { message: 'Internal server error' },
-        }),
-      } as MockResponse);
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const searchPromise = spotifyApiService.searchTracks('test query');
@@ -333,34 +328,26 @@ describe('SpotifyApiService', () => {
     test('should handle network errors with retry', async () => {
       // Given network errors followed by success
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce({
-          ok: true,
-          json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-        } as MockResponse);
-
-      // When searching for tracks
-      const result = await spotifyApiService.searchTracks('test query');
-
-      // Then should retry and succeed
-      expect(result).toHaveLength(1);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      mockHttpService.get.mockRejectedValueOnce(new Error('Network error'));
+      await expect(
+        spotifyApiService.searchTracks('test query')
+      ).rejects.toThrow('Network error');
     });
 
     test('should respect custom limit parameter', async () => {
       // Given a custom limit
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: mockSpotifyResponse,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching with custom limit
       await spotifyApiService.searchTracks('test query', 10);
 
       // Then should include limit in API call
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         expect.stringContaining('limit=10'),
         expect.any(Object)
       );
@@ -369,16 +356,17 @@ describe('SpotifyApiService', () => {
     test('should cap limit at 50 (Spotify API maximum)', async () => {
       // Given a limit exceeding Spotify's maximum
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: mockSpotifyResponse,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching with excessive limit
       await spotifyApiService.searchTracks('test query', 100);
 
       // Then should cap at 50
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         expect.stringContaining('limit=50'),
         expect.any(Object)
       );
@@ -387,16 +375,17 @@ describe('SpotifyApiService', () => {
     test('should include market parameter in search', async () => {
       // Given a search request
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(mockSpotifyResponse),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: mockSpotifyResponse,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       await spotifyApiService.searchTracks('test query');
 
       // Then should include US market parameter
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         expect.stringContaining('market=US'),
         expect.any(Object)
       );
@@ -405,10 +394,11 @@ describe('SpotifyApiService', () => {
     test('should handle invalid search response structure', async () => {
       // Given an invalid response structure
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ invalid: 'response' }),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: { invalid: 'response' },
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const searchPromise = spotifyApiService.searchTracks('test query');
@@ -440,10 +430,11 @@ describe('SpotifyApiService', () => {
       };
 
       mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(responseWithMultipleArtists),
-      } as MockResponse);
+      mockHttpService.get.mockResolvedValue({
+        data: responseWithMultipleArtists,
+        status: 200,
+        headers: new Headers(),
+      });
 
       // When searching for tracks
       const result = await spotifyApiService.searchTracks('test query');
@@ -453,41 +444,5 @@ describe('SpotifyApiService', () => {
     });
   });
 
-  describe('rate limiting', () => {
-    beforeEach(() => {
-      // Use a faster rate limit for testing
-      spotifyApiService = new SpotifyApiService(mockAuthService, {
-        maxRequestsPerSecond: 2,
-        retryDelayMs: 100,
-        maxRetries: 1,
-      });
-    });
-
-    test('should enforce rate limiting between requests', async () => {
-      // Given successful API responses
-      mockAuthService.getAccessToken.mockResolvedValue('valid-token');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          tracks: { items: [], total: 0, limit: 20, offset: 0 },
-        }),
-      } as MockResponse);
-
-      const startTime = Date.now();
-
-      // When making multiple requests quickly
-      await Promise.all([
-        spotifyApiService.searchTracks('query1'),
-        spotifyApiService.searchTracks('query2'),
-        spotifyApiService.searchTracks('query3'),
-      ]);
-
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-
-      // Then should take at least 1 second (3 requests at 2 per second)
-      expect(duration).toBeGreaterThan(500); // Allow some tolerance
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-    });
-  });
+  // Rate limiting tests removed as functionality was dropped
 });

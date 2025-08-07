@@ -18,8 +18,8 @@ describe('HttpApiService', () => {
     globalThis.fetch = jest
       .fn()
       .mockResolvedValue({ json: () => Promise.resolve(payload) });
-    const api: HttpService = new FetchHttpService(BASE);
-    const { data } = await api.get('/ping');
+    const api: HttpService = new FetchHttpService();
+    const { data } = await api.get(`${BASE}/ping`);
     expect(globalThis.fetch).toHaveBeenCalledWith(
       `${BASE}/ping`,
       expect.any(Object)
@@ -47,8 +47,8 @@ describe('HttpApiService', () => {
           json: () => Promise.resolve(payload),
         } as Response);
       });
-    const api: HttpService = new FetchHttpService(BASE);
-    const { data } = await api.post('/items', { name: 'n' });
+    const api: HttpService = new FetchHttpService();
+    const { data } = await api.post(`${BASE}/items`, { name: 'n' });
     const call = calls[0];
     expect(call.url).toBe(`${BASE}/items`);
     expect(call.init.method).toBe('POST');

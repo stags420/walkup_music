@@ -11,7 +11,7 @@ export interface AppContainer {
 let container: AppContainer | null = null;
 
 export function bootstrapServices(config: AppConfig): AppContainer {
-  const apiService = new FetchHttpService('');
+  const apiService = new FetchHttpService();
   container = { config, httpService: apiService };
   return container;
 }

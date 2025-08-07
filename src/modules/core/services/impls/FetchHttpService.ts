@@ -3,20 +3,21 @@ import type { HttpRequestOptions } from '@/modules/core/services/HttpRequestOpti
 import type { HttpResponse } from '@/modules/core/services/models/HttpResponse';
 
 export class FetchHttpService implements HttpService {
-  constructor(
-    private readonly baseUrl: string,
-    private readonly defaultHeaders: Record<string, string> = {}
-  ) {}
+  constructor() {}
 
   async get<T>(
-    endpointOrUrl: string,
+    url: string,
     init: HttpRequestOptions = {}
   ): Promise<HttpResponse<T>> {
-    const url = this.resolveUrl(endpointOrUrl);
     const res: Response = await fetch(url, {
       headers: this.headers(false, init.headers),
     });
-    const data = (await res.json()) as T;
+    let data = undefined as unknown as T;
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      // no body
+    }
     const status =
       typeof res.status === 'number' ? res.status : res.ok ? 200 : 500;
     return { data, status, headers: res.headers };
@@ -32,35 +33,53 @@ export class FetchHttpService implements HttpService {
       ...init.headers,
       'Content-Type': 'application/x-www-form-urlencoded',
     };
-    const res: Response = await fetch(this.url(endpoint), {
+    const res: Response = await fetch(endpoint, {
       method: 'POST',
       headers: this.headers(false, headers),
       body,
     });
-    const data = (await res.json()) as T;
+    let data = undefined as unknown as T;
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      // no body
+    }
     const status =
       typeof res.status === 'number' ? res.status : res.ok ? 200 : 500;
     return { data, status, headers: res.headers };
   }
 
-  private url(endpoint: string): string {
-    return `${this.baseUrl}${endpoint}`;
+  async put<T>(
+    endpointOrUrl: string,
+    jsonBody: unknown = undefined,
+    init: HttpRequestOptions = {}
+  ): Promise<HttpResponse<T>> {
+    const url = endpointOrUrl;
+    const body = jsonBody === undefined ? undefined : JSON.stringify(jsonBody);
+    const res: Response = await fetch(url, {
+      method: 'PUT',
+      headers: this.headers(true, init.headers),
+      body,
+    });
+    let data = undefined as unknown as T;
+    try {
+      data = (await res.json()) as T;
+    } catch {
+      // no body
+    }
+    const status =
+      typeof res.status === 'number' ? res.status : res.ok ? 200 : 500;
+    return { data, status, headers: res.headers };
   }
 
   private headers(
     isJson: boolean,
     extra?: Record<string, string>
   ): Record<string, string> {
-    const headers: Record<string, string> = { ...this.defaultHeaders };
+    const headers: Record<string, string> = {};
     if (isJson) headers['Content-Type'] = 'application/json';
     if (extra)
       for (const [k, v] of Object.entries(extra)) headers[k] = v as string;
     return headers;
-  }
-
-  private resolveUrl(endpointOrUrl: string): string {
-    return endpointOrUrl.startsWith('http')
-      ? endpointOrUrl
-      : this.url(endpointOrUrl);
   }
 }

@@ -199,29 +199,21 @@ export class SpotifyAuthService implements AuthService {
       client_id: this.config.spotifyClientId,
     });
 
-    const responseFinal = await fetch(SpotifyAuthService.SPOTIFY_TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
+    const { httpService } = getContainer();
+    const { data, status } = await httpService.post<Record<string, unknown>>(
+      SpotifyAuthService.SPOTIFY_TOKEN_URL,
+      Object.fromEntries(params.entries())
+    );
 
-    if (!responseFinal.ok) {
-      const errorText = await responseFinal.text();
-      console.error(
-        `Token refresh failed: ${responseFinal.status} ${errorText}`
-      );
-
-      // If it's a 400 or 401 error, the refresh token is invalid
-      if (responseFinal.status === 400 || responseFinal.status === 401) {
+    if (status < 200 || status >= 300) {
+      console.error(`Token refresh failed: ${status}`);
+      if (status === 400 || status === 401) {
         throw new Error('Refresh token is invalid or expired');
       }
-
-      throw new Error(
-        `Token refresh failed: ${responseFinal.status} ${errorText}`
-      );
+      throw new Error(`Token refresh failed: ${status}`);
     }
 
-    const tokenData = await responseFinal.json();
+    const tokenData = data;
     const tokenResponse = SpotifyTokenResponse.fromExternalData(tokenData);
 
     // Update tokens (refresh token might not be included in refresh response)

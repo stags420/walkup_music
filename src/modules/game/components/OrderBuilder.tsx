@@ -2,8 +2,9 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { PlayerCard } from '@/modules/core/components';
+import { Button } from '@/modules/core/components/Button';
 import { MusicService } from '@/modules/music/services/MusicService';
-import './OrderBuilder.css';
+// Using Bootstrap classes instead of custom CSS
 
 interface OrderBuilderProps {
   lineup: Player[];
@@ -42,66 +43,72 @@ const PlayerCardComponent = ({
 }: PlayerCardProps) => {
   return (
     <div
-      className="order-builder-player-wrapper"
+      className="card mb-2"
       data-testid={fromLineup ? 'lineup-player' : 'available-player'}
     >
-      <div className="left-actions">
-        <div className="batting-position">
-          {fromLineup ? `${index + 1}.` : ''}
-        </div>
-        {fromLineup && (
-          <button
-            className="action-button remove-button"
-            onClick={() => onRemoveFromLineup?.(player)}
-            title="Remove from lineup"
-            aria-label={`Remove ${player.name} from lineup`}
-          >
-            <span>−</span>
-          </button>
-        )}
-      </div>
-      <div className="player-card-content">
-        <PlayerCard
-          player={player}
-          musicService={musicService}
-          playerService={playerService}
-          allowPlayMusic={false}
-          displayAlbumArt={false}
-          size="small"
-          className="order-builder-player-card"
-        />
-        <div className="player-actions">
-          {fromLineup ? (
-            <div className="move-buttons">
-              <button
-                className="action-button move-button"
-                onClick={() => onMoveUp?.(player)}
-                disabled={index === 0}
-                title={index === 0 ? 'Already at top' : 'Move up'}
-                aria-label={`Move ${player.name} up in lineup`}
-              >
-                ↑
-              </button>
-              <button
-                className="action-button move-button"
-                onClick={() => onMoveDown?.(player)}
-                disabled={index >= 8}
-                title={index >= 8 ? 'Already at bottom' : 'Move down'}
-                aria-label={`Move ${player.name} down in lineup`}
-              >
-                ↓
-              </button>
+      <div className="card-body p-2">
+        <div className="row align-items-center">
+          <div className="col-auto">
+            <div className="d-flex flex-column align-items-center">
+              <div className="fw-bold text-primary">
+                {fromLineup ? `${index + 1}.` : ''}
+              </div>
+              {fromLineup && (
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={() => onRemoveFromLineup?.(player)}
+                  data-testid={`remove-${player.name}`}
+                >
+                  −
+                </Button>
+              )}
             </div>
-          ) : (
-            <button
-              className="action-button add-button"
-              onClick={() => onAddToLineup?.(player)}
-              title="Add to lineup"
-              aria-label={`Add ${player.name} to lineup`}
-            >
-              <span>+</span>
-            </button>
-          )}
+          </div>
+          <div className="col">
+            <PlayerCard
+              player={player}
+              musicService={musicService}
+              playerService={playerService}
+              allowPlayMusic={false}
+              displayAlbumArt={false}
+              size="small"
+              className="border-0 bg-transparent p-0"
+            />
+          </div>
+          <div className="col-auto">
+            {fromLineup ? (
+              <div className="d-flex flex-column gap-1">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => onMoveUp?.(player)}
+                  disabled={index === 0}
+                  data-testid={`move-up-${player.name}`}
+                >
+                  ↑
+                </Button>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={() => onMoveDown?.(player)}
+                  disabled={index >= 8}
+                  data-testid={`move-down-${player.name}`}
+                >
+                  ↓
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline-success"
+                size="sm"
+                onClick={() => onAddToLineup?.(player)}
+                data-testid={`add-${player.name}`}
+              >
+                +
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -157,69 +164,80 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
     };
 
     return (
-      <div className="order-builder">
-        <div className="order-builder-columns">
-          {/* Lineup Column */}
-          <div
-            className="order-builder-column lineup-column"
-            data-testid="lineup-column"
-          >
-            <div className="column-header">
-              <h2>Batting Lineup</h2>
-              <span className="player-count">{lineup.length} players</span>
+      <div className="row">
+        {/* Lineup Column */}
+        <div className="col-12 col-lg-6 mb-4" data-testid="lineup-column">
+          <div className="card">
+            <div className="card-header">
+              <div className="d-flex justify-content-between align-items-center">
+                <h2 className="h5 mb-0">Batting Lineup</h2>
+                <span className="badge bg-primary">
+                  {lineup.length} players
+                </span>
+              </div>
             </div>
-            <div className="column-content">
+            <div className="card-body">
               {lineup.length === 0 ? (
-                <div className="empty-message">
-                  Click the + button next to players to add them to the batting
-                  lineup
+                <div className="text-center text-muted p-4">
+                  <p className="mb-0">
+                    Click the + button next to players to add them to the
+                    batting lineup
+                  </p>
                 </div>
               ) : (
-                lineup.map((player, index) => (
-                  <PlayerCardComponent
-                    key={player.id}
-                    player={player}
-                    index={index}
-                    fromLineup={true}
-                    musicService={musicService}
-                    playerService={playerService}
-                    onRemoveFromLineup={handleRemoveFromLineup}
-                    onMoveUp={handleMoveUp}
-                    onMoveDown={handleMoveDown}
-                  />
-                ))
+                <div className="d-flex flex-column gap-2">
+                  {lineup.map((player, index) => (
+                    <PlayerCardComponent
+                      key={player.id}
+                      player={player}
+                      index={index}
+                      fromLineup={true}
+                      musicService={musicService}
+                      playerService={playerService}
+                      onRemoveFromLineup={handleRemoveFromLineup}
+                      onMoveUp={handleMoveUp}
+                      onMoveDown={handleMoveDown}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Bench Column */}
-          <div
-            className="order-builder-column available-column"
-            data-testid="available-players-column"
-          >
-            <div className="column-header">
-              <h2>Bench</h2>
-              <span className="player-count">
-                {availablePlayers.length} players
-              </span>
+        {/* Bench Column */}
+        <div
+          className="col-12 col-lg-6 mb-4"
+          data-testid="available-players-column"
+        >
+          <div className="card">
+            <div className="card-header">
+              <div className="d-flex justify-content-between align-items-center">
+                <h2 className="h5 mb-0">Bench</h2>
+                <span className="badge bg-secondary">
+                  {availablePlayers.length} players
+                </span>
+              </div>
             </div>
-            <div className="column-content">
+            <div className="card-body">
               {availablePlayers.length === 0 ? (
-                <div className="empty-message">
-                  All players are in the lineup
+                <div className="text-center text-muted p-4">
+                  <p className="mb-0">All players are in the lineup</p>
                 </div>
               ) : (
-                availablePlayers.map((player, index) => (
-                  <PlayerCardComponent
-                    key={player.id}
-                    player={player}
-                    index={index}
-                    fromLineup={false}
-                    musicService={musicService}
-                    playerService={playerService}
-                    onAddToLineup={handleAddToLineup}
-                  />
-                ))
+                <div className="d-flex flex-column gap-2">
+                  {availablePlayers.map((player, index) => (
+                    <PlayerCardComponent
+                      key={player.id}
+                      player={player}
+                      index={index}
+                      fromLineup={false}
+                      musicService={musicService}
+                      playerService={playerService}
+                      onAddToLineup={handleAddToLineup}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </div>

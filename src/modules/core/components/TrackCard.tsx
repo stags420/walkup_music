@@ -1,3 +1,4 @@
+import { Button } from '@/modules/core/components/Button';
 import './TrackCard.css';
 
 interface Track {
@@ -66,16 +67,17 @@ export function TrackCard({
 
       <div className="track-actions">
         {track.preview_url && (
-          <button
+          <Button
+            variant={isPlaying ? 'danger' : 'success'}
+            size="sm"
             className={`preview-button ${isPlaying ? 'playing' : ''}`}
             onClick={(e) => {
-              e.stopPropagation();
+              e?.stopPropagation();
               onPreview?.();
             }}
-            aria-label={isPlaying ? 'Stop preview' : 'Play preview'}
           >
             {isPlaying ? '⏸' : '▶'}
-          </button>
+          </Button>
         )}
 
         {isSelected && <div className="selected-indicator">✓</div>}

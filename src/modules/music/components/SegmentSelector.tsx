@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Modal, Form, Alert, Card, Button } from 'react-bootstrap';
+import React, { useState, useRef, useCallback } from 'react';
+import { Modal, Form, Alert, Card } from 'react-bootstrap';
+import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SongSegment } from '@/modules/music/models/SongSegment';
-import { TrackPreview } from '@/modules/core';
+import { TrackPreview, PlayButton } from '@/modules/core';
 import { MusicService } from '@/modules/music/services/MusicService';
 
 interface SegmentSelectorProps {
@@ -27,58 +28,17 @@ export function SegmentSelector({
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
   );
-  const [isPlayingSelection, setIsPlayingSelection] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartTime, setDragStartTime] = useState(0);
-  const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
-  const isMountedRef = useRef(true);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 
-  // Cleanup function to stop playback
-  const stopPlayback = useCallback(async () => {
-    // Always try to pause - if we pause twice, who cares?
-    if (musicService) {
-      try {
-        await musicService.pause();
-      } catch (error) {
-        console.debug('Playback pause failed:', error);
-      }
-    }
-
-    // Always reset the playing state
-    if (isMountedRef.current) {
-      setIsPlayingSelection(false);
-    }
-
-    // Clear any pending timeout
-    if (playbackTimeoutRef.current) {
-      clearTimeout(playbackTimeoutRef.current);
-      playbackTimeoutRef.current = null;
-    }
-  }, [musicService]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      stopPlayback();
-    };
-  }, [stopPlayback]);
-
   // Cleanup when modal is closed
   const handleCancel = () => {
-    stopPlayback()
-      .then(() => {
-        onCancel();
-      })
-      .catch((error) => {
-        console.error('Failed to stop playback on cancel:', error);
-        onCancel();
-      });
+    onCancel();
   };
 
   // Touch and mouse handling functions
@@ -188,79 +148,17 @@ export function SegmentSelector({
     setDuration(newDuration);
   };
 
-  const handlePlaySelection = async () => {
-    if (!musicService) {
-      console.warn('MusicService not available for playback');
-      setPlaybackError('MusicService not available for playback');
-      return;
-    }
-
-    if (isPlayingSelection) {
-      // Stop selection playback
-      await stopPlayback();
-    } else {
-      // Start playback from selected segment
-      try {
-        const startPositionMs = startTime * 1000;
-
-        // Clear any existing timeout first
-        if (playbackTimeoutRef.current) {
-          clearTimeout(playbackTimeoutRef.current);
-          playbackTimeoutRef.current = null;
-        }
-
-        await musicService.playTrack(track.uri, startPositionMs);
-        setIsPlayingSelection(true);
-        setPlaybackError(null);
-
-        // Stop after the selected duration
-        playbackTimeoutRef.current = setTimeout(async () => {
-          if (musicService) {
-            try {
-              await musicService.pause();
-            } catch (error) {
-              console.error('Failed to stop playback after timeout:', error);
-            }
-            if (isMountedRef.current) {
-              setIsPlayingSelection(false);
-            }
-          }
-          playbackTimeoutRef.current = null;
-        }, duration * 1000);
-      } catch (error) {
-        console.error('Playback failed:', error);
-        setPlaybackError(
-          'Failed to play track. Please check your Spotify Premium subscription.'
-        );
-        setIsPlayingSelection(false);
-        // Clear timeout if playback fails
-        if (playbackTimeoutRef.current) {
-          clearTimeout(playbackTimeoutRef.current);
-          playbackTimeoutRef.current = null;
-        }
-      }
-    }
+  const handlePlaybackError = (error: string) => {
+    setPlaybackError(error);
   };
 
   const handleConfirm = () => {
-    stopPlayback()
-      .then(() => {
-        const segment: SongSegment = {
-          track,
-          startTime,
-          duration,
-        };
-        onConfirm(segment);
-      })
-      .catch((error) => {
-        console.error('Failed to stop playback on confirm:', error);
-        const segment: SongSegment = {
-          track,
-          startTime,
-          duration,
-        };
-        onConfirm(segment);
-      });
+    const segment: SongSegment = {
+      track,
+      startTime,
+      duration,
+    };
+    onConfirm(segment);
   };
 
   const formatTime = (seconds: number) => {
@@ -411,21 +309,17 @@ export function SegmentSelector({
                   {formatTime(startTime + duration)}
                 </p>
 
-                <Button
-                  variant={isPlayingSelection ? 'danger' : 'success'}
+                <PlayButton
+                  track={track}
+                  musicService={musicService}
+                  startTime={startTime}
+                  duration={duration}
+                  variant="success"
                   size="lg"
-                  onClick={handlePlaySelection}
-                  disabled={!musicService}
-                  data-testid={
-                    isPlayingSelection ? 'pause-button' : 'play-button'
-                  }
-                >
-                  {isPlayingSelection ? (
-                    <>⏸ Stop Selection</>
-                  ) : (
-                    <>▶ Play Selection</>
-                  )}
-                </Button>
+                  playText="▶ Play Selection"
+                  pauseText="⏸ Stop Selection"
+                  onError={handlePlaybackError}
+                />
               </div>
             </Card.Body>
           </Card>

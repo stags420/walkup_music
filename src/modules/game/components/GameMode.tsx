@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
+import { Button } from '@/modules/core/components/Button';
 import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
 import { CurrentBatterDisplay } from './CurrentBatterDisplay';
-import './GameMode.css';
+// Using Bootstrap classes instead of custom CSS
 
 interface GameModeProps {
   lineupService: LineupService;
@@ -55,31 +56,41 @@ export function GameMode({
   };
 
   return (
-    <div className="game-mode">
-      <div className="game-controls">
-        <button
-          onClick={handleNextBatter}
-          disabled={isLoading}
-          className="next-batter-button"
-          data-testid="next-batter-button"
-        >
-          {isLoading ? 'Advancing...' : 'Next Batter'}
-        </button>
-        <button
-          onClick={handleEndGameClick}
-          className="end-game-button"
-          data-testid="end-game-button"
-        >
-          End Game
-        </button>
+    <div className="py-3">
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-center gap-3">
+            <Button
+              onClick={handleNextBatter}
+              disabled={isLoading}
+              variant="primary"
+              size="lg"
+              data-testid="next-batter-button"
+            >
+              {isLoading ? 'Advancing...' : 'Next Batter'}
+            </Button>
+            <Button
+              onClick={handleEndGameClick}
+              variant="outline-danger"
+              size="lg"
+              data-testid="end-game-button"
+            >
+              End Game
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div key={refreshKey}>
-        <CurrentBatterDisplay
-          lineupService={lineupService}
-          playerService={playerService}
-          musicService={musicService}
-        />
+      <div className="row">
+        <div className="col-12">
+          <div key={refreshKey}>
+            <CurrentBatterDisplay
+              lineupService={lineupService}
+              playerService={playerService}
+              musicService={musicService}
+            />
+          </div>
+        </div>
       </div>
 
       <Modal

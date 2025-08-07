@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Modal, Button, Form, Alert, Card } from 'react-bootstrap';
+import { Modal, Form, Alert, Card } from 'react-bootstrap';
+import { Button } from '@/modules/core/components/Button';
 import type { FormEvent, MouseEvent } from 'react';
 import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';

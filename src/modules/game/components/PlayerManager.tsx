@@ -6,6 +6,7 @@ import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerList, PlayerListRef } from './PlayerList';
 import { PlayerForm } from './PlayerForm';
 import { SegmentSelector, SongSegment } from '@/modules/music';
+import { Button } from '@/modules/core/components/Button';
 import './PlayerManager.css';
 
 interface PlayerManagerProps {
@@ -95,18 +96,18 @@ export function PlayerManager({
       {/* Start Game button - only show when there are players */}
       {players.length > 0 && (
         <div className="start-game-section">
-          <button onClick={handleStartGame} className="start-game-button">
+          <Button onClick={handleStartGame} variant="success" size="lg">
             Start Game
-          </button>
+          </Button>
         </div>
       )}
 
       <div className="player-manager-header">
         <h1>Player Management</h1>
         <div className="header-actions">
-          <button onClick={handleAddPlayer} className="add-player-button">
+          <Button onClick={handleAddPlayer} variant="primary">
             Add Player
-          </button>
+          </Button>
         </div>
       </div>
 

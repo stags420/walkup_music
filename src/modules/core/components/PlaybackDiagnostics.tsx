@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MusicService } from '@/modules/music';
+import { Button } from '@/modules/core/components/Button';
 
 interface PlaybackDiagnosticsProps {
   musicService?: MusicService;
@@ -119,21 +120,16 @@ export function PlaybackDiagnostics({
         fontSize: '12px',
       }}
     >
-      <button
+      <Button
         onClick={() => setIsVisible(!isVisible)}
+        variant={diagnostics.isMobile ? 'warning' : 'success'}
+        size="sm"
         style={{
-          padding: '8px 12px',
-          backgroundColor: diagnostics.isMobile ? '#ff6b35' : '#1db954',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
           fontSize: '12px',
         }}
-        title="Toggle playback diagnostics"
       >
         🔧 Debug
-      </button>
+      </Button>
 
       {isVisible && (
         <div

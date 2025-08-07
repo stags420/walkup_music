@@ -4,7 +4,7 @@ import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerCard } from '@/modules/core/components';
-import './CurrentBatterDisplay.css';
+// Using Bootstrap classes instead of custom CSS
 
 interface CurrentBatterDisplayProps {
   lineupService: LineupService;
@@ -46,9 +46,11 @@ export function CurrentBatterDisplay({
   const renderCurrentBatter = () => {
     if (!currentBatter) {
       return (
-        <div className="current-batter-card">
-          <h2>Current Batter</h2>
-          <p className="no-player">No player assigned</p>
+        <div className="card text-center">
+          <div className="card-body">
+            <h2 className="card-title">Current Batter</h2>
+            <p className="card-text text-muted">No player assigned</p>
+          </div>
         </div>
       );
     }
@@ -92,9 +94,11 @@ export function CurrentBatterDisplay({
 
     if (!batter) {
       return (
-        <div className={`secondary-batter-card ${position}`}>
-          <h4>{positionLabels[position]}</h4>
-          <p className="no-player">No player assigned</p>
+        <div className="card text-center">
+          <div className="card-body">
+            <h4 className="card-title h6">{positionLabels[position]}</h4>
+            <p className="card-text text-muted small">No player assigned</p>
+          </div>
         </div>
       );
     }
@@ -130,17 +134,22 @@ export function CurrentBatterDisplay({
   };
 
   return (
-    <div
-      className="current-batter-display"
-      data-testid="current-batter-display"
-    >
+    <div data-testid="current-batter-display">
       {/* Current batter - prominent display */}
-      {renderCurrentBatter()}
+      <div className="row mb-4">
+        <div className="col-12 col-md-8 col-lg-6 mx-auto">
+          {renderCurrentBatter()}
+        </div>
+      </div>
 
       {/* Secondary batters - on deck and in the hole */}
-      <div className="secondary-batters">
-        {renderSecondaryBatter(onDeckBatter, 'on-deck')}
-        {renderSecondaryBatter(inTheHoleBatter, 'in-the-hole')}
+      <div className="row">
+        <div className="col-12 col-md-6 mb-3">
+          {renderSecondaryBatter(onDeckBatter, 'on-deck')}
+        </div>
+        <div className="col-12 col-md-6 mb-3">
+          {renderSecondaryBatter(inTheHoleBatter, 'in-the-hole')}
+        </div>
       </div>
     </div>
   );

@@ -89,44 +89,71 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
 
   if (isLoading) {
     return (
-      <div className="App">
+      <div className="container-fluid">
         <header className="App-header">
-          <div className="header-content">
-            <h1>Walk Up Music</h1>
-            <p className="welcome-text">Loading...</p>
+          <div className="container">
+            <div className="row">
+              <div className="col-12">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h1 className="mb-0">Walk Up Music</h1>
+                  <p className="welcome-text mb-0">Loading...</p>
+                </div>
+              </div>
+            </div>
           </div>
         </header>
+        <main>
+          <div className="container">
+            <div className="row">
+              <div className="col-12 text-center py-5">
+                <div className="loading-spinner mx-auto mb-3"></div>
+                <p>Loading...</p>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="container-fluid">
       <header className="App-header">
-        <div className="header-content">
-          <h1>Walk Up Music</h1>
-
-          <p className="welcome-text">
-            Welcome, {auth.state.user?.displayName}!
-          </p>
+        <div className="container">
+          <div className="row">
+            <div className="col-12">
+              <div className="d-flex justify-content-between align-items-center">
+                <h1 className="mb-0">Walk Up Music</h1>
+                <p className="welcome-text mb-0">
+                  Welcome, {auth.state.user?.displayName}!
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
       <main>
-        {isGameMode ? (
-          <GameMode
-            lineupService={lineupService}
-            playerService={playerService}
-            musicService={musicService}
-            onEndGame={handleEndGame}
-          />
-        ) : (
-          <BattingOrderManager
-            playerService={playerService}
-            musicService={musicService}
-            lineupService={lineupService}
-            onStartGame={handleStartGame}
-          />
-        )}
+        <div className="container">
+          <div className="row">
+            <div className="col-12">
+              {isGameMode ? (
+                <GameMode
+                  lineupService={lineupService}
+                  playerService={playerService}
+                  musicService={musicService}
+                  onEndGame={handleEndGame}
+                />
+              ) : (
+                <BattingOrderManager
+                  playerService={playerService}
+                  musicService={musicService}
+                  lineupService={lineupService}
+                  onStartGame={handleStartGame}
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

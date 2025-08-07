@@ -13,6 +13,8 @@ The tasks should flow from one to the other and logically build upon one another
 Tasks should be scoped to what would take a human about 2 days to do. This prevents large changes that are hard to review.
 
 “Definition of Done” checklist:
-- acceptance criteria are met
-- relevant documentation is updated
-- precommit script succeeds
+- tests green
+- lint clean
+- docs updated
+- e2e happy path passes
+- no TODOs left

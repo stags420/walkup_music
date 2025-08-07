@@ -9,53 +9,21 @@
 .App-header {
   background: #1a1a1a;
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border-bottom: 1px solid #2a2a2a;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-}
-
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 .App-header h1 {
-  font-size: 0.9rem;
-  margin: 0;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #ffffff;
 }
 
 .welcome-text {
-  font-size: 0.8rem;
-  margin: 0;
+  font-size: 0.875rem;
   color: #1db954;
-  text-align: right;
-}
-
-@media (min-width: 768px) {
-  .App-header {
-    padding: 0.75rem 2rem;
-  }
-
-  .App-header h1 {
-    font-size: 1.1rem;
-  }
-
-  .welcome-text {
-    font-size: 0.9rem;
-  }
 }
 
 .app-loading {

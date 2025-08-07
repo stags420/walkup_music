@@ -4,6 +4,7 @@ import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Button } from '@/modules/core/components/Button';
+import { PlayButton } from '@/modules/core/components/PlayButton';
 import './PlayerCard.css';
 
 export interface PlayerCardProps {
@@ -32,8 +33,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   className = '',
 }) => {
   const [showEditForm, setShowEditForm] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [fullPlayer, setFullPlayer] = useState<Player | null>(null);
 
   const hasSong = player.song && player.song.track;
@@ -59,56 +58,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     setFullPlayer(null);
   };
 
-  const handlePlayMusic = async () => {
-    if (!hasSong || !musicService) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // Get the full player object from the service
-      const playerData = await playerService.getPlayer(player.id);
-      if (playerData && playerData.song) {
-        // Convert start time to milliseconds
-        const startTimeMs = playerData.song.startTime * 1000;
-        // Convert duration to milliseconds for automatic stopping
-        const durationMs = playerData.song.duration * 1000;
-
-        // Use previewTrack with duration for automatic stopping and callback to reset button state
-        await musicService.previewTrack(
-          playerData.song.track.uri,
-          startTimeMs,
-          durationMs,
-          () => {
-            // Reset the playing state when the track ends
-            setIsPlaying(false);
-          }
-        );
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('Failed to play walk-up music:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStopMusic = async () => {
-    if (!musicService) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await musicService.pause();
-      setIsPlaying(false);
-    } catch (error) {
-      console.error('Failed to stop music:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <>
       <div
@@ -118,16 +67,18 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       >
         {/* Edit button - always show when musicService is available */}
         {musicService && (
-          <button
-            className="player-card__edit-button"
+          <Button
+            variant="outline-secondary"
+            size="sm"
             onClick={handleEdit}
-            aria-label="Edit player"
+            className="player-card__edit-button"
             data-testid="edit-player-button"
+            aria-label="Edit player"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
             </svg>
-          </button>
+          </Button>
         )}
 
         {/* Header */}
@@ -183,23 +134,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         )}
 
         {/* Play Music Button */}
-        {canPlayMusic && (
+        {canPlayMusic && player.song && (
           <div className="player-card__play-section">
-            <Button
-              variant={isPlaying ? 'danger' : 'success'}
-              onClick={isPlaying ? handleStopMusic : handlePlayMusic}
-              disabled={isLoading}
+            <PlayButton
+              track={player.song.track}
+              musicService={musicService}
+              startTime={player.song.startTime}
+              duration={player.song.duration}
+              variant="success"
               className="player-card__play-button"
+              playText="PLAY"
+              pauseText="STOP"
               data-testid="play-button"
-            >
-              {isLoading
-                ? isPlaying
-                  ? 'Stopping...'
-                  : 'Loading...'
-                : isPlaying
-                  ? 'STOP'
-                  : 'PLAY'}
-            </Button>
+            />
           </div>
         )}
       </div>

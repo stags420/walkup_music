@@ -6,7 +6,8 @@ import { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerForm } from './PlayerForm';
 import { OrderBuilder } from './OrderBuilder';
 import { SegmentSelector, SongSegment } from '@/modules/music';
-import './BattingOrderManager.css';
+import { Button } from '@/modules/core/components/Button';
+// Using Bootstrap classes instead of custom CSS
 
 interface BattingOrderManagerProps {
   playerService: PlayerService;
@@ -128,42 +129,50 @@ export function BattingOrderManager({
   const canStartGame = lineup.length > 0 || allPlayers.length > 0;
 
   return (
-    <div className="batting-order-manager">
+    <div className="py-3">
       {/* Start Game button - only show when there are players in lineup or available */}
       {canStartGame && (
-        <div className="start-game-section">
-          <button
-            onClick={handleStartGame}
-            className="start-game-button"
-            data-testid="start-game-button"
-          >
-            Start Game
-          </button>
+        <div className="row mb-4">
+          <div className="col-12 text-center">
+            <Button
+              onClick={handleStartGame}
+              variant="success"
+              size="lg"
+              className="px-4"
+              data-testid="start-game-button"
+            >
+              Start Game
+            </Button>
+          </div>
         </div>
       )}
 
-      <div className="batting-order-manager-header">
-        <h1>Lineup</h1>
-        <div className="header-actions">
-          <button
-            onClick={handleAddPlayer}
-            className="add-player-button"
-            data-testid="add-player-button"
-          >
-            Add Player
-          </button>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="mb-0">Lineup</h1>
+            <Button
+              onClick={handleAddPlayer}
+              variant="primary"
+              data-testid="add-player-button"
+            >
+              Add Player
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div data-testid="player-list">
-        <OrderBuilder
-          ref={orderBuilderRef}
-          lineup={lineup}
-          availablePlayers={availablePlayers}
-          onLineupChange={handleLineupChange}
-          musicService={musicService}
-          playerService={playerService}
-        />
+      <div className="row">
+        <div className="col-12" data-testid="player-list">
+          <OrderBuilder
+            ref={orderBuilderRef}
+            lineup={lineup}
+            availablePlayers={availablePlayers}
+            onLineupChange={handleLineupChange}
+            musicService={musicService}
+            playerService={playerService}
+          />
+        </div>
       </div>
 
       {showForm && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Alert, Spinner, Button } from 'react-bootstrap';
+import { Modal, Form, Alert, Spinner } from 'react-bootstrap';
+import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { MusicService } from '@/modules/music/services/MusicService';

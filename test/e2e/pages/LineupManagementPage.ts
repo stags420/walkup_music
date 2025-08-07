@@ -94,7 +94,7 @@ export class LineupManagementPage extends BasePage {
     }
 
     // Find and click the + button for this player
-    const addButton = sourcePlayer.locator('.add-button');
+    const addButton = sourcePlayer.locator('.btn-outline-success');
     await addButton.click();
     await this.page.waitForTimeout(500); // Wait for action to complete
   }
@@ -122,7 +122,7 @@ export class LineupManagementPage extends BasePage {
     }
 
     // Find and click the - button for this player
-    const removeButton = sourcePlayer.locator('.remove-button');
+    const removeButton = sourcePlayer.locator('.btn-outline-danger');
     await removeButton.click();
     await this.page.waitForTimeout(500); // Wait for action to complete
   }
@@ -150,7 +150,7 @@ export class LineupManagementPage extends BasePage {
     }
 
     // Find and click the ↑ button for this player
-    const upButton = sourcePlayer.locator('.move-button').first(); // First move button is up
+    const upButton = sourcePlayer.locator('.btn-outline-secondary').first(); // First move button is up
     await upButton.click();
     await this.page.waitForTimeout(500); // Wait for action to complete
   }
@@ -178,7 +178,7 @@ export class LineupManagementPage extends BasePage {
     }
 
     // Find and click the ↓ button for this player
-    const downButton = sourcePlayer.locator('.move-button').last(); // Last move button is down
+    const downButton = sourcePlayer.locator('.btn-outline-secondary').last(); // Last move button is down
     await downButton.click();
     await this.page.waitForTimeout(500); // Wait for action to complete
   }

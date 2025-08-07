@@ -4,3 +4,4 @@ export { default as TrackPreview } from './TrackPreview';
 
 export { PlaybackDiagnostics } from './PlaybackDiagnostics';
 export { default as PlayerCard } from './PlayerCard';
+export { PlayButton } from './PlayButton';

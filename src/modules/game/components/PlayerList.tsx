@@ -9,6 +9,7 @@ import { Player } from '@/modules/game/models/Player';
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerCard } from '@/modules/core/components';
+import { Button } from '@/modules/core/components/Button';
 import './PlayerList.css';
 
 interface PlayerListProps {
@@ -67,9 +68,9 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
       return (
         <div className="player-list-error">
           <p>Error: {error}</p>
-          <button onClick={loadPlayers} className="retry-button">
+          <Button onClick={loadPlayers} variant="primary">
             Retry
-          </button>
+          </Button>
         </div>
       );
     }

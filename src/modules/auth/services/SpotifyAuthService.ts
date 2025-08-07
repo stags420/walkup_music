@@ -14,6 +14,7 @@ import {
   deleteCookie,
 } from '@/modules/auth/utils/cookies';
 import { AppConfig } from '@/modules/config';
+import { getContainer } from '@/container';
 
 /**
  * Spotify authentication service implementing PKCE OAuth 2.0 flow
@@ -198,27 +199,29 @@ export class SpotifyAuthService implements AuthService {
       client_id: this.config.spotifyClientId,
     });
 
-    const response = await fetch(SpotifyAuthService.SPOTIFY_TOKEN_URL, {
+    const responseFinal = await fetch(SpotifyAuthService.SPOTIFY_TOKEN_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Token refresh failed: ${response.status} ${errorText}`);
+    if (!responseFinal.ok) {
+      const errorText = await responseFinal.text();
+      console.error(
+        `Token refresh failed: ${responseFinal.status} ${errorText}`
+      );
 
       // If it's a 400 or 401 error, the refresh token is invalid
-      if (response.status === 400 || response.status === 401) {
+      if (responseFinal.status === 400 || responseFinal.status === 401) {
         throw new Error('Refresh token is invalid or expired');
       }
 
-      throw new Error(`Token refresh failed: ${response.status} ${errorText}`);
+      throw new Error(
+        `Token refresh failed: ${responseFinal.status} ${errorText}`
+      );
     }
 
-    const tokenData = await response.json();
+    const tokenData = await responseFinal.json();
     const tokenResponse = SpotifyTokenResponse.fromExternalData(tokenData);
 
     // Update tokens (refresh token might not be included in refresh response)
@@ -248,20 +251,11 @@ export class SpotifyAuthService implements AuthService {
       code_verifier: codeVerifier,
     });
 
-    const response = await fetch(SpotifyAuthService.SPOTIFY_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
-    }
-
-    const tokenData = await response.json();
+    const { httpService } = getContainer();
+    const { data: tokenData } = await httpService.post<Record<string, unknown>>(
+      SpotifyAuthService.SPOTIFY_TOKEN_URL,
+      Object.fromEntries(params.entries())
+    );
     return SpotifyTokenResponse.fromExternalData(tokenData);
   }
 
@@ -357,17 +351,17 @@ export class SpotifyAuthService implements AuthService {
       throw new Error('No access token available for premium verification');
     }
 
-    const response = await fetch(SpotifyAuthService.SPOTIFY_PROFILE_URL, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const { httpService } = getContainer();
+    const { data, status } = await httpService.get<Record<string, unknown>>(
+      SpotifyAuthService.SPOTIFY_PROFILE_URL,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user profile: ${response.status}`);
+    if (status < 200 || status >= 300) {
+      throw new Error(`Failed to fetch user profile: ${status}`);
     }
 
-    const profileData = await response.json();
+    const profileData = data;
     const profile = SpotifyUserProfile.fromExternalData(profileData);
 
     if (profile.product !== 'premium') {
@@ -395,24 +389,22 @@ export class SpotifyAuthService implements AuthService {
         return null;
       }
 
-      const response = await fetch(SpotifyAuthService.SPOTIFY_PROFILE_URL, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const { httpService } = getContainer();
+      const { data, status } = await httpService.get<Record<string, unknown>>(
+        SpotifyAuthService.SPOTIFY_PROFILE_URL,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
 
-      if (!response.ok) {
-        // If we get a 401, the token is invalid
-        if (response.status === 401) {
-          console.error('Access token is invalid, clearing authentication');
-          await this.logout();
-          return null;
-        }
-
-        throw new Error(`Failed to fetch user profile: ${response.status}`);
+      if (status === 401) {
+        console.error('Access token is invalid, clearing authentication');
+        await this.logout();
+        return null;
+      }
+      if (status < 200 || status >= 300) {
+        throw new Error(`Failed to fetch user profile: ${status}`);
       }
 
-      const profileData = await response.json();
+      const profileData = data;
       const profile = SpotifyUserProfile.fromExternalData(profileData);
 
       return {

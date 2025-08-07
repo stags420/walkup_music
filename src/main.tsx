@@ -4,6 +4,7 @@ import { App } from './App';
 import { AppConfigProvider } from '@/modules/config';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
+import { bootstrapServices } from '@/container';
 
 // Environment variables
 const VITE_MOCK_AUTH = import.meta.env.VITE_MOCK_AUTH === 'true';
@@ -45,6 +46,9 @@ const initializeAppConfig = () => {
   };
 
   AppConfigProvider.initialize(config);
+
+  // Bootstrap service container with config
+  bootstrapServices(config);
 };
 
 // Initialize configuration before rendering the app

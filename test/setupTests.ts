@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { bootstrapServices } from '@/container';
 
 // Mock crypto.randomUUID for Node.js test environment
 Object.defineProperty(globalThis, 'crypto', {
@@ -23,30 +24,6 @@ if (globalThis.TextEncoder === undefined) {
   });
 }
 
-// Suppress JSDOM "Not implemented" console errors for HTML media elements during tests
-// These are expected limitations of JSDOM and don't affect test functionality
-const originalConsoleError = console.error;
-console.error = (...args) => {
-  const message = args[0];
-  if (
-    typeof message === 'string' &&
-    (message.includes('Not implemented: HTMLMediaElement.prototype.pause') ||
-      message.includes('Not implemented: HTMLMediaElement.prototype.play') ||
-      message.includes('Error: Not implemented: HTMLMediaElement') ||
-      message.includes('Not implemented: HTMLMediaElement') ||
-      (message.includes('An update to') &&
-        message.includes('inside a test was not wrapped in act')) ||
-      message.includes(
-        'When testing, code that causes React state updates should be wrapped into act'
-      ))
-  ) {
-    // Suppress these specific JSDOM limitations and React act warnings
-    return;
-  }
-  // Allow all other console.error messages through
-  originalConsoleError.apply(console, args);
-};
-
 // Suppress debug messages about audio operations in test environment
 const originalConsoleDebug = console.debug;
 console.debug = (...args) => {
@@ -61,3 +38,13 @@ console.debug = (...args) => {
   // Allow all other console.debug messages through
   originalConsoleDebug.apply(console, args);
 };
+
+// Bootstrap a default service container for tests
+bootstrapServices({
+  maxSegmentDuration: 10,
+  spotifyClientId: 'test-client-id',
+  redirectUri: 'http://127.0.0.1/callback',
+  tokenRefreshBufferMinutes: 15,
+  basePath: '',
+  mockAuth: true,
+});

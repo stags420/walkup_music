@@ -23,13 +23,13 @@ Acceptance criteria:
 Notes:
 - No React Context. No service instances in Zustand.
 
-## T2: Add path aliases for modules and services
+Progress:
+- [x] Created `src/services/container.ts` with typed container, bootstrap, getter, and test reset helper
+- [x] Wired `bootstrapServices(config)` in `src/main.tsx` after `AppConfigProvider.initialize(config)`
+- [x] Added `test/services/container.test.ts` with bootstrap and error behavior tests
+- [ ] CI run green (unit + e2e) after subsequent tasks
 
-- As a developer, I want stable module import paths so that code references are clean and refactors are safe.
 
-Acceptance criteria:
-- `tsconfig.json` includes `@/modules/*` and `@/*` mappings
-- Build passes and imports updated in touched files only
 
 ## T3: Install and baseline Zustand with one UI slice
 
@@ -39,6 +39,10 @@ Acceptance criteria:
 - Install Zustand (+ middleware if needed)
 - Create `stores/useSettingsStore.ts` with `theme` and `persist` example
 - Unit tests for store actions (minimal)
+Progress:
+- [x] Installed `zustand`
+- [x] Added `src/stores/useSettingsStore.ts` with `theme` and `persist`
+- [x] Added `test/stores/useSettingsStore.test.ts` covering default and persistence
 
 ## T4: Core API client abstraction
 
@@ -47,6 +51,10 @@ Acceptance criteria:
 Acceptance criteria:
 - `services/ApiService.ts` interface and `HttpApiService` impl
 - Unit tests for basic GET/POST behavior (mock fetch)
+
+Progress:
+- [x] Added `src/services/ApiService.ts` with `ApiService` and `HttpApiService`
+- [x] Added `test/services/ApiService.test.ts` covering GET, POST, and auth header
 
 ## T5: Migrate Storage to service + container
 

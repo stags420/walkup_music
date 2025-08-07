@@ -1,5 +1,14 @@
 import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { AuthService } from '@/modules/auth';
+import { getContainer } from '@/container';
+
+// Internal light response used when we do not want to pass through the raw fetch Response
+interface LightweightResponse {
+  ok: boolean;
+  status: number;
+  headers: Headers;
+  json: () => Promise<unknown>;
+}
 
 /**
  * Rate limiting configuration for Spotify API
@@ -75,7 +84,11 @@ export class SpotifyApiService {
     const response = await this.makeRateLimitedRequest(searchUrl, accessToken);
 
     if (!response.ok) {
-      await this.handleApiError(response);
+      await this.handleApiError({
+        ok: response.ok,
+        status: response.status,
+        json: response.json,
+      } as unknown as Response);
     }
 
     const searchData = await response.json();
@@ -114,7 +127,7 @@ export class SpotifyApiService {
   private async makeRateLimitedRequest(
     url: string,
     accessToken: string
-  ): Promise<Response> {
+  ): Promise<LightweightResponse> {
     return new Promise((resolve, reject) => {
       this.requestQueue.push(async () => {
         try {
@@ -168,14 +181,23 @@ export class SpotifyApiService {
     url: string,
     accessToken: string,
     retryCount = 0
-  ): Promise<Response> {
+  ): Promise<LightweightResponse> {
     try {
-      const response = await fetch(url, {
+      const { httpService } = getContainer();
+      // Use HttpService and check status via response model
+      const { data, status, headers } = await httpService.get<unknown>(url, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       });
+      // Lightweight response for internal flow
+      const response: LightweightResponse = {
+        ok: status >= 200 && status < 300,
+        status,
+        headers,
+        json: async () => data,
+      };
 
       // Handle rate limiting (429) with exponential backoff
       if (
@@ -207,10 +229,13 @@ export class SpotifyApiService {
    * Handle API errors with appropriate error messages
    */
   private async handleApiError(response: Response): Promise<never> {
-    let errorMessage = `Spotify API error: ${response.status}`;
+    // Accept lightweight response as well
+    type Resp = Response | LightweightResponse;
+    const r = response as Resp;
+    let errorMessage = `Spotify API error: ${r.status}`;
 
     try {
-      const errorData = await response.json();
+      const errorData = await r.json();
       if (errorData.error?.message) {
         errorMessage = `Spotify API error: ${errorData.error.message}`;
       }
@@ -218,7 +243,7 @@ export class SpotifyApiService {
       // If we can't parse the error response, use the status-based message
     }
 
-    switch (response.status) {
+    switch (r.status) {
       case 401: {
         throw new Error('Spotify authentication expired. Please log in again.');
       }

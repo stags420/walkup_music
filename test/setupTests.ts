@@ -9,8 +9,7 @@ if (globalThis.TextEncoder === undefined) {
   });
 }
 
-import { ApplicationContainerProvider } from '@/modules/app';
-import { AppConfigProvider } from '@/modules/config';
+import { ApplicationContainerProvider, AppConfigProvider } from '@/modules/app';
 
 // Mock crypto.randomUUID for Node.js test environment
 Object.defineProperty(globalThis, 'crypto', {

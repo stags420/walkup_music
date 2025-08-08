@@ -1,5 +1,5 @@
-import type { AppConfig } from '@/modules/config';
-import { AppConfigProvider } from '@/modules/config';
+import type { AppConfig } from '@/modules/app';
+import { AppConfigProvider } from '@/modules/app';
 
 describe('AppConfigProvider', () => {
   const mockConfig: AppConfig = {

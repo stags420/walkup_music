@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { MusicProvider } from '@/modules/music';
 
 // Mock SongSelector to avoid portal issues

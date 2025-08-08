@@ -1,4 +1,4 @@
-import { AuthState } from '@/modules/auth';
+import type { AuthState } from '@/modules/auth';
 
 // Authentication context interface
 

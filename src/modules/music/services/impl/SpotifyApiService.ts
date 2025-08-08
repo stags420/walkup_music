@@ -1,5 +1,5 @@
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
-import { AuthService } from '@/modules/auth';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import type { AuthService } from '@/modules/auth';
 import { getContainer } from '@/container';
 import type { HttpService } from '@/modules/core/services/HttpService';
 

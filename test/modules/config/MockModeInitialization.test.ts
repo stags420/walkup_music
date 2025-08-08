@@ -1,7 +1,7 @@
 import { AppConfig } from '@/modules/config/models/AppConfig';
 import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
-import { MockAuthService } from '@/modules/auth/services/MockAuthService';
+import { MockAuthService } from '@/modules/auth/services/impl/MockAuthService';
 import { MockMusicService } from '@/modules/music/services/MusicService';
 import { AppConfigProvider } from '@/modules/config';
 

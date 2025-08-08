@@ -1,4 +1,4 @@
-import { StorageService } from './StorageService';
+import type { StorageService } from '@/modules/storage/services/StorageService';
 
 /**
  * Local storage implementation of the StorageService interface.

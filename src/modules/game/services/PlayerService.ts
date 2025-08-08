@@ -1,5 +1,5 @@
-import { Player } from '@/modules/game/models/Player';
-import { StorageService } from '@/modules/storage';
+import type { Player } from '@/modules/game/models/Player';
+import type { StorageService } from '@/modules/storage';
 
 /**
  * Service for managing player data with CRUD operations

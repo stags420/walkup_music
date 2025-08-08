@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/modules/core/components/Button';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 
 interface PlayButtonProps {
   track: SpotifyTrack;

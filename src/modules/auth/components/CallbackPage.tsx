@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AuthContextType } from '@/modules/auth';
+import type { AuthContextType } from '@/modules/auth';
 
 interface CallbackPageProps {
   auth: AuthContextType;

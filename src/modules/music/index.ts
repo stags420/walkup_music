@@ -1,19 +1,20 @@
 // Music module exports
-export { SongSegment } from './models/SongSegment';
-export { SpotifyTrack } from './models/SpotifyTrack';
-export type { MusicService } from './services/MusicService';
-export { MockMusicService, SpotifyMusicService } from './services/MusicService';
-export { SpotifyApiService } from './services/SpotifyApiService';
+export { SongSegment } from '@/modules/music/models/SongSegment';
+export { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+export type { MusicService } from '@/modules/music/services/MusicService';
+export { MockMusicService } from '@/modules/music/services/MusicService';
+export { SpotifyMusicService } from '@/modules/music/services/impl/SpotifyMusicService';
+export { SpotifyApiService } from '@/modules/music/services/impl/SpotifyApiService';
 export {
   SpotifyPlaybackServiceImpl,
   MockSpotifyPlaybackService,
-} from './services/SpotifyPlaybackService';
-export type { SpotifyPlaybackService } from './services/SpotifyPlaybackService';
-export { SongSelector } from './components/SongSelector';
-export { SegmentSelector } from './components/SegmentSelector';
-export { MusicProvider } from './providers/MusicProvider';
-export type { MusicContextType } from './providers/MusicProvider';
+} from '@/modules/music/services/impl/SpotifyPlaybackService';
+export type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
+export { SongSelector } from '@/modules/music/components/SongSelector';
+export { SegmentSelector } from '@/modules/music/components/SegmentSelector';
+export { MusicProvider } from '@/modules/music/providers/MusicProvider';
+export type { MusicContextType } from '@/modules/music/providers/MusicProvider';
 // Service providers for stateless services
-export { MusicServiceProvider } from './providers/MusicServiceProvider';
-export { SpotifyApiServiceProvider } from './providers/SpotifyApiServiceProvider';
-export { SpotifyPlaybackServiceProvider } from './providers/SpotifyPlaybackServiceProvider';
+export { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
+export { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
+export { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';

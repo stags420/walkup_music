@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { LoginPage } from '../pages/LoginPage';
-import { PlayerManagementPage } from '../pages/PlayerManagementPage';
-import { LineupManagementPage } from '../pages/LineupManagementPage';
-import { GameModePage } from '../pages/GameModePage';
-import { testPlayers } from '../fixtures/testData';
-import { testMockTracks } from '../fixtures/mockTracks';
+import { LoginPage } from '@/../test/e2e/pages/LoginPage';
+import { PlayerManagementPage } from '@/../test/e2e/pages/PlayerManagementPage';
+import { LineupManagementPage } from '@/../test/e2e/pages/LineupManagementPage';
+import { GameModePage } from '@/../test/e2e/pages/GameModePage';
+import { testPlayers } from '@/../test/e2e/fixtures/testData';
+import { testMockTracks } from '@/../test/e2e/fixtures/mockTracks';
 
 test.describe('Complete E2E Workflow', () => {
   let loginPage: LoginPage;

@@ -1,5 +1,6 @@
-import { PlayerService } from '../services/PlayerService';
-import { LocalStorageService, StorageService } from '@/modules/storage';
+import { PlayerService } from '@/modules/game/services/PlayerService';
+import type { StorageService } from '@/modules/storage';
+import { LocalStorageService } from '@/modules/storage';
 
 /**
  * Provider for creating PlayerService instances with proper dependencies

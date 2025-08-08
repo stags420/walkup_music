@@ -46,6 +46,8 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': ["error"],
+      '@typescript-eslint/no-require-imports': ["error"],
+      '@typescript-eslint/consistent-type-imports': ["error"],
 
       // React hooks rules
       ...reactHooks.configs.recommended.rules,

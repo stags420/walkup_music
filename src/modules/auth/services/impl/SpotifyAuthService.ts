@@ -1,7 +1,6 @@
+import type { AuthService, SpotifyTokens } from '@/modules/auth';
 import {
-  AuthService,
   SpotifyTokenResponse,
-  SpotifyTokens,
   SpotifyUserProfile,
   generateCodeVerifier,
   generateCodeChallenge,
@@ -13,7 +12,7 @@ import {
   getCookie,
   deleteCookie,
 } from '@/modules/auth/utils/cookies';
-import { AppConfig } from '@/modules/config';
+import type { AppConfig } from '@/modules/config';
 import { getContainer } from '@/container';
 
 /**

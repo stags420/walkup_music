@@ -1,4 +1,4 @@
-import { MockAuthService } from '@/modules/auth/services/MockAuthService';
+import { MockAuthService } from '@/modules/auth/services/impl/MockAuthService';
 
 describe('MockAuthService', () => {
   let mockAuthService: MockAuthService;

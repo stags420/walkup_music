@@ -1,3 +1,3 @@
 // Config module exports
-export { AppConfig } from './models/AppConfig';
-export { AppConfigProvider } from './providers/AppConfigProvider';
+export { AppConfig } from '@/modules/config/models/AppConfig';
+export { AppConfigProvider } from '@/modules/config/providers/AppConfigProvider';

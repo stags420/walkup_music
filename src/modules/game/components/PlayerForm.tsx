@@ -2,15 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Modal, Form, Alert, Card } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { FormEvent, MouseEvent } from 'react';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import {
-  MusicService,
-  SongSelector,
-  SegmentSelector,
-  SpotifyTrack,
-  SongSegment,
-} from '@/modules/music';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
+import { SongSelector, SegmentSelector } from '@/modules/music';
 // import './PlayerForm.css'; // Using Bootstrap classes instead
 
 interface PlayerFormProps {

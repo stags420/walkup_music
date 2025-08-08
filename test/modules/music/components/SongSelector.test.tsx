@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SongSelector } from '@/modules/music/components/SongSelector';
-import { MusicService, SpotifyTrack } from '@/modules/music';
+import type { MusicService, SpotifyTrack } from '@/modules/music';
 
 // Mock music service
 const mockMusicService: MusicService = {

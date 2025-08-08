@@ -2,10 +2,10 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Modal, Form, Alert, Card } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
-import { SongSegment } from '@/modules/music/models/SongSegment';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import type { SongSegment } from '@/modules/music/models/SongSegment';
 import { TrackPreview, PlayButton } from '@/modules/core';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;

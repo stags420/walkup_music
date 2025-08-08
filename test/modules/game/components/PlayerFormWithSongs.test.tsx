@@ -1,13 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import {
-  MusicService,
-  SpotifyTrack,
-  SongSegment,
-  MusicProvider,
-} from '@/modules/music';
-import { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
+import { MusicProvider } from '@/modules/music';
+import type { Player } from '@/modules/game/models/Player';
 
 // Mock SongSelector to avoid portal issues
 jest.mock('@/modules/music/components/SongSelector', () => {

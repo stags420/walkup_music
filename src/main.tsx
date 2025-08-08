@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-import { App } from './App';
+import { App } from '@/App';
 import { AppConfigProvider } from '@/modules/config';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './index.css';
+import '@/index.css';
 import { bootstrapServices } from '@/container';
 
 // Environment variables

@@ -1,4 +1,4 @@
-import { AuthService } from './AuthService';
+import type { AuthService } from '@/modules/auth/services/AuthService';
 
 /**
  * Mock authentication service that bypasses Spotify OAuth for development/testing

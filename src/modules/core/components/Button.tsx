@@ -1,4 +1,4 @@
-import { ReactNode, MouseEvent, CSSProperties } from 'react';
+import type { ReactNode, MouseEvent, CSSProperties } from 'react';
 import { Button as BootstrapButton } from 'react-bootstrap';
 
 interface ButtonProps {

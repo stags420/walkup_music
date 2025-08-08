@@ -6,9 +6,9 @@ import {
   act,
 } from '@testing-library/react';
 import { GameMode } from '@/modules/game/components/GameMode';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock the LineupService
 const mockLineupService = {

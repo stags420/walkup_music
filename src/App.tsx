@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import type { AuthContextType } from '@/modules/auth';
 import {
   AuthProvider,
   useAuth,
   LoginPage,
   CallbackPage,
-  AuthContextType,
   AuthServiceProvider,
 } from '@/modules/auth';
 import {

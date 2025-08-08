@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock PlayerCard component
 jest.mock('@/modules/core/components', () => ({

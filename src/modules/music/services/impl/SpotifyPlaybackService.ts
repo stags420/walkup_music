@@ -1,4 +1,4 @@
-import { AuthService } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth';
 import { getContainer } from '@/container';
 
 /**

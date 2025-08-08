@@ -1,5 +1,5 @@
 import { PlayerService } from '@/modules/game/services/PlayerService';
-import { Player } from '@/modules/game/models/Player';
+import type { Player } from '@/modules/game/models/Player';
 
 // Mock storage service for testing
 class MockStorageService {

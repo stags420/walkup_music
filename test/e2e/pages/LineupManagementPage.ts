@@ -1,5 +1,5 @@
-import { Page, Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
+import type { Page, Locator } from '@playwright/test';
+import { BasePage } from '@/../test/e2e/pages/BasePage';
 
 /**
  * Page object for lineup management functionality

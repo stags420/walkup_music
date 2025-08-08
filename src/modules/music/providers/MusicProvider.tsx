@@ -1,11 +1,10 @@
-import { createContext, ReactNode, useMemo } from 'react';
-import {
-  MusicService,
-  MockMusicService,
-} from '@/modules/music/services/MusicService';
-import { MusicServiceProvider } from './MusicServiceProvider';
-import { SpotifyPlaybackServiceProvider } from './SpotifyPlaybackServiceProvider';
-import { AuthService } from '@/modules/auth';
+import type { ReactNode } from 'react';
+import { createContext, useMemo } from 'react';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import { MockMusicService } from '@/modules/music/services/MusicService';
+import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
+import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
+import type { AuthService } from '@/modules/auth';
 
 interface MusicContextType {
   musicService: MusicService;

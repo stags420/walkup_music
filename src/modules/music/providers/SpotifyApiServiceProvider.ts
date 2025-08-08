@@ -1,5 +1,5 @@
-import { SpotifyApiService } from '@/modules/music/services/SpotifyApiService';
-import { AuthService } from '@/modules/auth';
+import { SpotifyApiService } from '@/modules/music/services/impl/SpotifyApiService';
+import type { AuthService } from '@/modules/auth';
 import { getContainer } from '@/container';
 
 /**

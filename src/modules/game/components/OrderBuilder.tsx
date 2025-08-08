@@ -1,9 +1,9 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 // Using Bootstrap classes instead of custom CSS
 
 interface OrderBuilderProps {

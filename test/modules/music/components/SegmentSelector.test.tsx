@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SegmentSelector } from '@/modules/music/components/SegmentSelector';
-import { SpotifyTrack, SongSegment } from '@/modules/music';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { SpotifyTrack, SongSegment } from '@/modules/music';
+import type { MusicService } from '@/modules/music/services/MusicService';
 
 const mockTrack: SpotifyTrack = {
   id: 'track1',

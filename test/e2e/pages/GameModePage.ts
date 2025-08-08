@@ -1,5 +1,5 @@
-import { Page } from '@playwright/test';
-import { BasePage } from './BasePage';
+import type { Page } from '@playwright/test';
+import { BasePage } from '@/../test/e2e/pages/BasePage';
 
 /**
  * Page object for game mode functionality

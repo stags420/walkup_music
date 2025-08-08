@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { CurrentBatterDisplay } from './CurrentBatterDisplay';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
 // Using Bootstrap classes instead of custom CSS
 
 interface GameModeProps {

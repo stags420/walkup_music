@@ -1,12 +1,10 @@
-import {
-  MusicService,
-  MockMusicService,
-  SpotifyMusicService,
-} from '@/modules/music/services/MusicService';
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
-import { SpotifyApiServiceProvider } from './SpotifyApiServiceProvider';
-import { SpotifyPlaybackServiceProvider } from './SpotifyPlaybackServiceProvider';
-import { AuthService } from '@/modules/auth';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import { MockMusicService } from '@/modules/music/services/MusicService';
+import { SpotifyMusicService } from '@/modules/music/services/impl/SpotifyMusicService';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
+import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
+import type { AuthService } from '@/modules/auth';
 import { AppConfigProvider } from '@/modules/config';
 
 /**

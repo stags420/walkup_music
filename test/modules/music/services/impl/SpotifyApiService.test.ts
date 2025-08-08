@@ -1,6 +1,6 @@
-import { SpotifyApiService } from '@/modules/music/services/SpotifyApiService';
+import { SpotifyApiService } from '@/modules/music/services/impl/SpotifyApiService';
 import type { HttpService } from '@/modules/core/services/HttpService';
-import { AuthService } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth';
 
 // Mock fetch globally
 const mockFetch = jest.fn();

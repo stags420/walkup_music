@@ -1,4 +1,4 @@
-import { FetchHttpService } from '@/modules/core/services/impls/FetchHttpService';
+import { FetchHttpService } from '@/modules/core/services/impl/FetchHttpService';
 import type { HttpService } from '@/modules/core/services/HttpService';
 
 describe('HttpApiService', () => {

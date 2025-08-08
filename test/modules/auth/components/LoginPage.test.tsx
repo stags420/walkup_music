@@ -1,10 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import {
-  LoginPage,
-  AuthService,
-  AuthContextType,
-  AuthState,
-} from '@/modules/auth';
+import type { AuthService, AuthContextType, AuthState } from '@/modules/auth';
+import { LoginPage } from '@/modules/auth';
 
 // Mock auth service for testing
 class MockAuthService implements AuthService {

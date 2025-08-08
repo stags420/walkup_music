@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Button } from '@/modules/core/components/Button';
 import { PlayButton } from '@/modules/core/components/PlayButton';

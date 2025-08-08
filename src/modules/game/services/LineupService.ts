@@ -1,7 +1,7 @@
-import { BattingOrder, Player } from '@/modules/game';
-import { PlayerService } from './PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { StorageService } from '@/modules/storage';
+import type { BattingOrder, Player } from '@/modules/game';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { StorageService } from '@/modules/storage';
 
 // Game control interface
 export interface LineupService {

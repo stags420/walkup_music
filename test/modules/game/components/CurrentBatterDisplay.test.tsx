@@ -1,9 +1,9 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { Player } from '@/modules/game/models/Player';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { Player } from '@/modules/game/models/Player';
 
 // Mock the services
 const mockLineupService = {

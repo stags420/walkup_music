@@ -1,8 +1,8 @@
 import { LineupServiceImpl } from '@/modules/game/services/LineupService';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { StorageService } from '@/modules/storage';
-import { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { StorageService } from '@/modules/storage';
+import type { Player } from '@/modules/game/models/Player';
 
 // Mock services
 const mockPlayerService = {

@@ -1,6 +1,6 @@
-export { Button } from './components/Button';
-export { TrackCard } from './components/TrackCard';
-export { TrackPreview } from './components/TrackPreview';
-export { PlayButton } from './components/PlayButton';
+export { Button } from '@/modules/core/components/Button';
+export { TrackCard } from '@/modules/core/components/TrackCard';
+export { TrackPreview } from '@/modules/core/components/TrackPreview';
+export { PlayButton } from '@/modules/core/components/PlayButton';
 
-export { PlaybackDiagnostics } from './components/PlaybackDiagnostics';
+export { PlaybackDiagnostics } from '@/modules/core/components/PlaybackDiagnostics';

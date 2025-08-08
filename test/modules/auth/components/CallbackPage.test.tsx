@@ -1,17 +1,8 @@
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-  RenderResult,
-} from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import {
-  CallbackPage,
-  AuthService,
-  AuthContextType,
-  AuthState,
-} from '@/modules/auth';
+import type { AuthService, AuthContextType, AuthState } from '@/modules/auth';
+import { CallbackPage } from '@/modules/auth';
 
 // Mock navigate function
 const mockNavigate = jest.fn();

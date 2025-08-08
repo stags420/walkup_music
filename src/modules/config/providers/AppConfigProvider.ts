@@ -1,4 +1,4 @@
-import { AppConfig } from '@/modules/config/models/AppConfig';
+import type { AppConfig } from '@/modules/config/models/AppConfig';
 
 /**
  * Provider for creating AppConfig instances with proper dependencies

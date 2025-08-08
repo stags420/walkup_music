@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MusicService } from '@/modules/music';
+import type { MusicService } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
 
 interface PlaybackDiagnosticsProps {

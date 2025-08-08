@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Player } from '@/modules/game/models/Player';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { PlayerList, PlayerListRef } from './PlayerList';
-import { PlayerForm } from './PlayerForm';
-import { SegmentSelector, SongSegment } from '@/modules/music';
+import type { Player } from '@/modules/game/models/Player';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { PlayerListRef } from '@/modules/game/components/PlayerList';
+import { PlayerList } from '@/modules/game/components/PlayerList';
+import { PlayerForm } from '@/modules/game/components/PlayerForm';
+import type { SongSegment } from '@/modules/music';
+import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
 import './PlayerManager.css';
 

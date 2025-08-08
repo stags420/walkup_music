@@ -1,6 +1,6 @@
-import { Page, Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
-import { TestPlayer } from '../fixtures/testData';
+import type { Page, Locator } from '@playwright/test';
+import { BasePage } from '@/../test/e2e/pages/BasePage';
+import type { TestPlayer } from '@/../test/e2e/fixtures/testData';
 
 /**
  * Page object for player management functionality

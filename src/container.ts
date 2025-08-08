@@ -1,5 +1,5 @@
 import type { AppConfig } from '@/modules/config/models/AppConfig';
-import { FetchHttpService } from '@/modules/core/services/impls/FetchHttpService';
+import { FetchHttpService } from '@/modules/core/services/impl/FetchHttpService';
 import type { HttpService } from '@/modules/core/services/HttpService';
 
 export interface AppContainer {

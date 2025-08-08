@@ -1,5 +1,5 @@
-import { SpotifyPlaybackService } from '@/modules/music';
-import { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
+import type { SpotifyPlaybackService } from '@/modules/music';
+import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 
 // Mock SpotifyApiService before importing SpotifyMusicService
 const mockSpotifyApiService = {
@@ -19,7 +19,7 @@ const mockSpotifyApiService = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
-jest.mock('@/modules/music/services/SpotifyApiService', () => ({
+jest.mock('@/modules/music/services/impl/SpotifyApiService', () => ({
   SpotifyApiService: jest.fn().mockImplementation(() => mockSpotifyApiService),
 }));
 
@@ -30,7 +30,7 @@ const mockPlaybackService = {
   isReady: jest.fn(),
 } as jest.Mocked<SpotifyPlaybackService>;
 
-jest.mock('@/modules/music/services/SpotifyPlaybackService', () => ({
+jest.mock('@/modules/music/services/impl/SpotifyPlaybackService', () => ({
   SpotifyPlaybackServiceImpl: jest
     .fn()
     .mockImplementation(() => mockPlaybackService),
@@ -39,10 +39,8 @@ jest.mock('@/modules/music/services/SpotifyPlaybackService', () => ({
     .mockImplementation(() => mockPlaybackService),
 }));
 
-import {
-  MockMusicService,
-  SpotifyMusicService,
-} from '@/modules/music/services/MusicService';
+import { MockMusicService } from '@/modules/music/services/MusicService';
+import { SpotifyMusicService } from '@/modules/music/services/impl/SpotifyMusicService';
 
 describe('MockMusicService', () => {
   let musicService: MockMusicService;

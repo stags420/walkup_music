@@ -1,9 +1,9 @@
+import type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
 import {
-  SpotifyPlaybackService,
   SpotifyPlaybackServiceImpl,
   MockSpotifyPlaybackService,
-} from '@/modules/music/services/SpotifyPlaybackService';
-import { AuthService } from '@/modules/auth';
+} from '@/modules/music/services/impl/SpotifyPlaybackService';
+import type { AuthService } from '@/modules/auth';
 
 /**
  * Provider for creating SpotifyPlaybackService instances with proper dependencies

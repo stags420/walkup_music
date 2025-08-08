@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BattingOrderManager } from '@/modules/game/components/BattingOrderManager';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { Player } from '@/modules/game/models/Player';
-import { BattingOrder } from '@/modules/game/models/BattingOrder';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { Player } from '@/modules/game/models/Player';
+import type { BattingOrder } from '@/modules/game/models/BattingOrder';
 
 // Mock the OrderBuilder component
 jest.mock('@/modules/game/components/OrderBuilder', () => ({

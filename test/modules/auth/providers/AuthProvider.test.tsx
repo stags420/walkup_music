@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AuthProvider, useAuth, AuthService } from '@/modules/auth';
-import { AppConfigProvider, AppConfig } from '@/modules/config';
+import type { AuthService } from '@/modules/auth';
+import { AuthProvider, useAuth } from '@/modules/auth';
+import type { AppConfig } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/config';
 
 // Mock auth service for testing
 class MockAuthService implements AuthService {

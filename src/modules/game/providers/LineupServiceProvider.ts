@@ -1,7 +1,8 @@
-import { LineupService, LineupServiceImpl } from '../services/LineupService';
-import { PlayerService } from '../services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
-import { StorageService } from '@/modules/storage';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import { LineupServiceImpl } from '@/modules/game/services/LineupService';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
+import type { StorageService } from '@/modules/storage';
 
 /**
  * Provider for creating LineupService instances with proper dependencies

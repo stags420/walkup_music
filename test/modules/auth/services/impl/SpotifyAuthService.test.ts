@@ -1,5 +1,5 @@
 import { SpotifyAuthService } from '@/modules/auth';
-import { AppConfig } from '@/modules/config';
+import type { AppConfig } from '@/modules/config';
 import * as pkceUtils from '@/modules/auth/utils/pkce';
 import * as cookieUtils from '@/modules/auth/utils/cookies';
 

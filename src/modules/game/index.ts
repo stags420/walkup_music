@@ -1,18 +1,18 @@
 // Game module exports
-export { Player } from './models/Player';
-export { BattingOrder } from './models/BattingOrder';
+export { Player } from '@/modules/game/models/Player';
+export { BattingOrder } from '@/modules/game/models/BattingOrder';
 
-export { PlayerService } from './services/PlayerService';
-export { PlayerServiceProvider } from './providers/PlayerServiceProvider';
-export type { LineupService } from './services/LineupService';
-export { LineupServiceImpl } from './services/LineupService';
-export { LineupServiceProvider } from './providers/LineupServiceProvider';
+export { PlayerService } from '@/modules/game/services/PlayerService';
+export { PlayerServiceProvider } from '@/modules/game/providers/PlayerServiceProvider';
+export type { LineupService } from '@/modules/game/services/LineupService';
+export { LineupServiceImpl } from '@/modules/game/services/LineupService';
+export { LineupServiceProvider } from '@/modules/game/providers/LineupServiceProvider';
 
 // Components
-export { PlayerManager } from './components/PlayerManager';
-export { BattingOrderManager } from './components/BattingOrderManager';
-export { OrderBuilder } from './components/OrderBuilder';
-export { PlayerList } from './components/PlayerList';
-export { PlayerForm } from './components/PlayerForm';
-export { GameMode } from './components/GameMode';
-export { CurrentBatterDisplay } from './components/CurrentBatterDisplay';
+export { PlayerManager } from '@/modules/game/components/PlayerManager';
+export { BattingOrderManager } from '@/modules/game/components/BattingOrderManager';
+export { OrderBuilder } from '@/modules/game/components/OrderBuilder';
+export { PlayerList } from '@/modules/game/components/PlayerList';
+export { PlayerForm } from '@/modules/game/components/PlayerForm';
+export { GameMode } from '@/modules/game/components/GameMode';
+export { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';

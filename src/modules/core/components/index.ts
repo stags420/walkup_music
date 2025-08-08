@@ -1,7 +1,7 @@
-export { default as Button } from './Button';
-export { default as TrackCard } from './TrackCard';
-export { default as TrackPreview } from './TrackPreview';
+export { default as Button } from '@/modules/core/components/Button';
+export { default as TrackCard } from '@/modules/core/components/TrackCard';
+export { default as TrackPreview } from '@/modules/core/components/TrackPreview';
 
-export { PlaybackDiagnostics } from './PlaybackDiagnostics';
-export { default as PlayerCard } from './PlayerCard';
-export { PlayButton } from './PlayButton';
+export { PlaybackDiagnostics } from '@/modules/core/components/PlaybackDiagnostics';
+export { default as PlayerCard } from '@/modules/core/components/PlayerCard';
+export { PlayButton } from '@/modules/core/components/PlayButton';

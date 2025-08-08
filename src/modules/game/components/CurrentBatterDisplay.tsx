@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Player } from '@/modules/game/models/Player';
-import { LineupService } from '@/modules/game/services/LineupService';
-import { PlayerService } from '@/modules/game/services/PlayerService';
-import { MusicService } from '@/modules/music/services/MusicService';
+import type { Player } from '@/modules/game/models/Player';
+import type { LineupService } from '@/modules/game/services/LineupService';
+import type { PlayerService } from '@/modules/game/services/PlayerService';
+import type { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerCard } from '@/modules/core/components';
 // Using Bootstrap classes instead of custom CSS
 

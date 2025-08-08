@@ -8,13 +8,17 @@ import {
 import type { Player } from '@/modules/game/models/Player';
 import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
+import {
+  useMusicService,
+  usePlayerService,
+} from '@/modules/app/hooks/useServices';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
 import './PlayerList.css';
 
 interface PlayerListProps {
-  playerService: PlayerService;
-  musicService: MusicService;
+  playerService?: PlayerService;
+  musicService?: MusicService;
 }
 
 export interface PlayerListRef {
@@ -22,7 +26,17 @@ export interface PlayerListRef {
 }
 
 export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
-  function PlayerList({ playerService, musicService }, ref) {
+  function PlayerList(
+    {
+      playerService: injectedPlayerService,
+      musicService: injectedMusicService,
+    },
+    ref
+  ) {
+    const defaultPlayerService = usePlayerService();
+    const defaultMusicService = useMusicService();
+    const playerService = injectedPlayerService ?? defaultPlayerService;
+    const musicService = injectedMusicService ?? defaultMusicService;
     const [players, setPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

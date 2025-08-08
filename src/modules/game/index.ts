@@ -3,10 +3,8 @@ export { Player } from '@/modules/game/models/Player';
 export { BattingOrder } from '@/modules/game/models/BattingOrder';
 
 export { PlayerService } from '@/modules/game/services/PlayerService';
-export { PlayerServiceProvider } from '@/modules/game/providers/PlayerServiceProvider';
 export type { LineupService } from '@/modules/game/services/LineupService';
 export { LineupServiceImpl } from '@/modules/game/services/LineupService';
-export { LineupServiceProvider } from '@/modules/game/providers/LineupServiceProvider';
 
 // Components
 export { PlayerManager } from '@/modules/game/components/PlayerManager';

@@ -1,13 +1,15 @@
-import type { AuthContextType } from '@/modules/auth';
+import type { AuthContextType } from '@/modules/auth/models/AuthContextType';
+import { useAuth } from '@/modules/auth';
 import { Button } from '@/modules/core/components/Button';
 // Using Bootstrap classes instead of custom CSS
 
 interface LoginPageProps {
-  auth: AuthContextType;
+  auth?: AuthContextType;
 }
 
 export function LoginPage({ auth }: LoginPageProps) {
-  const { login } = auth;
+  const defaultAuth = useAuth();
+  const { login } = auth ?? defaultAuth;
 
   const handleLogin = async () => {
     await login();

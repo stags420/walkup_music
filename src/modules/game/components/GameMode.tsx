@@ -4,22 +4,33 @@ import { Button } from '@/modules/core/components/Button';
 import type { LineupService } from '@/modules/game/services/LineupService';
 import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
+import {
+  useLineupService,
+  useMusicService,
+  usePlayerService,
+} from '@/modules/app/hooks/useServices';
 import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
 // Using Bootstrap classes instead of custom CSS
 
 interface GameModeProps {
-  lineupService: LineupService;
-  playerService: PlayerService;
-  musicService: MusicService;
+  lineupService?: LineupService;
+  playerService?: PlayerService;
+  musicService?: MusicService;
   onEndGame: () => void;
 }
 
 export function GameMode({
-  lineupService,
-  playerService,
-  musicService,
+  lineupService: injectedLineupService,
+  playerService: injectedPlayerService,
+  musicService: injectedMusicService,
   onEndGame,
 }: GameModeProps) {
+  const defaultLineupService = useLineupService();
+  const defaultPlayerService = usePlayerService();
+  const defaultMusicService = useMusicService();
+  const lineupService = injectedLineupService ?? defaultLineupService;
+  const playerService = injectedPlayerService ?? defaultPlayerService;
+  const musicService = injectedMusicService ?? defaultMusicService;
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showEndGameConfirmation, setShowEndGameConfirmation] = useState(false);

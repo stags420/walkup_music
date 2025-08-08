@@ -1,21 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import type { AuthContextType } from '@/modules/auth';
-import {
-  AuthProvider,
-  useAuth,
-  LoginPage,
-  CallbackPage,
-  AuthServiceProvider,
-} from '@/modules/auth';
-import {
-  BattingOrderManager,
-  PlayerServiceProvider,
-  GameMode,
-  LineupServiceProvider,
-} from '@/modules/game';
-import { MusicServiceProvider } from '@/modules/music';
-import { StorageServiceProvider } from '@/modules/storage';
+import { useAuth, LoginPage, CallbackPage } from '@/modules/auth';
+import { BattingOrderManager, GameMode } from '@/modules/game';
 import { AppConfigProvider } from '@/modules/app';
+import {
+  usePlayerService,
+  useMusicService,
+  useLineupService,
+} from '@/modules/app/hooks/useServices';
 import { useState, useEffect } from 'react';
 import '@/App.css';
 
@@ -48,15 +40,9 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
   const [isGameMode, setIsGameMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const playerService = PlayerServiceProvider.getOrCreate();
-  const authService = AuthServiceProvider.getOrCreate();
-  const storageService = StorageServiceProvider.getOrCreate();
-  const musicService = MusicServiceProvider.getOrCreate(authService);
-  const lineupService = LineupServiceProvider.getOrCreate(
-    playerService,
-    musicService,
-    storageService
-  );
+  const playerService = usePlayerService();
+  const musicService = useMusicService();
+  const lineupService = useLineupService();
 
   useEffect(() => {
     const checkGameState = async () => {
@@ -156,15 +142,12 @@ function AppContainer() {
 }
 
 export function App() {
-  const authService = AuthServiceProvider.getOrCreate();
   const config = AppConfigProvider.get();
   const basename = config.basePath || '/';
 
   return (
     <Router basename={basename}>
-      <AuthProvider authService={authService}>
-        <AppContainer />
-      </AuthProvider>
+      <AppContainer />
     </Router>
   );
 }

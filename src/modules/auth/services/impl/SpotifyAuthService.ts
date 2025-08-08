@@ -1,11 +1,14 @@
-import type { AuthService, SpotifyTokens } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth/services/AuthService';
+import type { SpotifyTokens } from '@/modules/auth/models/SpotifyAuth';
 import {
   SpotifyTokenResponse,
   SpotifyUserProfile,
+} from '@/modules/auth/models/SpotifyAuth';
+import {
   generateCodeVerifier,
   generateCodeChallenge,
   generateState,
-} from '@/modules/auth';
+} from '@/modules/auth/utils/pkce';
 import {
   areCookiesAvailable,
   setCookie,

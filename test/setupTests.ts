@@ -1,4 +1,14 @@
 import '@testing-library/jest-dom';
+// Ensure TextEncoder/TextDecoder are available before importing any React Router modules
+import { TextEncoder, TextDecoder } from 'node:util';
+
+if (globalThis.TextEncoder === undefined) {
+  Object.assign(globalThis, {
+    TextEncoder,
+    TextDecoder,
+  });
+}
+
 import { ApplicationContainerProvider } from '@/modules/app';
 import { AppConfigProvider } from '@/modules/config';
 
@@ -6,6 +16,11 @@ import { AppConfigProvider } from '@/modules/config';
 Object.defineProperty(globalThis, 'crypto', {
   value: {
     randomUUID: () => `test-uuid-${Math.random().toString(36).slice(2, 11)}`,
+    getRandomValues: (arr: Uint8Array) => {
+      for (let i = 0; i < arr.length; i++)
+        arr[i] = Math.floor(Math.random() * 256);
+      return arr;
+    },
   },
 });
 
@@ -13,16 +28,6 @@ Object.defineProperty(globalThis, 'crypto', {
 if (!globalThis.structuredClone) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, unicorn/prefer-structured-clone
   globalThis.structuredClone = (obj: any) => JSON.parse(JSON.stringify(obj));
-}
-
-import { TextEncoder, TextDecoder } from 'node:util';
-
-// Add TextEncoder/TextDecoder polyfills for React Router v7
-if (globalThis.TextEncoder === undefined) {
-  Object.assign(globalThis, {
-    TextEncoder,
-    TextDecoder,
-  });
 }
 
 // Suppress debug messages about audio operations in test environment

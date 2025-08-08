@@ -1,6 +1,5 @@
 // Auth module exports
-export { AuthProvider } from '@/modules/auth/providers/AuthProvider';
-export { useAuth, AuthContext } from '@/modules/auth/hooks/useAuth';
+export { useAuth } from '@/modules/auth/hooks/useAuth';
 export { LoginPage } from '@/modules/auth/components/LoginPage';
 export { CallbackPage } from '@/modules/auth/components/CallbackPage';
 export { SpotifyAuthService } from '@/modules/auth/services/impl/SpotifyAuthService';
@@ -25,5 +24,4 @@ export {
   generateCodeChallenge,
   generateState,
 } from '@/modules/auth/utils/pkce';
-// Service provider for AuthService
-export { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
+// Deprecated React provider removed in favor of hooks + Zustand

@@ -12,9 +12,5 @@ export {
 export type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
 export { SongSelector } from '@/modules/music/components/SongSelector';
 export { SegmentSelector } from '@/modules/music/components/SegmentSelector';
+// Test-only provider (no-op) kept for compatibility in tests
 export { MusicProvider } from '@/modules/music/providers/MusicProvider';
-export type { MusicContextType } from '@/modules/music/providers/MusicProvider';
-// Service providers for stateless services
-export { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
-export { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
-export { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';

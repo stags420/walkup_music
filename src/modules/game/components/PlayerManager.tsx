@@ -9,21 +9,32 @@ import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
+import {
+  useLineupService,
+  useMusicService,
+  usePlayerService,
+} from '@/modules/app/hooks/useServices';
 import './PlayerManager.css';
 
 interface PlayerManagerProps {
-  playerService: PlayerService;
-  musicService: MusicService;
-  lineupService: LineupService;
+  playerService?: PlayerService;
+  musicService?: MusicService;
+  lineupService?: LineupService;
   onStartGame: () => void;
 }
 
 export function PlayerManager({
-  playerService,
-  musicService,
-  lineupService,
+  playerService: injectedPlayerService,
+  musicService: injectedMusicService,
+  lineupService: injectedLineupService,
   onStartGame,
 }: PlayerManagerProps) {
+  const defaultPlayerService = usePlayerService();
+  const defaultMusicService = useMusicService();
+  const defaultLineupService = useLineupService();
+  const playerService = injectedPlayerService ?? defaultPlayerService;
+  const musicService = injectedMusicService ?? defaultMusicService;
+  const lineupService = injectedLineupService ?? defaultLineupService;
   const [showForm, setShowForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
   const [editingSegmentOnly, setEditingSegmentOnly] = useState(false);

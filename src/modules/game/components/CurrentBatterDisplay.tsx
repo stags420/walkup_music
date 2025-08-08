@@ -3,20 +3,31 @@ import type { Player } from '@/modules/game/models/Player';
 import type { LineupService } from '@/modules/game/services/LineupService';
 import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
+import {
+  useLineupService,
+  useMusicService,
+  usePlayerService,
+} from '@/modules/app/hooks/useServices';
 import { PlayerCard } from '@/modules/core/components';
 // Using Bootstrap classes instead of custom CSS
 
 interface CurrentBatterDisplayProps {
-  lineupService: LineupService;
-  playerService: PlayerService;
-  musicService: MusicService;
+  lineupService?: LineupService;
+  playerService?: PlayerService;
+  musicService?: MusicService;
 }
 
 export function CurrentBatterDisplay({
-  lineupService,
-  playerService,
-  musicService,
+  lineupService: injectedLineupService,
+  playerService: injectedPlayerService,
+  musicService: injectedMusicService,
 }: CurrentBatterDisplayProps) {
+  const defaultLineupService = useLineupService();
+  const defaultPlayerService = usePlayerService();
+  const defaultMusicService = useMusicService();
+  const lineupService = injectedLineupService ?? defaultLineupService;
+  const playerService = injectedPlayerService ?? defaultPlayerService;
+  const musicService = injectedMusicService ?? defaultMusicService;
   const [currentBatter, setCurrentBatter] = useState<Player | null>(null);
   const [onDeckBatter, setOnDeckBatter] = useState<Player | null>(null);
   const [inTheHoleBatter, setInTheHoleBatter] = useState<Player | null>(null);

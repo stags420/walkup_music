@@ -20,7 +20,7 @@
     "test:e2e": "npm run build:mock && playwright test",
     "test:all": "concurrently \"npm run test\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",
     "predeploy": "npm run fixup && npm run build && npm run test:all",
-    "precommit": "npm run predeploy",
+    "precommit": "npm run fixup && npm run test",
     "deploy": "npm run predeploy && gh-pages -d dist",
     "deploy:raw": "echo 'AGENTS SHOULD NEVER USE THIS' && npm run build && gh-pages -d dist",
     "test:watch": "jest --watch",

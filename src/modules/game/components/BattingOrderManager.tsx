@@ -8,21 +8,32 @@ import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
+import {
+  useLineupService,
+  useMusicService,
+  usePlayerService,
+} from '@/modules/app/hooks/useServices';
 // Using Bootstrap classes instead of custom CSS
 
 interface BattingOrderManagerProps {
-  playerService: PlayerService;
-  musicService: MusicService;
-  lineupService: LineupService;
+  playerService?: PlayerService;
+  musicService?: MusicService;
+  lineupService?: LineupService;
   onStartGame: () => void;
 }
 
 export function BattingOrderManager({
-  playerService,
-  musicService,
-  lineupService,
+  playerService: injectedPlayerService,
+  musicService: injectedMusicService,
+  lineupService: injectedLineupService,
   onStartGame,
 }: BattingOrderManagerProps) {
+  const defaultPlayerService = usePlayerService();
+  const defaultMusicService = useMusicService();
+  const defaultLineupService = useLineupService();
+  const playerService = injectedPlayerService ?? defaultPlayerService;
+  const musicService = injectedMusicService ?? defaultMusicService;
+  const lineupService = injectedLineupService ?? defaultLineupService;
   const [showForm, setShowForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
   const [editingSegmentOnly, setEditingSegmentOnly] = useState(false);

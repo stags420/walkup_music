@@ -4,21 +4,24 @@ import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { MusicService } from '@/modules/music/services/MusicService';
+import { useMusicService } from '@/modules/app/hooks/useServices';
 import { TrackCard } from '@/modules/core';
 
 interface SongSelectorProps {
-  musicService: MusicService;
+  musicService?: MusicService;
   onSelectTrack: (track: SpotifyTrack) => void;
   onCancel: () => void;
   initialSearchQuery?: string;
 }
 
 export function SongSelector({
-  musicService,
+  musicService: injectedMusicService,
   onSelectTrack,
   onCancel,
   initialSearchQuery = '',
 }: SongSelectorProps) {
+  const defaultMusicService = useMusicService();
+  const musicService = injectedMusicService ?? defaultMusicService;
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);

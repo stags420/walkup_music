@@ -1,0 +1,103 @@
+:root[data-bs-theme='dark'] {
+  --bs-body-bg: #121212;
+  --bs-body-color: #ffffff;
+  --bs-border-color: #2a2a2a;
+  --bs-secondary-bg: #1a1a1a;
+  --bs-tertiary-bg: #2a2a2a;
+  --bs-emphasis-color: #ffffff;
+  --bs-secondary-color: #b3b3b3;
+  --bs-muted-color: #808080;
+  --bs-link-color: #1db954;
+  --bs-link-hover-color: #1ed760;
+  --bs-primary: #1db954;
+  --bs-primary-rgb: 29, 185, 84;
+  --bs-secondary: #2a2a2a;
+  --bs-secondary-rgb: 42, 42, 42;
+  --bs-success: #1db954;
+  --bs-success-rgb: 29, 185, 84;
+  --bs-info: #3b82f6;
+  --bs-info-rgb: 59, 130, 246;
+  --bs-warning: #f59e0b;
+  --bs-warning-rgb: 245, 158, 11;
+  --bs-danger: #dc2626;
+  --bs-danger-rgb: 220, 38, 38;
+  --bs-light: #2a2a2a;
+  --bs-light-rgb: 42, 42, 42;
+  --bs-dark: #121212;
+  --bs-dark-rgb: 18, 18, 18;
+}
+
+[data-bs-theme='dark'] body {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .modal-content {
+  background-color: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .modal-header {
+  border-bottom-color: #2a2a2a;
+  background-color: #1a1a1a;
+}
+
+[data-bs-theme='dark'] .modal-footer {
+  border-top-color: #2a2a2a;
+  background-color: #1a1a1a;
+}
+
+[data-bs-theme='dark'] .form-control {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .form-control:focus {
+  background-color: #2a2a2a;
+  border-color: #1db954;
+  color: #ffffff;
+  box-shadow: 0 0 0 0.2rem rgba(29, 185, 84, 0.25);
+}
+
+[data-bs-theme='dark'] .form-label {
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .card {
+  background-color: #2a2a2a;
+  border-color: #404040;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .card-body {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .alert-danger {
+  background-color: #2d1b1b;
+  border-color: #4a2a2a;
+  color: #ff6b6b;
+}
+
+[data-bs-theme='dark'] .alert-success {
+  background-color: #1a2a1a;
+  border-color: #2a4a2a;
+  color: #1db954;
+}
+
+[data-bs-theme='dark'] .btn-outline-danger {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+[data-bs-theme='dark'] .btn-outline-danger:hover {
+  background-color: #ff6b6b;
+  color: #ffffff;
+}
+
+[data-bs-theme='dark'] .text-muted {
+  color: #808080;
+}

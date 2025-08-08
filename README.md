@@ -99,11 +99,13 @@ To use real Spotify authentication and playback:
 2. Add Redirect URIs:
    - Local dev: `http://127.0.0.1:8000/callback`
    - GitHub Pages: `https://stags420.github.io/walkup_music/callback`
-3. Set your Spotify Client ID in `src/main.tsx` (`spotifyClientId`).
+3. Copy `.env.local.example` to `.env.local` and set:
+   - `VITE_SPOTIFY_CLIENT_ID=<your-client-id>`
+   - Optionally, `VITE_BASE_PATH` and `VITE_MOCK_AUTH`
 
 Notes:
 
-- The app auto-detects base path (`/walkup_music` on GitHub Pages) and computes `redirectUri` accordingly.
+- The app auto-detects base path (`/walkup_music` on GitHub Pages) unless `VITE_BASE_PATH` is provided, and computes `redirectUri` accordingly.
 - Localhost is normalized to `127.0.0.1` to satisfy Spotify restrictions.
 
 ### Mock Mode

@@ -1,6 +1,6 @@
 import { PlayerService } from '@/modules/game/services/PlayerService';
 import type { StorageService } from '@/modules/storage';
-import { LocalStorageService } from '@/modules/storage';
+import { StorageServiceProvider } from '@/modules/storage';
 
 /**
  * Provider for creating PlayerService instances with proper dependencies
@@ -13,7 +13,7 @@ export class PlayerServiceProvider {
    */
   static getOrCreate(): PlayerService {
     if (!this.instance) {
-      const storageService = new LocalStorageService();
+      const storageService = StorageServiceProvider.getOrCreate();
       this.instance = new PlayerService(storageService);
     }
     return this.instance;

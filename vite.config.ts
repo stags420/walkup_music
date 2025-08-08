@@ -4,9 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(() => ({
   plugins: [react()],
-  base: '/walkup_music/',
+  // Allow override from env; default stays GH Pages path
+  base: process.env.VITE_BASE_PATH ?? '/walkup_music/',
   build: {
     outDir: 'dist',
     sourcemap: true,
@@ -20,4 +21,4 @@ export default defineConfig({
       '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src'),
     },
   }
-});
+}));

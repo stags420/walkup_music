@@ -1,0 +1,3 @@
+give a critical review of this project based on the style i describe in @steering/ . you are a very experience senior software developer who prides themself in simple, enterprise-grade code. 
+
+Look at everything - directory structure, file names, variable names, app structure, security concerns, tests, etc. Pretend you are new to the project and coming from the most pristine, developer-friendly setup and just want to make it what you're used to. Give me an in-depth formatted report.

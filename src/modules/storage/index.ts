@@ -14,4 +14,8 @@ export class StorageServiceProvider {
     }
     return this.instance;
   }
+
+  static reset(): void {
+    this.instance = null;
+  }
 }

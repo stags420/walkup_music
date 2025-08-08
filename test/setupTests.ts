@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
-import { bootstrapServices } from '@/container';
+import { ApplicationContainerProvider } from '@/modules/app';
+import { AppConfigProvider } from '@/modules/config';
 
 // Mock crypto.randomUUID for Node.js test environment
 Object.defineProperty(globalThis, 'crypto', {
@@ -39,8 +40,8 @@ console.debug = (...args) => {
   originalConsoleDebug.apply(console, args);
 };
 
-// Bootstrap a default service container for tests
-bootstrapServices({
+// Initialize config and container for tests
+AppConfigProvider.initialize({
   maxSegmentDuration: 10,
   spotifyClientId: 'test-client-id',
   redirectUri: 'http://127.0.0.1/callback',
@@ -48,3 +49,4 @@ bootstrapServices({
   basePath: '',
   mockAuth: true,
 });
+ApplicationContainerProvider.initialize();

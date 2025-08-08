@@ -4,3 +4,4 @@ export { TrackPreview } from '@/modules/core/components/TrackPreview';
 export { PlayButton } from '@/modules/core/components/PlayButton';
 
 export { PlaybackDiagnostics } from '@/modules/core/components/PlaybackDiagnostics';
+export { useHttpService } from '@/modules/core/hooks/useHttpService';

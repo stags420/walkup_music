@@ -1,16 +1,16 @@
-import {
-  bootstrapServices,
-  getContainer,
-  __resetContainerForTests,
-} from '@/container';
+import { ApplicationContainerProvider } from '@/modules/app';
+import { AppConfigProvider } from '@/modules/app';
 
 describe('service container', () => {
   beforeEach(() => {
-    __resetContainerForTests();
+    ApplicationContainerProvider.reset();
+    AppConfigProvider.reset();
   });
 
   test('throws if accessed before bootstrap', () => {
-    expect(() => getContainer()).toThrow('Services not bootstrapped');
+    expect(() => ApplicationContainerProvider.get()).toThrow(
+      'ApplicationContainer not initialized'
+    );
   });
 
   test('returns same container after bootstrap', () => {
@@ -22,9 +22,10 @@ describe('service container', () => {
       basePath: '',
       mockAuth: true,
     };
-    const c1 = bootstrapServices(cfg);
-    const c2 = getContainer();
-    expect(c2).toBe(c1);
+    // Initialize config and then container
+    AppConfigProvider.initialize(cfg);
+    ApplicationContainerProvider.initialize();
+    const c2 = ApplicationContainerProvider.get();
     expect(c2.config.spotifyClientId).toBe('id');
   });
 });

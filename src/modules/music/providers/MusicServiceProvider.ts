@@ -5,7 +5,7 @@ import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
 import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
 import type { AuthService } from '@/modules/auth';
-import { AppConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/app';
 
 /**
  * Singleton service provider for MusicService instances

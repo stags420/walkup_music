@@ -1,6 +1,6 @@
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { AuthService } from '@/modules/auth';
-import { getContainer } from '@/container';
+import { ApplicationContainerProvider } from '@/modules/app';
 import type { HttpService } from '@/modules/core/services/HttpService';
 
 // Internal light response used when we do not want to pass through the raw fetch Response
@@ -52,7 +52,8 @@ export class SpotifyApiService {
 
   constructor(authService: AuthService, httpService?: HttpService) {
     this.authService = authService;
-    this.httpService = httpService ?? getContainer().httpService;
+    this.httpService =
+      httpService ?? ApplicationContainerProvider.get().httpService;
   }
 
   /**

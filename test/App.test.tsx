@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AppContent, AuthenticatedApp } from '@/App';
+import { AppContent, AuthenticatedApp } from '@/modules/app/components/App';
 import type { AuthContextType } from '@/modules/auth';
 import { PlayerServiceProvider } from '@/modules/game/providers/PlayerServiceProvider';
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';

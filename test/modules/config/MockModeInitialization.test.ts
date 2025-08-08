@@ -1,12 +1,12 @@
-import { AppConfig } from '@/modules/config/models/AppConfig';
+import { AppConfig } from '@/modules/app/models/AppConfig';
 import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
 import { MockAuthService } from '@/modules/auth/services/impl/MockAuthService';
 import { MockMusicService } from '@/modules/music/services/MusicService';
-import { AppConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/app';
 
 // Mock the global config provider
-jest.mock('@/modules/config', () => ({
+jest.mock('@/modules/app', () => ({
   AppConfigProvider: {
     get: jest.fn(),
     initialize: jest.fn(),

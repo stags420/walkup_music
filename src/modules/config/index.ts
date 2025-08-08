@@ -1,3 +1,4 @@
 // Config module exports
-export { AppConfig } from '@/modules/config/models/AppConfig';
-export { AppConfigProvider } from '@/modules/config/providers/AppConfigProvider';
+// Deprecated: Re-export from app module to avoid churn
+export { AppConfig } from '@/modules/app/models/AppConfig';
+export { AppConfigProvider } from '@/modules/app/providers/AppConfigProvider';

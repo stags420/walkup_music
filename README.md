@@ -9,6 +9,7 @@ A single-page web application that integrates with Spotify Premium accounts to m
 - Batting order creation and management
 - Game mode for real-time music playback
 - Export/import functionality for data portability
+- Mock mode for local development and E2E tests (no Spotify login required)
 - GitHub Pages deployment ready
 
 ## Development Setup
@@ -28,34 +29,59 @@ cd walkup_music
 ./scripts/setup.sh
 ```
 
-1. Start the development server:
+1. Start the development server (real auth):
 
 ```bash
 npm run dev
 ```
 
-1. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
+Or start in mock mode (no Spotify auth required):
+
+```bash
+npm run dev:mock
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
+
+### Prerequisites
+
+- Node.js 18+ (setup script verifies this)
+- For real playback: a Spotify Premium account
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
+- `npm run dev` - Start development server (real Spotify auth)
+- `npm run dev:mock` - Start dev server in mock mode (`VITE_MOCK_AUTH=true`)
+- `npm run build` - Build for production (`dist/`)
+- `npm run build:mock` - Build mock version (`dist-mocked/`)
+- `npm run preview` - Preview production build at `http://127.0.0.1:4173`
+- `npm run preview:mock` - Preview mock build (serves `dist-mocked/`)
+- `npm run test` - Run unit tests (Jest)
+- `npm run test:watch` - Run unit tests in watch mode
+- `npm run test:e2e` - Run E2E tests (Playwright) against mock build
+- `npm run test:all` - Run unit and E2E tests concurrently
 - `npm run lint` - Run ESLint
+- `npm run lint:fix` - Auto-fix lint issues
+- `npm run fixup` - Auto-fix lint issues and format code
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting
-- `npm run deploy` - Deploy to GitHub Pages
+- `npm run clean` - Remove `dist/` and `dist-mocked/`
+- `npm run predeploy` - Lint, format, build, and run all tests
+- `npm run precommit` - Alias for `predeploy` used by the git hook
+- `npm run deploy` - Build, test, and publish `dist/` to GitHub Pages
+
+Optional/internal:
+
+- `npm run deploy:raw` - Build and publish without running checks (not recommended)
 
 ### Git Hooks
 
 This project uses git hooks to maintain code quality:
 
-- **Pre-commit hook**: Automatically runs before each commit to:
-  - Run ESLint to check for code issues
-  - Execute all tests to ensure functionality
-  - Verify code formatting with Prettier
+- **Pre-commit hook**: Automatically runs `predeploy` which:
+  - Runs ESLint and formatting checks
+  - Builds the app
+  - Executes both unit and E2E tests
 
 If any check fails, the commit will be blocked. To bypass hooks in emergency situations:
 
@@ -64,6 +90,27 @@ git commit --no-verify
 ```
 
 The hooks are stored in the `hooks/` directory and are automatically configured by the setup script.
+
+### Spotify Setup (Real Auth)
+
+To use real Spotify authentication and playback:
+
+1. Create a Spotify application in the Spotify Developer Dashboard.
+2. Add Redirect URIs:
+   - Local dev: `http://127.0.0.1:8000/callback`
+   - GitHub Pages: `https://stags420.github.io/walkup_music/callback`
+3. Set your Spotify Client ID in `src/main.tsx` (`spotifyClientId`).
+
+Notes:
+
+- The app auto-detects base path (`/walkup_music` on GitHub Pages) and computes `redirectUri` accordingly.
+- Localhost is normalized to `127.0.0.1` to satisfy Spotify restrictions.
+
+### Mock Mode
+
+- Use `npm run dev:mock` for local development without logging into Spotify.
+- Use `npm run build:mock` and `npm run preview:mock` to preview the mock build.
+- E2E tests run against the mock build automatically.
 
 ### Working with Modules
 
@@ -102,6 +149,7 @@ The hooks are stored in the `hooks/` directory and are automatically configured 
    ```
 
 4. **Export from module index**:
+
    ```typescript
    // src/modules/newfeature/index.ts
    export { NewType } from './models/NewType';
@@ -117,49 +165,28 @@ The hooks are stored in the `hooks/` directory and are automatically configured 
 
 #### Import Guidelines
 
-- Import from module index files: `from './modules/auth'`
-- Avoid deep imports: `from './modules/auth/services/SpotifyAuthService'`
+- Import from module index files using the alias: `from '@/modules/auth'`
+- Avoid deep imports: `from '@/modules/auth/services/SpotifyAuthService'`
 - Use relative imports within modules: `from '../models/Player'`
 
 ### Project Structure
 
-The project follows a modular architecture with domain-driven design principles:
-
 ```text
 src/
-├── components/           # Main application components
-│   └── index.ts         # Component exports
-├── modules/             # Feature modules
-│   ├── auth/           # Authentication module
-│   │   ├── components/ # Auth-specific components (LoginPage, CallbackPage)
-│   │   ├── hooks/      # Auth hooks (useAuth)
-│   │   ├── models/     # Auth types and interfaces
-│   │   ├── providers/  # Auth context providers
-│   │   ├── services/   # Auth services (SpotifyAuthService)
-│   │   ├── utils/      # Auth utilities (PKCE, cookies)
-│   │   └── index.ts    # Auth module exports
-│   ├── config/         # Configuration module
-│   │   ├── models/     # Config types (AppConfig)
-│   │   └── index.ts    # Config module exports
-│   ├── game/           # Game management module
-│   │   ├── models/     # Game types (Player, BattingOrder)
-│   │   ├── services/   # Game services (GameService, PlayerService)
-│   │   └── index.ts    # Game module exports
-│   ├── music/          # Music management module
-│   │   ├── models/     # Music types (SongSegment, SpotifyTrack)
-│   │   └── index.ts    # Music module exports
-│   └── storage/        # Data persistence module
-│       ├── services/   # Storage services (LocalStorageService)
-│       └── index.ts    # Storage module exports
-├── App.tsx             # Main application component
-└── main.tsx            # Application entry point
+├── App.tsx               # Root component
+├── main.tsx              # App bootstrap, config initialization
+├── container.ts          # Service container (DI)
+├── index.css             # Global styles
+└── modules/
+    ├── auth/             # Authentication (Spotify PKCE, cookies, provider, components)
+    ├── config/           # App configuration (types and provider)
+    ├── core/             # Shared UI/components and core services (HTTP)
+    ├── game/             # Players, batting orders, game mode UI
+    ├── music/            # Spotify API + playback services and components
+    └── storage/          # Local storage service and hooks
 
-test/                   # Test files mirroring src structure
-├── components/         # Component tests
-├── contexts/           # Context tests
-├── services/           # Service tests
-├── types/              # Type validation tests
-└── utils/              # Utility tests
+test/                     # Tests mirror src/modules layout
+└── e2e/                  # Playwright E2E tests
 ```
 
 #### Module Organization
@@ -180,12 +207,9 @@ The modular structure enables clean imports:
 
 ```typescript
 // Import from specific modules
-import { AuthProvider, useAuth, LoginPage } from './modules/auth';
-import { Player, BattingOrder } from './modules/game';
-import { AppConfig } from './modules/config';
-
-// Cross-module dependencies are explicit
-import { SpotifyTrack } from '../music/models/SpotifyTrack';
+import { AuthProvider, useAuth, LoginPage } from '@/modules/auth';
+import { Player, BattingOrder } from '@/modules/game';
+import { AppConfig } from '@/modules/config';
 ```
 
 #### Key Design Principles
@@ -197,7 +221,37 @@ import { SpotifyTrack } from '../music/models/SpotifyTrack';
 
 ## Deployment
 
-The application is configured for automatic deployment to GitHub Pages via GitHub Actions. Push to the `main` branch to trigger deployment.
+Deployment uses the `gh-pages` package and the `deploy` script:
+
+```bash
+npm run deploy
+```
+
+This builds the app, runs tests, and publishes `dist/` to the `gh-pages` branch. The site is served at `https://stags420.github.io/walkup_music/`.
+
+If you fork this repo, update `homepage` in `package.json` and `base` in `vite.config.ts` to match your GitHub Pages path.
+
+## Testing
+
+### Unit Tests (Jest)
+
+```bash
+npm run test
+```
+
+### End-to-End Tests (Playwright)
+
+First-time setup (install browsers):
+
+```bash
+npx playwright install
+```
+
+Run E2E tests (automatically builds and serves the mock app):
+
+```bash
+npm run test:e2e
+```
 
 ## Architecture
 
@@ -213,30 +267,75 @@ The application uses a modular architecture where each feature domain is self-co
 
 ### Dependency Injection
 
-Services use constructor injection for better testability:
+This project uses constructor injection, explicit interfaces, and a typed container wired at bootstrap (no React Context for DI).
 
-```typescript
-// Service interfaces define contracts
-interface AuthService {
-  login(): Promise<void>;
-  logout(): Promise<void>;
-  isAuthenticated(): boolean;
+Composition root and container:
+
+```ts
+// src/container.ts
+export interface AppContainer {
+  config: AppConfig;
+  httpService: HttpService;
+  // Add service singletons here as they are introduced
 }
 
-// Implementations are injected
-class SpotifyAuthService implements AuthService {
-  constructor(private config: AppConfig) {}
-  // Implementation...
+export class ApplicationContainerProvider {
+  private static instance: AppContainer | null = null;
+  private static isInitialized = false;
+
+  static initialize(): void {
+    if (this.isInitialized) return;
+    const config = AppConfigProvider.get();
+    const apiService = new FetchHttpService();
+    this.instance = { config, httpService: apiService };
+    this.isInitialized = true;
+  }
+
+  static get(): AppContainer {
+    if (!this.instance || !this.isInitialized) {
+      throw new Error('ApplicationContainer not initialized. Call ApplicationContainerProvider.initialize() after AppConfigProvider.initialize(config).');
+    }
+    return this.instance;
+  }
 }
-
-// Global config initialized at startup
-appConfigProvider.initialize(config);
-
-// Components receive services via props
-<AuthProvider authService={authService}>
-  <App />
-</AuthProvider>
 ```
+
+Bootstrap at app startup:
+
+```ts
+// src/main.tsx
+AppConfigProvider.initialize(config);
+ApplicationContainerProvider.initialize();
+```
+
+Access services via small helpers or props-with-defaults:
+
+```ts
+// Example tiny hook
+export function useHttpService() {
+  return ApplicationContainerProvider.get().httpService;
+}
+
+// Example component using props-with-default
+type Props = { http?: HttpService };
+export function SomeComponent({ http = useHttpService() }: Props) {
+  // use `http` here
+}
+```
+
+Notes:
+
+- Business/services live outside React and depend on interfaces (constructor injection).
+- UI-related Contexts (like `AuthProvider`) are for view state, not for wiring service singletons.
+
+### Add a New Service to the Container
+
+1. Define an interface in the appropriate module (e.g., `src/modules/game/services/PlayerService.ts`).
+2. Implement the interface in `services/impl/` using constructor injection for dependencies.
+3. Add the service to `AppContainer` in `src/container.ts` and wire it in `bootstrapServices`.
+4. Expose a tiny helper hook (e.g., `usePlayerService`) that returns the singleton from `getContainer()`.
+5. Consume via props-with-defaults or the helper hook at the top of components.
+6. Add unit tests that pass fakes/mocks via props or replace the container in test setup.
 
 ### Type Safety
 
@@ -249,7 +348,7 @@ appConfigProvider.initialize(config);
 - **Frontend**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Routing**: React Router
-- **Testing**: Jest + React Testing Library
+- **Testing**: Jest + React Testing Library, Playwright (E2E)
 - **Linting**: ESLint + Prettier
 - **Deployment**: GitHub Pages
 - **Architecture**: Modular design with dependency injection

@@ -1,6 +1,6 @@
 import { SpotifyApiService } from '@/modules/music/services/impl/SpotifyApiService';
 import type { AuthService } from '@/modules/auth';
-import { getContainer } from '@/container';
+import { ApplicationContainerProvider } from '@/modules/app';
 
 /**
  * Provider for creating SpotifyApiService instances with proper dependencies
@@ -14,7 +14,7 @@ export class SpotifyApiServiceProvider {
    */
   static getOrCreate(authService: AuthService): SpotifyApiService {
     if (!this.instance) {
-      const { httpService } = getContainer();
+      const { httpService } = ApplicationContainerProvider.get();
       this.instance = new SpotifyApiService(authService, httpService);
     }
     return this.instance;

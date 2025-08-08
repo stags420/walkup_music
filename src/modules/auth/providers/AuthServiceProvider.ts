@@ -1,7 +1,7 @@
 import type { AuthService } from '@/modules/auth';
 import { SpotifyAuthService } from '@/modules/auth/services/impl/SpotifyAuthService';
 import { MockAuthService } from '@/modules/auth/services/impl/MockAuthService';
-import { AppConfigProvider } from '@/modules/config';
+import { AppConfigProvider } from '@/modules/app';
 
 /**
  * Provider for creating AuthService instances with proper dependencies

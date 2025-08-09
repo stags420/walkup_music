@@ -6,11 +6,11 @@
       .slice(1)
       .split('&')
       .map(function (s) {
-        return s.replace(/~and~/g, '&');
+        return s.replaceAll('~and~', '&');
       })
       .join('?');
-    window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+    globalThis.history.replaceState(undefined, undefined, l.pathname.slice(0, -1) + decoded + l.hash);
   }
-})(window.location);
+})(globalThis.location);
 
 

@@ -12,6 +12,10 @@ export default defineConfig(() => ({
     outDir: 'dist',
     sourcemap: true,
   },
+  define: {
+    'import.meta.env.VITE_LOG_LEVEL': JSON.stringify(process.env.VITE_LOG_LEVEL ?? ''),
+    'import.meta.env.VITE_E2E_COVERAGE': JSON.stringify(process.env.VITE_E2E_COVERAGE ?? ''),
+  },
   server: {
     port: 8000,
     open: true,

@@ -24,10 +24,13 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        // Enable type-aware linting without listing tsconfig files explicitly (TS-ESLint v8)
+        projectService: true,
       },
       globals: {
         ...globals.browser,
         ...globals.es2020,
+        process: 'readonly',
       },
     },
     plugins: {
@@ -43,6 +46,8 @@ export default [
         'error',
         { argsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-floating-promises': ['error', { ignoreIIFE: true }],
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': ["error"],
@@ -102,6 +107,10 @@ export default [
       globals: {
         ...globals.node,
         ...globals.browser,
+      },
+      parserOptions: {
+        // Remove allowDefaultProject customization to avoid parser issues
+        projectService: true,
       },
     },
   },

@@ -2,6 +2,7 @@ import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { AuthService } from '@/modules/auth';
 import { ApplicationContainerProvider } from '@/modules/app';
 import type { HttpService } from '@/modules/core/services/HttpService';
+import { retry } from '@/modules/core/utils/retry';
 
 // Internal light response used when we do not want to pass through the raw fetch Response
 interface LightweightResponse {
@@ -70,15 +71,24 @@ export class SpotifyApiService {
     }
 
     const searchUrl = this.buildSearchUrl(query, limit);
-    const { data, status, headers } = await this.httpService.get<unknown>(
-      searchUrl,
-      {
+    const enableRetry =
+      typeof process !== 'undefined' &&
+      process.env?.VITE_ENABLE_RETRY === 'true';
+    const fetchOnce = () =>
+      this.httpService.get<unknown>(searchUrl, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-      }
-    );
+        timeoutMs: 8000,
+      });
+    const { data, status, headers } = enableRetry
+      ? await retry(fetchOnce, {
+          maxRetries: 2,
+          initialDelayMs: 300,
+          shouldRetry: (err) => err instanceof Error,
+        })
+      : await fetchOnce();
 
     if (status < 200 || status >= 300) {
       await this.handleApiError({

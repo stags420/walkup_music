@@ -66,7 +66,7 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
     );
 
     useEffect(() => {
-      loadPlayers();
+      void loadPlayers();
     }, [loadPlayers]);
 
     if (loading) {

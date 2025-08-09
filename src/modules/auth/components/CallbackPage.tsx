@@ -30,14 +30,14 @@ export function CallbackPage({ auth }: CallbackPageProps) {
       // Handle OAuth error
       if (error) {
         console.error('OAuth error:', error);
-        navigate('/?error=' + encodeURIComponent(error));
+        void navigate('/?error=' + encodeURIComponent(error));
         return;
       }
 
       // Handle missing parameters
       if (!code || !state) {
         console.error('Missing code or state parameter');
-        navigate(
+        void navigate(
           '/?error=' + encodeURIComponent('Invalid callback parameters')
         );
         return;
@@ -46,16 +46,16 @@ export function CallbackPage({ auth }: CallbackPageProps) {
       try {
         await handleCallback(code, state);
         // Redirect to main app after successful authentication
-        navigate('/');
+        void navigate('/');
       } catch (error) {
         console.error('Callback handling failed:', error);
         const errorMessage =
           error instanceof Error ? error.message : 'Authentication failed';
-        navigate('/?error=' + encodeURIComponent(errorMessage));
+        void navigate('/?error=' + encodeURIComponent(errorMessage));
       }
     };
 
-    processCallback();
+    void processCallback();
   }, [searchParams, handleCallback, navigate]);
 
   return (

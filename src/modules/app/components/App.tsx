@@ -58,7 +58,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
       }
     };
 
-    checkGameState();
+    void checkGameState();
   }, [lineupService]);
 
   const handleStartGame = () => setIsGameMode(true);

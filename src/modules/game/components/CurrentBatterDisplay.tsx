@@ -51,7 +51,7 @@ export function CurrentBatterDisplay({
 
   // Refresh batters when component mounts or lineup service changes
   useEffect(() => {
-    refreshBatters();
+    void refreshBatters();
   }, [refreshBatters]);
 
   const renderCurrentBatter = () => {

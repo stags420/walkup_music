@@ -233,6 +233,11 @@ This builds the app, runs tests, and publishes `dist/` to the `gh-pages` branch.
 
 If you fork this repo, update `homepage` in `package.json` and `base` in `vite.config.ts` to match your GitHub Pages path.
 
+### Security Headers and CSP
+
+- The app adds a strict Content Security Policy in `index.html` that allows the Spotify Web Playback SDK and required Spotify API origins while disallowing inline scripts and styles. Inline redirect logic has been moved to `public/404.html` per the SPA GitHub Pages pattern.
+- If deploying somewhere other than GitHub Pages, ensure equivalent headers are set by your platform. See `docs/security-headers.md` for a minimal reverse proxy example with strong headers.
+
 ## Testing
 
 ### Unit Tests (Jest)
@@ -254,6 +259,14 @@ Run E2E tests (automatically builds and serves the mock app):
 ```bash
 npm run test:e2e
 ```
+
+Collect E2E coverage artifacts (placeholder wiring):
+
+```bash
+npm run test:e2e:coverage
+```
+
+Artifacts are written to `test-results/coverage-e2e/`. Integrate `vite-plugin-istanbul` if you need Istanbul/nyc coverage for E2E.
 
 ## Architecture
 

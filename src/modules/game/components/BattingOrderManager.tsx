@@ -72,7 +72,7 @@ export function BattingOrderManager({
 
   // Load players and lineup on component mount
   useEffect(() => {
-    loadPlayersAndLineup();
+    void loadPlayersAndLineup();
   }, [loadPlayersAndLineup]);
 
   const handleAddPlayer = () => {
@@ -210,7 +210,7 @@ export function BattingOrderManager({
               await playerService.updatePlayer(editingPlayer.id, {
                 song: segment,
               });
-              handleSegmentSaved();
+              void handleSegmentSaved();
             } catch (error) {
               console.error('Failed to update timing:', error);
             }

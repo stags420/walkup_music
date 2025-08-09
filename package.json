@@ -18,6 +18,7 @@
     "dev:mock": "VITE_MOCK_AUTH=true vite --host=127.0.0.1",
     "test": "jest --passWithNoTests --silent",
     "test:e2e": "npm run build:mock && playwright test",
+    "test:e2e:coverage": "VITE_E2E_COVERAGE=true npm run build:mock && playwright test && node ./test/e2e/playwright/collect-coverage.js",
     "test:all": "concurrently \"npm run test\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",
     "predeploy": "npm run fixup && npm run build && npm run test:all",
     "precommit": "npm run fixup && npm run test:all",

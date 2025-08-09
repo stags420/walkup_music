@@ -49,7 +49,9 @@ export function SongSelector({
       }
     };
 
-    const timeoutId = setTimeout(searchTracks, 500);
+    const timeoutId = setTimeout(() => {
+      void searchTracks();
+    }, 500);
     return () => clearTimeout(timeoutId);
   }, [searchQuery, musicService]);
 
@@ -119,19 +121,27 @@ export function SongSelector({
   useEffect(() => {
     return () => {
       // Stop any playing preview when component unmounts
-      musicService.pause().catch((error) => {
-        console.debug('Failed to stop preview on unmount:', error);
-      });
+      void (async () => {
+        try {
+          await musicService.pause();
+        } catch (error) {
+          console.debug('Failed to stop preview on unmount:', error);
+        }
+      })();
       setPlayingTrackId(null);
     };
   }, [musicService]);
 
   // Stop playback when tracks change (new search results)
   useEffect(() => {
-    musicService.pause().catch((error) => {
-      console.debug('Failed to stop preview on tracks change:', error);
-    });
-    setPlayingTrackId(null);
+    void (async () => {
+      try {
+        await musicService.pause();
+      } catch (error) {
+        console.debug('Failed to stop preview on tracks change:', error);
+      }
+      setPlayingTrackId(null);
+    })();
   }, [tracks, musicService]);
 
   return (

@@ -82,15 +82,17 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
         globalThis.window as Window & { Spotify: SpotifySDK }
       ).Spotify.Player({
         name: 'Walk-Up Music Manager',
-        getOAuthToken: async (callback: (token: string) => void) => {
-          try {
-            const token = await this.authService.getAccessToken();
-            if (token) {
-              callback(token);
+        getOAuthToken: (callback: (token: string) => void) => {
+          void (async () => {
+            try {
+              const token = await this.authService.getAccessToken();
+              if (token) {
+                callback(token);
+              }
+            } catch (error) {
+              console.error('Failed to get OAuth token:', error);
             }
-          } catch (error) {
-            console.error('Failed to get OAuth token:', error);
-          }
+          })();
         },
         volume: 0.5,
         enableMediaSession: true,

@@ -54,7 +54,7 @@ export function PlayerManager({
       }
     };
 
-    loadPlayers();
+    void loadPlayers();
   }, [playerService]);
 
   const handleAddPlayer = () => {
@@ -69,7 +69,7 @@ export function PlayerManager({
     // Refresh the player list after save
     playerListRef.current?.refreshPlayers();
     // Reload players to update local state
-    playerService.getAllPlayers().then(setPlayers);
+    void playerService.getAllPlayers().then(setPlayers);
   };
 
   const handleCancelForm = () => {
@@ -84,7 +84,7 @@ export function PlayerManager({
     // Refresh the player list after save
     playerListRef.current?.refreshPlayers();
     // Reload players to update local state
-    playerService.getAllPlayers().then(setPlayers);
+    void playerService.getAllPlayers().then(setPlayers);
   };
 
   const handleSegmentCancelled = () => {
@@ -151,7 +151,7 @@ export function PlayerManager({
               await playerService.updatePlayer(editingPlayer.id, {
                 song: segment,
               });
-              handleSegmentSaved();
+              void handleSegmentSaved();
             } catch (error) {
               console.error('Failed to update timing:', error);
             }

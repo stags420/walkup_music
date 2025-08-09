@@ -230,15 +230,16 @@ export class MockMusicService implements MusicService {
 
     // Auto-pause after duration if one is specified
     if (durationMs) {
-      this.previewTimeoutId = setTimeout(async () => {
-        try {
-          await this.playbackService.pause();
-          this.previewTimeoutId = null;
-          // Call the callback when the track ends
-          onTrackEnd?.();
-        } catch (error) {
-          console.error('Failed to auto-pause preview:', error);
-        }
+      this.previewTimeoutId = setTimeout(() => {
+        void (async () => {
+          try {
+            await this.playbackService.pause();
+            this.previewTimeoutId = null;
+            onTrackEnd?.();
+          } catch (error) {
+            console.error('Failed to auto-pause preview:', error);
+          }
+        })();
       }, durationMs);
     }
   }

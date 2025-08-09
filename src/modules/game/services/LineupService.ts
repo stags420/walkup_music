@@ -31,7 +31,7 @@ export class LineupServiceImpl implements LineupService {
     private storageService: StorageService
   ) {
     // Load game state on initialization
-    this.loadGameState();
+    void this.loadGameState();
   }
 
   private async saveGameState(): Promise<void> {
@@ -174,7 +174,7 @@ export class LineupServiceImpl implements LineupService {
   // Additional methods for game state management
   startGame(): void {
     this.isGameActive = true;
-    this.saveGameState();
+    void this.saveGameState();
   }
 
   endGame(): void {
@@ -182,7 +182,7 @@ export class LineupServiceImpl implements LineupService {
     // Keep the batting order persistent - don't clear it
     // this.currentBattingOrder = null;
     // this.storageService.delete(this.storageKey);
-    this.saveGameState();
+    void this.saveGameState();
   }
 
   isGameInProgress(): boolean {

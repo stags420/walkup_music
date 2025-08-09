@@ -77,7 +77,7 @@ export function PlayButton({
   // Stop playback when component unmounts
   useEffect(() => {
     return () => {
-      stopPlayback();
+      void stopPlayback();
     };
   }, [stopPlayback]);
 
@@ -110,8 +110,8 @@ export function PlayButton({
 
         // Auto-stop after duration if specified
         if (duration) {
-          playbackTimeoutRef.current = setTimeout(async () => {
-            await stopPlayback();
+          playbackTimeoutRef.current = setTimeout(() => {
+            void stopPlayback();
           }, duration * 1000);
         }
       } catch (error) {

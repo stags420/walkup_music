@@ -1,0 +1,25 @@
+.segment-timeline {
+  width: 100%;
+  user-select: none;
+}
+
+.timeline-track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+
+.timeline-segment {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(29, 185, 84, 0.8);
+  border-radius: 4px;
+  cursor: ew-resize;
+}
+
+.timeline-segment.dragging {
+  background: rgba(29, 185, 84, 1);
+}

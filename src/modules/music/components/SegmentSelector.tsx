@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Modal, Form, Alert, Card } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
+import './SegmentSelector.css';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { SongSegment } from '@/modules/music/models/SongSegment';
@@ -102,7 +103,6 @@ export function SegmentSelector({
   // Touch event handlers for mobile
   const handleSegmentTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      e.preventDefault();
       const touch = e.touches[0];
       handleSegmentStart(touch.clientX);
     },
@@ -111,7 +111,6 @@ export function SegmentSelector({
 
   const handleSegmentTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      e.preventDefault();
       const touch = e.touches[0];
       handleSegmentMove(touch.clientX);
     },
@@ -119,8 +118,7 @@ export function SegmentSelector({
   );
 
   const handleSegmentTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
+    (_e: React.TouchEvent) => {
       handleSegmentEnd();
     },
     [handleSegmentEnd]
@@ -162,8 +160,9 @@ export function SegmentSelector({
   };
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    const totalSeconds = Math.max(0, Math.round(seconds));
+    const minutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
@@ -233,18 +232,12 @@ export function SegmentSelector({
                 <Button
                   variant="outline-secondary"
                   onClick={() => {
-                    const newDuration = Math.min(
-                      maxDuration,
-                      Math.min(trackDurationSeconds - startTime, duration + 0.5)
-                    );
+                    const newDuration = Math.max(1, duration - 0.5);
                     setDuration(newDuration);
                   }}
-                  disabled={
-                    duration >=
-                    Math.min(maxDuration, trackDurationSeconds - startTime)
-                  }
+                  disabled={duration <= 1}
                 >
-                  +
+                  −
                 </Button>
                 <Form.Control
                   id="duration"
@@ -259,12 +252,18 @@ export function SegmentSelector({
                 <Button
                   variant="outline-secondary"
                   onClick={() => {
-                    const newDuration = Math.max(1, duration - 0.5);
+                    const newDuration = Math.min(
+                      maxDuration,
+                      Math.min(trackDurationSeconds - startTime, duration + 0.5)
+                    );
                     setDuration(newDuration);
                   }}
-                  disabled={duration <= 1}
+                  disabled={
+                    duration >=
+                    Math.min(maxDuration, trackDurationSeconds - startTime)
+                  }
                 >
-                  −
+                  +
                 </Button>
                 <span className="input-group-text">seconds</span>
               </div>

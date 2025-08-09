@@ -1,33 +1,8 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import type { AuthContextType } from '@/modules/auth/models/AuthContextType';
-import type { AuthState } from '@/modules/auth/models/AuthState';
 import { useAuthService } from '@/modules/app/hooks/useServices';
+import { useAuthUiStore } from '@/modules/auth/state/authUiStore';
 
-interface AuthUiStore extends AuthState {
-  setAuthenticatedUser: (user: AuthState['user']) => void;
-  clear: () => void;
-}
-
-const useAuthUiStore = create<AuthUiStore>()(
-  persist(
-    (set) => ({
-      isAuthenticated: false,
-      user: null,
-      setAuthenticatedUser: (user) => set({ isAuthenticated: !!user, user }),
-      clear: () => set({ isAuthenticated: false, user: null }),
-    }),
-    {
-      name: 'auth-ui',
-      storage: createJSONStorage(() => localStorage),
-      version: 1,
-      partialize: (state) => ({
-        isAuthenticated: state.isAuthenticated,
-        user: state.user,
-      }),
-    }
-  )
-);
+// Store moved to dedicated module
 
 export function useAuth(): AuthContextType {
   const authService = useAuthService();
@@ -55,4 +30,4 @@ export function useAuth(): AuthContextType {
   };
 }
 
-export { useAuthUiStore };
+export { useAuthUiStore } from '@/modules/auth/state/authUiStore';

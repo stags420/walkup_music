@@ -380,6 +380,7 @@ export class SpotifyAuthService implements AuthService {
     try {
       const accessToken = await this.getAccessToken();
       if (!accessToken) {
+        await this.logout();
         return null;
       }
 

@@ -9,7 +9,7 @@ import {
   useLineupService,
 } from '@/modules/app/hooks/useServices';
 import { useState, useEffect } from 'react';
-import '@/App.css';
+import './App.css';
 
 interface AppContentProps {
   auth: AuthContextType;
@@ -59,7 +59,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
     };
 
     void checkGameState();
-  }, [lineupService]);
+  }, [lineupService, auth.state.isAuthenticated]);
 
   const handleStartGame = () => setIsGameMode(true);
   const handleEndGame = () => setIsGameMode(false);

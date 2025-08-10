@@ -121,6 +121,15 @@ async function main() {
         const match = rawUrl.match(/\/src\/[^?#]*/);
         if (match && match[0]) return match[0].replace(/^\//, '');
       }
+      // prefer distFile when present and contains a concrete src path
+      if (
+        info &&
+        typeof info === 'object' &&
+        typeof info.distFile === 'string'
+      ) {
+        const di = info.distFile.indexOf('src/');
+        if (di !== -1) return info.distFile.slice(di);
+      }
       // if only a filename, try to resolve via the pre-built src index
       const base = path.basename(sp);
       const candidates = sourceIndex.get(base);

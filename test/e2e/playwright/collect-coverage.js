@@ -15,7 +15,7 @@ function findJsonFiles(directory) {
 function buildSourceIndex(rootDirectory) {
   const sourceDirectory = path.join(rootDirectory, 'src');
   const stack = [sourceDirectory];
-  const index = new Map();
+  const index = new Map(); // basename -> Set of '/src/...'
   while (stack.length > 0) {
     const directory = stack.pop();
     if (!directory || !fs.existsSync(directory)) continue;
@@ -27,11 +27,10 @@ function buildSourceIndex(rootDirectory) {
       } else {
         const base = ent.name;
         const relative = p.slice(sourceDirectory.length);
-        // prefer ts/tsx over others when duplicates
-        const previous = index.get(base);
-        if (!previous || /\.tsx?$/.test(base)) {
-          index.set(base, '/src' + relative.replaceAll('\\', '/'));
-        }
+        const normalized = '/src' + relative.replaceAll('\\', '/');
+        const set = index.get(base) ?? new Set();
+        set.add(normalized);
+        index.set(base, set);
       }
     }
   }
@@ -115,18 +114,19 @@ async function main() {
       // keep existing /src paths as-is (strip leading slash to match report expectations)
       if (sp.startsWith('/src/')) return sp.slice(1);
       if (sp.startsWith('src/')) return sp;
+      // try to extract /src/... from original source URL if present
+      const rawUrl =
+        info && typeof info === 'object' ? String(info.url || '') : '';
+      if (rawUrl) {
+        const match = rawUrl.match(/\/src\/[^?#]*/);
+        if (match && match[0]) return match[0].replace(/^\//, '');
+      }
       // if only a filename, try to resolve via the pre-built src index
       const base = path.basename(sp);
-      const guess = sourceIndex.get(base);
-      if (guess) return guess.startsWith('/') ? guess.slice(1) : guess;
-      // fallback: if distFile carries a /src/ segment, reuse that
-      if (
-        info &&
-        typeof info === 'object' &&
-        typeof info.distFile === 'string'
-      ) {
-        const index = info.distFile.indexOf('src/');
-        if (index !== -1) return info.distFile.slice(index);
+      const candidates = sourceIndex.get(base);
+      if (candidates && candidates.size === 1) {
+        const only = [...candidates][0];
+        return only.startsWith('/') ? only.slice(1) : only;
       }
       return sp;
     },

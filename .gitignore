@@ -9,6 +9,11 @@ yarn.lock
 # Jest coverage output
 coverage/
 
+# Test artifacts (Playwright + E2E coverage reports)
+# Keep the index HTML (so links are stable), ignore heavy generated assets
+test/reports/
+!test/reports/index.html
+
 # Build output
 dist/
 dist-mocked/
@@ -92,4 +97,6 @@ spotify-credentials.json
 
 .todo
 
-*/e2e/playwright/*
+# Keep Playwright helper scripts under version control
+!test/e2e/playwright/
+test/e2e/playwright/*.log

@@ -260,13 +260,20 @@ Run E2E tests (automatically builds and serves the mock app):
 npm run test:e2e
 ```
 
-Collect E2E coverage artifacts (placeholder wiring):
+Collect E2E coverage (Chromium, native V8) and open reports:
 
 ```bash
 npm run test:e2e:coverage
+npm run report:coverage:open   # Monocart coverage UI
+npm run report:e2e:open        # Playwright test report
 ```
 
-Artifacts are written to `test-results/coverage-e2e/`. Integrate `vite-plugin-istanbul` if you need Istanbul/nyc coverage for E2E.
+Coverage details:
+
+- Coverage is collected via Playwright's Chromium Coverage API and reported with Monocart. Only application code under `src/**` is measured; `node_modules/**` and tool internals are excluded.
+- Reports are written to `test/reports` (gitignored):
+  - `test/reports/monocart/report.html` – unified coverage UI (V8 native + HTML view)
+  - `test/reports/playwright/` – Playwright test results
 
 ## Architecture
 

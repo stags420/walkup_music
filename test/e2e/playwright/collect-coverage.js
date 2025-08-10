@@ -39,6 +39,12 @@ function buildSourceIndex(rootDirectory) {
 }
 
 async function main() {
+  if (!globalThis.process?.env?.VITE_E2E_COVERAGE) {
+    globalThis.console.log(
+      'E2E coverage not enabled (VITE_E2E_COVERAGE not set). Skipping report generation.'
+    );
+    return;
+  }
   const cwd = globalThis.process.cwd();
   const dumpsDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'dumps');
   const reportDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'e2e');

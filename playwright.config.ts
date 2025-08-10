@@ -20,12 +20,16 @@ export default defineConfig({
       'monocart-reporter',
       {
         outputFile: 'test/reports/monocart/index.html',
-        coverage: {
-          include: ['**/src/**'],
-          exclude: ['**/node_modules/**', '**/@vite/**', '**/vite/**'],
-          // V8-only reports
-          reports: ['v8', 'v8-json', 'console-summary']
-        },
+        ...((process.env.VITE_E2E_COVERAGE)
+          ? {
+              coverage: {
+                include: ['**/src/**'],
+                exclude: ['**/node_modules/**', '**/@vite/**', '**/vite/**'],
+                // V8-only reports
+                reports: ['v8', 'v8-json', 'console-summary'],
+              },
+            }
+          : {}),
       },
     ],
   ],

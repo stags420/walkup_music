@@ -14,7 +14,7 @@ test.describe('Complete E2E Workflow', () => {
   let gamePage: GameModePage;
 
   test.beforeEach(async ({ page, browserName }) => {
-    if (browserName === 'chromium') {
+    if (browserName === 'chromium' && process.env.VITE_E2E_COVERAGE) {
       await (
         page as unknown as {
           coverage: {
@@ -69,7 +69,7 @@ test.describe('Complete E2E Workflow', () => {
   });
 
   test.afterEach(async ({ page, browserName }, testInfo) => {
-    if (browserName === 'chromium') {
+    if (browserName === 'chromium' && process.env.VITE_E2E_COVERAGE) {
       await saveCoverageDump(page, testInfo);
     }
   });

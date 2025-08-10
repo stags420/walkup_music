@@ -5,10 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
-  const enableE2eCoverage = Boolean(process.env.VITE_E2E_COVERAGE);
-
-  const sourcemapSetting: true | 'inline' = enableE2eCoverage ? 'inline' : true;
-  const minifySetting: boolean | 'esbuild' = enableE2eCoverage ? false : 'esbuild';
+  // We always run E2E against built preview; keep stable build settings
+  const sourcemapSetting: true | 'inline' = true;
+  const minifySetting: boolean | 'esbuild' = 'esbuild';
 
   return {
     plugins: [react()],
@@ -25,9 +24,7 @@ export default defineConfig(() => {
       'import.meta.env.VITE_LOG_LEVEL': JSON.stringify(
         process.env.VITE_LOG_LEVEL ?? ''
       ),
-      'import.meta.env.VITE_E2E_COVERAGE': JSON.stringify(
-        process.env.VITE_E2E_COVERAGE ?? ''
-      ),
+      'import.meta.env.VITE_E2E_COVERAGE': JSON.stringify(''),
     },
     server: {
       port: 8000,

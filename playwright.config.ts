@@ -23,7 +23,8 @@ export default defineConfig({
         coverage: {
           include: ['**/src/**'],
           exclude: ['**/node_modules/**', '**/@vite/**', '**/vite/**'],
-          reports: ['v8', 'html', 'text-summary']
+          // V8-only reports
+          reports: ['v8', 'v8-json', 'console-summary']
         },
       },
     ],
@@ -70,16 +71,11 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: (() => {
-    const isCoverage = Boolean(process.env.VITE_E2E_COVERAGE);
-    return {
-      command: isCoverage
-        ? 'VITE_MOCK_AUTH=true VITE_E2E_COVERAGE=true vite --port 4173 --host 127.0.0.1'
-        : 'npx vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked',
-      url: 'http://127.0.0.1:4173/walkup_music/',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
-    };
-  })(),
+  /* Always run against the built preview (dist-mocked) */
+  webServer: {
+    command: 'npx vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked',
+    url: 'http://127.0.0.1:4173/walkup_music/',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
 });

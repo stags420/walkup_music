@@ -39,22 +39,8 @@ function buildSourceIndex(rootDirectory) {
 
 async function main() {
   const cwd = globalThis.process.cwd();
-  const dumpsDirectory = path.join(
-    cwd,
-    'test',
-    'reports',
-    'utils',
-    'coverage',
-    'dumps'
-  );
-  const reportDirectory = path.join(
-    cwd,
-    'test',
-    'reports',
-    'utils',
-    'coverage',
-    'e2e'
-  );
+  const dumpsDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'dumps');
+  const reportDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'e2e');
   fs.mkdirSync(reportDirectory, { recursive: true });
 
   const files = findJsonFiles(dumpsDirectory);
@@ -93,15 +79,7 @@ async function main() {
     // ensure relative path resolution uses the project root
     baseDir: cwd,
     // generate a standalone native V8 coverage report
-    outputDir: path.join(
-      cwd,
-      'test',
-      'reports',
-      'utils',
-      'coverage',
-      'e2e',
-      'v8-report'
-    ),
+    outputDir: path.join(cwd, 'test', 'reports', 'coverage', 'e2e', 'v8-report'),
     // Only V8-based reports (no Istanbul)
     reports: ['v8', 'v8-json', 'console-summary'],
     // Strictly include only application entries that map to /src/
@@ -160,15 +138,7 @@ async function main() {
 
   // Reorder: files before directories in snapshot data for nicer listing
   try {
-    const reportDirectoryPath = path.join(
-      cwd,
-      'test',
-      'reports',
-      'utils',
-      'coverage',
-      'e2e',
-      'v8-report'
-    );
+    const reportDirectoryPath = path.join(cwd, 'test', 'reports', 'coverage', 'e2e', 'v8-report');
     const jsonPath = path.join(reportDirectoryPath, 'coverage-report.json');
     if (fs.existsSync(jsonPath)) {
       const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
@@ -186,10 +156,7 @@ async function main() {
     globalThis.console.warn('Post-sort of coverage-report.json failed:', error);
   }
 
-  globalThis.console.log(
-    'V8 coverage written to',
-    path.join(cwd, 'test', 'reports', 'utils', 'coverage', 'e2e', 'v8-report')
-  );
+  globalThis.console.log('V8 coverage written to', path.join(cwd, 'test', 'reports', 'coverage', 'e2e', 'v8-report'));
 
   // Create a lightweight index to unify access
   const indexHtmlPath = path.join(cwd, 'test', 'reports', 'index.html');
@@ -210,7 +177,7 @@ async function main() {
     <h1>Test Reports</h1>
     <ol>
       <li><a href="http://localhost:8090/test/reports/monocart/index.html">Open Test Report (Monocart)</a></li>
-      <li><a href="./utils/coverage/e2e/v8-report/index.html">Open Coverage Report (V8)</a></li>
+      <li><a href="./coverage/e2e/v8-report/index.html">Open Coverage Report (V8)</a></li>
     </ol>
     <p><small>Tip: run <code>npm run report:serve</code> to launch the local server if links fail to load.</small></p>
   </body>

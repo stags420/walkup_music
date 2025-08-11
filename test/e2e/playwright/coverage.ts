@@ -25,13 +25,7 @@ export async function saveCoverageDump(
 
     if (!v8Entries || v8Entries.length === 0) return;
 
-    const outDir = path.join(
-      process.cwd(),
-      'test',
-      'reports',
-      'coverage',
-      'dumps'
-    );
+    const outDir = path.join(process.cwd(), 'test', 'reports', 'coverage', 'dumps');
     fs.mkdirSync(outDir, { recursive: true });
 
     const titleParts: string[] = Array.isArray(

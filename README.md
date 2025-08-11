@@ -58,7 +58,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
 - `npm run preview:mock` - Preview mock build (serves `dist-mocked/`)
 - `npm run test` - Run unit tests (Jest)
 - `npm run test:watch` - Run unit tests in watch mode
-- `npm run test:e2e` - Run E2E tests (Playwright) against mock build
+- `npm run test:e2e` - Run E2E tests (Playwright) against vite dev with mock auth
 - `npm run test:all` - Run unit and E2E tests concurrently
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Auto-fix lint issues

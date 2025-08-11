@@ -18,7 +18,7 @@
     "dev:mock": "VITE_MOCK_AUTH=true vite --host=127.0.0.1",
     "test": "jest --passWithNoTests --silent",
     "test:e2e": "VITE_MOCK_AUTH=true playwright test",
-    "test:e2e:coverage": "VITE_E2E_COVERAGE=true npm run test:e2e && node ./test/e2e/playwright/collect-coverage.js",
+    "test:e2e:coverage": "VITE_E2E_COVERAGE=true npm run test:e2e && node ./test/reports/utils/collect-coverage.js",
     "report:serve": "monocart show-report test/reports/index.html",
     "test:e2e:coverage:show": "npm run test:e2e:coverage && npm run report:serve",
     "test:all": "concurrently \"npm run test\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",

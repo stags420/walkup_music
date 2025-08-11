@@ -75,9 +75,9 @@ export default defineConfig({
     },
   ],
 
-  /* Always run against the built preview (dist-mocked) */
+  /* Always run Vite dev server; invoker can set env (e.g., VITE_MOCK_AUTH, VITE_E2E_COVERAGE) */
   webServer: {
-    command: 'npx vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked',
+    command: 'vite --host=127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173/walkup_music/',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

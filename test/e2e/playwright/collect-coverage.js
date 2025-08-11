@@ -38,12 +38,6 @@ function buildSourceIndex(rootDirectory) {
 }
 
 async function main() {
-  if (!globalThis.process?.env?.VITE_E2E_COVERAGE) {
-    globalThis.console.log(
-      'E2E coverage not enabled (VITE_E2E_COVERAGE not set). Skipping report generation.'
-    );
-    return;
-  }
   const cwd = globalThis.process.cwd();
   const dumpsDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'dumps');
   const reportDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'e2e');
@@ -95,7 +89,7 @@ async function main() {
     ),
     // Only V8-based reports (no Istanbul)
     reports: ['v8', 'v8-json', 'console-summary'],
-    // Filter only application sources
+    // Strictly include only application entries that map to /src/
     entryFilter: (entry) => {
       const url = String((entry && entry.url) || '');
       if (!url) return false;
@@ -105,8 +99,14 @@ async function main() {
         url.includes('vite/dist')
       )
         return false;
-      return url.includes('/src/');
+      // Require /src/ in url or in distFile
+      const hasSourceInUrl = url.includes('/src/');
+      const hasSourceInDistribution =
+        typeof entry.distFile === 'string' && entry.distFile.includes('src/');
+      return hasSourceInUrl || hasSourceInDistribution;
     },
+    // Only keep unpacked sources under src/
+    sourceFilter: (sourcePath) => sourcePath.includes('src/'),
     // restore full source paths for JS/TS sources when sourcemaps only provide basenames
     // this is applied in multiple phases (raw V8 entries and sourcemap-unpacked sources)
     sourcePath: (filePath, info) => {
@@ -142,6 +142,33 @@ async function main() {
   });
   await mcr.add(combined);
   await mcr.generate();
+
+  // Reorder: files before directories in snapshot data for nicer listing
+  try {
+    const reportDirectoryPath = path.join(
+      cwd,
+      'test',
+      'reports',
+      'coverage',
+      'e2e',
+      'v8-report'
+    );
+    const jsonPath = path.join(reportDirectoryPath, 'coverage-report.json');
+    if (fs.existsSync(jsonPath)) {
+      const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      if (report && Array.isArray(report.files)) {
+        report.files.sort((a, b) => {
+          const aIsDirectory = a.name && a.name.endsWith('/');
+          const bIsDirectory = b.name && b.name.endsWith('/');
+          if (aIsDirectory !== bIsDirectory) return aIsDirectory ? 1 : -1; // files first
+          return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+        fs.writeFileSync(jsonPath, JSON.stringify(report));
+      }
+    }
+  } catch (error) {
+    globalThis.console.warn('Post-sort of coverage-report.json failed:', error);
+  }
 
   globalThis.console.log(
     'V8 coverage written to',

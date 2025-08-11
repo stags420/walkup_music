@@ -9,10 +9,12 @@ yarn.lock
 # Jest coverage output
 coverage/
 
-# Test artifacts (Playwright + E2E coverage reports)
-# Keep the index HTML (so links are stable), ignore heavy generated assets
+# Test reports
+# Keep reports folder and index, ignore heavy generated subtrees except utils where we store scripts/coverage
 test/reports/
+!test/reports/
 !test/reports/index.html
+!test/reports/utils/**
 
 # Build output
 dist/

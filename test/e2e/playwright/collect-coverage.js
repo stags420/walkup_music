@@ -39,8 +39,22 @@ function buildSourceIndex(rootDirectory) {
 
 async function main() {
   const cwd = globalThis.process.cwd();
-  const dumpsDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'dumps');
-  const reportDirectory = path.join(cwd, 'test', 'reports', 'coverage', 'e2e');
+  const dumpsDirectory = path.join(
+    cwd,
+    'test',
+    'reports',
+    'utils',
+    'coverage',
+    'dumps'
+  );
+  const reportDirectory = path.join(
+    cwd,
+    'test',
+    'reports',
+    'utils',
+    'coverage',
+    'e2e'
+  );
   fs.mkdirSync(reportDirectory, { recursive: true });
 
   const files = findJsonFiles(dumpsDirectory);
@@ -83,6 +97,7 @@ async function main() {
       cwd,
       'test',
       'reports',
+      'utils',
       'coverage',
       'e2e',
       'v8-report'
@@ -149,6 +164,7 @@ async function main() {
       cwd,
       'test',
       'reports',
+      'utils',
       'coverage',
       'e2e',
       'v8-report'
@@ -172,7 +188,7 @@ async function main() {
 
   globalThis.console.log(
     'V8 coverage written to',
-    path.join(cwd, 'test', 'reports', 'coverage', 'e2e', 'v8-report')
+    path.join(cwd, 'test', 'reports', 'utils', 'coverage', 'e2e', 'v8-report')
   );
 
   // Create a lightweight index to unify access
@@ -194,7 +210,7 @@ async function main() {
     <h1>Test Reports</h1>
     <ol>
       <li><a href="http://localhost:8090/test/reports/monocart/index.html">Open Test Report (Monocart)</a></li>
-      <li><a href="./coverage/e2e/v8-report/index.html">Open Coverage Report (V8)</a></li>
+      <li><a href="./utils/coverage/e2e/v8-report/index.html">Open Coverage Report (V8)</a></li>
     </ol>
     <p><small>Tip: run <code>npm run report:serve</code> to launch the local server if links fail to load.</small></p>
   </body>

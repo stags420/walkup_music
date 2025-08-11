@@ -187,8 +187,20 @@ src/
     ├── music/            # Spotify API + playback services and components
     └── storage/          # Local storage service and hooks
 
-test/                     # Tests mirror src/modules layout
-└── e2e/                  # Playwright E2E tests
+test/
+├── e2e/                  # Playwright E2E tests (fixtures, pages, tests)
+│   ├── fixtures/
+│   ├── pages/
+│   └── tests/
+└── reports/              # Test reports (gitignored except where noted)
+    ├── index.html        # Landing page (tracked)
+    ├── coverage/         # V8 coverage artifacts (gitignored)
+    │   ├── dumps/        # Raw V8 dumps per test (gitignored)
+    │   └── e2e/
+    │       └── v8-report/  # Monocart V8 coverage UI (gitignored)
+    └── utils/            # Reporting helpers (tracked)
+        ├── collect-coverage.js  # Merges dumps and generates V8 report
+        └── coverage.ts          # Playwright helper to save V8 dumps
 ```
 
 #### Module Organization

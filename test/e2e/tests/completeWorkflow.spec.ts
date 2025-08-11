@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { saveCoverageDump } from '@/../test/e2e/playwright/coverage';
+import { saveCoverageDump } from 'test/reports/utils/coverage';
 import { LoginPage } from '@/../test/e2e/pages/LoginPage';
 import { PlayerManagementPage } from '@/../test/e2e/pages/PlayerManagementPage';
 import { LineupManagementPage } from '@/../test/e2e/pages/LineupManagementPage';

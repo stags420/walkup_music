@@ -11,8 +11,7 @@ coverage/
 
 # Test reports
 # Keep reports folder and index, ignore heavy generated subtrees except utils where we store scripts/coverage
-test/reports/
-!test/reports/
+test/reports/**
 !test/reports/index.html
 !test/reports/utils/**
 

@@ -254,7 +254,7 @@ First-time setup (install browsers):
 npx playwright install
 ```
 
-Run E2E tests (automatically builds and serves the mock app):
+Run E2E tests (served by vite dev with mock auth):
 
 ```bash
 npm run test:e2e
@@ -264,16 +264,28 @@ Collect E2E coverage (Chromium, native V8) and open reports:
 
 ```bash
 npm run test:e2e:coverage
-npm run report:coverage:open   # Monocart coverage UI
-npm run report:e2e:open        # Playwright test report
+npm run report:serve            # Opens test/reports/index.html (links to coverage UI)
 ```
 
 Coverage details:
 
 - Coverage is collected via Playwright's Chromium Coverage API and reported with Monocart. Only application code under `src/**` is measured; `node_modules/**` and tool internals are excluded.
-- Reports are written to `test/reports` (gitignored):
-  - `test/reports/monocart/report.html` – unified coverage UI (V8 native + HTML view)
-  - `test/reports/playwright/` – Playwright test results
+- Reports are written under `test/reports`:
+  - `test/reports/coverage/e2e/v8-report/` – V8 native coverage UI (Monocart)
+  - `test/reports/index.html` – landing page with links (tracked in git)
+  - `test/reports/utils/` – checked-in E2E reporting helpers (tracked in git)
+  - All other subdirs are ignored by git via `.gitignore`
+
+Helper scripts (checked in):
+
+- `test/reports/utils/coverage.ts` – Playwright helper to save V8 dumps per-test
+- `test/reports/utils/collect-coverage.js` – Node script to merge dumps and generate the Monocart report
+
+How it works:
+
+1. Tests run via vite dev server. If `VITE_E2E_COVERAGE` is set, Chromium coverage starts in `beforeEach` and stops in `afterEach`, saving dumps to `test/reports/coverage/dumps`.
+2. After tests, run the collector to merge dumps and generate the V8 report at `test/reports/coverage/e2e/v8-report`.
+3. Open `npm run report:serve` to browse `test/reports/index.html` and click the Coverage link.
 
 ## Architecture
 

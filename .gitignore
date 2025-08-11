@@ -13,9 +13,7 @@ coverage/
 # Keep reports folder and index, ignore heavy generated subtrees except utils where we store scripts/coverage
 # Ignore all generated reports under test/reports except the landing page and the utilities folder
 test/reports/**
-!test/reports/
 !test/reports/index.html
-!test/reports/utils/
 !test/reports/utils/**
 
 # Build output

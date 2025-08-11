@@ -175,42 +175,28 @@ Notes:
 
 ```text
 src/
-├── App.tsx               # Root component
-├── main.tsx              # App bootstrap, config initialization
-├── container.ts          # Service container (DI)
+├── main.tsx              # App bootstrap
 ├── index.css             # Global styles
-└── modules/
-    ├── auth/             # Authentication (Spotify PKCE, cookies, provider, components)
-    ├── config/           # App configuration (types and provider)
-    ├── core/             # Shared UI/components and core services (HTTP)
-    ├── game/             # Players, batting orders, game mode UI
-    ├── music/            # Spotify API + playback services and components
-    └── storage/          # Local storage service and hooks
+├── theme.css             # Theme tokens/styles
+├── vite-env.d.ts         # Vite ambient types
+└── modules/              # Feature modules (public APIs via each module's index.ts)
+    ├── app/             # App shell: providers, app-level components/hooks
+    ├── auth/            # Auth (Spotify PKCE, providers, hooks, utils)
+    ├── core/            # Shared UI + core services/utilities
+    ├── game/            # Players, lineup, game mode UI
+    ├── music/           # Spotify API + playback services and components
+    └── storage/         # Local storage hooks/services
 
 test/
 ├── e2e/                  # Playwright E2E tests (fixtures, pages, tests)
-│   ├── fixtures/
-│   │   ├── mockTracks.ts
-│   │   └── testData.ts
-│   ├── pages/
-│   │   ├── BasePage.ts
-│   │   ├── GameModePage.ts
-│   │   ├── LineupManagementPage.ts
-│   │   ├── LoginPage.ts
-│   │   └── PlayerManagementPage.ts
-│   └── tests/
-│       └── completeWorkflow.spec.ts
 └── reports/              # Test reports (gitignored except where noted)
     ├── index.html        # Landing page (tracked)
     ├── coverage/         # V8 coverage artifacts (gitignored)
     │   ├── dumps/        # Raw V8 dumps per test (gitignored)
-    │   └── e2e/
-    │       └── v8-report/  # Monocart V8 coverage UI (gitignored)
-    ├── monocart/         # Playwright report output (gitignored)
+    │   └── e2e/v8-report/  # Monocart V8 coverage UI (gitignored)
+    ├── monocart/         # Playwright JSON summary (gitignored)
     ├── playwright/       # Playwright HTML report (gitignored)
     └── utils/            # Reporting helpers (tracked)
-        ├── collect-coverage.js  # Merges dumps and generates V8 report
-        └── coverage.ts          # Playwright helper to save V8 dumps
 ```
 
 #### Module Organization

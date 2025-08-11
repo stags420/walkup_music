@@ -9,6 +9,18 @@ export default {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        sourceMap: true,
+        inlineSources: true,
+        inlineSourceMap: true,
+      },
+      isolatedModules: true,
+      diagnostics: false,
+      useESM: true,
+    },
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: [
     '<rootDir>/test/**/*.test.(ts|tsx|js)',
@@ -27,4 +39,32 @@ export default {
   testEnvironmentOptions: {
     customExportConditions: [''],
   },
+  // Unit coverage with V8 provider; Monocart will generate the report
+  collectCoverage: process.env.VITE_ENABLE_COVERAGE === 'true',
+  coverageProvider: 'v8',
+  coverageDirectory: 'test/reports/unit/coverage/dumps/',
+  coverageReporters: ['json'],
+  reporters: [
+    'default',
+    [
+      'jest-html-reporter',
+      {
+        pageTitle: 'Unit Test Report',
+        outputPath: 'test/reports/unit/report/index.html',
+        includeFailureMsg: true,
+        includeSuiteFailure: true,
+        useCssFile: false,
+      },
+    ],
+    [
+      'jest-monocart-coverage',
+      {
+        name: 'Unit Coverage',
+        outputDir: 'test/reports/unit/coverage/report',
+        baseDir: '.',
+        reports: ['v8', 'console-summary'],
+        filter: '**/src/**/*.{ts,tsx,js,jsx}',
+      },
+    ],
+  ],
 };

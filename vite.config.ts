@@ -24,7 +24,7 @@ export default defineConfig(() => {
       'import.meta.env.VITE_LOG_LEVEL': JSON.stringify(
         process.env.VITE_LOG_LEVEL ?? ''
       ),
-      'import.meta.env.VITE_E2E_COVERAGE': JSON.stringify(''),
+      'import.meta.env.VITE_ENABLE_COVERAGE': JSON.stringify(''),
     },
     server: {
       port: 8000,

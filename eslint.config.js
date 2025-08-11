@@ -116,6 +116,12 @@ export default [
   },
 
   {
-    ignores: ['dist/**', 'dist-mocked/**', 'node_modules/**', '.eslintrc.cjs', 'test/reports/**'],
+    ignores: [
+      'dist/**',
+      'dist-mocked/**',
+      'node_modules/**',
+      '.eslintrc.cjs',
+      'test/reports/**',
+    ],
   },
 ];

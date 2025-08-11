@@ -56,10 +56,13 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
 - `npm run build:mock` - Build mock version (`dist-mocked/`)
 - `npm run preview` - Preview production build at `http://127.0.0.1:4173`
 - `npm run preview:mock` - Preview mock build (serves `dist-mocked/`)
-- `npm run test` - Run unit tests (Jest)
+- `npm run test:unit` - Run unit tests (Jest)
 - `npm run test:watch` - Run unit tests in watch mode
 - `npm run test:e2e` - Run E2E tests (Playwright) against vite dev with mock auth
 - `npm run test:all` - Run unit and E2E tests concurrently
+- `npm run test:unit:cover` - Generate unit V8 coverage and report (same as test:unit)
+- `npm run test:e2e:cover` - Generate E2E V8 coverage and report (same as test:e2e)
+- `npm run test:all:cover` - Run unit and E2E coverage in parallel and open the reports landing page
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Auto-fix lint issues
 - `npm run fixup` - Auto-fix lint issues and format code
@@ -188,15 +191,19 @@ src/
     └── storage/         # Local storage hooks/services
 
 test/
-├── e2e/                  # Playwright E2E tests (fixtures, pages, tests)
-└── reports/              # Test reports (gitignored except where noted)
-    ├── index.html        # Landing page (tracked)
-    ├── coverage/         # V8 coverage artifacts (gitignored)
-    │   ├── dumps/        # Raw V8 dumps per test (gitignored)
-    │   └── e2e/v8-report/  # Monocart V8 coverage UI (gitignored)
-    ├── monocart/         # Playwright JSON summary (gitignored)
-    ├── playwright/       # Playwright HTML report (gitignored)
-    └── utils/            # Reporting helpers (tracked)
+├── e2e/                      # Playwright E2E tests (fixtures, pages, tests)
+└── reports/                  # Test reports (gitignored except where noted)
+    ├── index.html            # Landing page (tracked)
+    ├── unit/
+    │   ├── report/          # Unit test results/logs (e.g., custom, if any)
+    │   └── coverage/
+    │       ├── dumps/       # Raw V8 coverage dumps (Jest json)
+    │       └── report/      # Monocart HTML coverage UI for unit
+    └── e2e/
+        ├── report/          # Playwright test report (Monocart HTML)
+        └── coverage/
+            ├── dumps/       # Raw V8 coverage dumps (if any exporter writes)
+            └── report/      # Monocart HTML coverage UI for E2E
 ```
 
 #### Module Organization
@@ -251,7 +258,7 @@ If you fork this repo, update `homepage` in `package.json` and `base` in `vite.c
 ### Unit Tests (Jest)
 
 ```bash
-npm run test
+npm run test:unit
 ```
 
 ### End-to-End Tests (Playwright)
@@ -268,32 +275,31 @@ Run E2E tests (served by vite dev with mock auth):
 npm run test:e2e
 ```
 
-Collect E2E coverage (Chromium, native V8) and open reports:
+Collect coverage (native V8 for both unit and E2E) and open the landing page:
 
 ```bash
-npm run test:e2e:coverage
-npm run report:serve            # Opens test/reports/index.html (links to coverage UI)
+npm run test:all:cover
 ```
 
 Coverage details:
 
-- Coverage is collected via Playwright's Chromium Coverage API and reported with Monocart. Only application code under `src/**` is measured; `node_modules/**` and tool internals are excluded.
+- Both unit and E2E use native V8 coverage and are reported with Monocart (no Istanbul).
+- Only application code under `src/**` is measured; vendor/tooling code is excluded.
 - Reports are written under `test/reports`:
-  - `test/reports/coverage/e2e/v8-report/` – V8 native coverage UI (Monocart)
-  - `test/reports/index.html` – landing page with links (tracked in git)
-  - `test/reports/utils/` – checked-in E2E reporting helpers (tracked in git)
+- `test/reports/e2e/coverage/report/` – E2E V8 coverage UI (Monocart)
+- `test/reports/unit/coverage/report/` – Unit V8 coverage UI (Monocart)
+  - `test/reports/index.html` – landing page with links (generated, not tracked)
+  - `test/reports/utils/` – checked-in reporting helpers (tracked in git)
   - All other subdirs are ignored by git via `.gitignore`
 
 Helper scripts (checked in):
 
-- `test/reports/utils/coverage.ts` – Playwright helper to save V8 dumps per-test
-- `test/reports/utils/collect-coverage.js` – Node script to merge dumps and generate the Monocart report
+Removed (no longer needed): manual V8 dump/save utilities.
 
 How it works:
 
-1. Tests run via vite dev server. If `VITE_E2E_COVERAGE` is set, Chromium coverage starts in `beforeEach` and stops in `afterEach`, saving dumps to `test/reports/coverage/dumps`.
-2. After tests, run the collector to merge dumps and generate the V8 report at `test/reports/coverage/e2e/v8-report`.
-3. Open `npm run report:serve` to browse `test/reports/index.html` and click the Coverage link.
+- E2E: Playwright Monocart reporter captures V8 coverage and writes HTML to `test/reports/e2e/coverage/report` and the test report to `test/reports/e2e/report/index.html`.
+- Unit: Jest uses V8 provider. JSON coverage dump is written to `test/reports/unit/coverage/dumps` (via `coverageDirectory` + `json` reporter). Monocart reporter renders HTML to `test/reports/unit/coverage/report`.
 
 ## Architecture
 

@@ -13,7 +13,7 @@ interface ImportMetaEnv {
   readonly VITE_BASE_PATH?: string;
   readonly VITE_MOCK_AUTH?: 'true' | 'false';
   readonly VITE_LOG_LEVEL?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
-  readonly VITE_E2E_COVERAGE?: 'true' | 'false';
+  readonly VITE_ENABLE_COVERAGE?: 'true' | 'false';
 }
 
 interface ImportMeta {

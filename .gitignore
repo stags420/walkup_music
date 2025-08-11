@@ -9,12 +9,9 @@ yarn.lock
 # Jest coverage output
 coverage/
 
-# Test reports
-# Keep reports folder and index, ignore heavy generated subtrees except utils where we store scripts/coverage
-# Ignore all generated reports under test/reports except the landing page and the utilities folder
+# Test reports (ignore all generated; keep utilities only)
 test/reports/**
 !test/reports/index.html
-!test/reports/utils/**
 
 # Build output
 dist/

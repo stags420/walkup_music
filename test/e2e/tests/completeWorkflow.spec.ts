@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { saveCoverageDump } from 'test/reports/utils/coverage';
+import { test, expect } from '../fixtures/withCoverage';
 import { LoginPage } from '@/../test/e2e/pages/LoginPage';
 import { PlayerManagementPage } from '@/../test/e2e/pages/PlayerManagementPage';
 import { LineupManagementPage } from '@/../test/e2e/pages/LineupManagementPage';
@@ -13,18 +12,7 @@ test.describe('Complete E2E Workflow', () => {
   let lineupPage: LineupManagementPage;
   let gamePage: GameModePage;
 
-  test.beforeEach(async ({ page, browserName }) => {
-    if (browserName === 'chromium' && process.env.VITE_E2E_COVERAGE) {
-      await (
-        page as unknown as {
-          coverage: {
-            startJSCoverage: (opts?: {
-              resetOnNavigation?: boolean;
-            }) => Promise<void>;
-          };
-        }
-      ).coverage.startJSCoverage({ resetOnNavigation: false });
-    }
+  test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     playerPage = new PlayerManagementPage(page);
     lineupPage = new LineupManagementPage(page);
@@ -68,11 +56,7 @@ test.describe('Complete E2E Workflow', () => {
     expect(await playerPage.playerExists(testPlayer.name)).toBe(true);
   });
 
-  test.afterEach(async ({ page, browserName }, testInfo) => {
-    if (browserName === 'chromium' && process.env.VITE_E2E_COVERAGE) {
-      await saveCoverageDump(page, testInfo);
-    }
-  });
+  // No manual coverage start/stop; reporter handles V8 capture and reporting
 
   test('edit player song selection workflow', async ({ page }) => {
     // 1. Authentication and setup

@@ -190,14 +190,24 @@ src/
 test/
 ├── e2e/                  # Playwright E2E tests (fixtures, pages, tests)
 │   ├── fixtures/
+│   │   ├── mockTracks.ts
+│   │   └── testData.ts
 │   ├── pages/
+│   │   ├── BasePage.ts
+│   │   ├── GameModePage.ts
+│   │   ├── LineupManagementPage.ts
+│   │   ├── LoginPage.ts
+│   │   └── PlayerManagementPage.ts
 │   └── tests/
+│       └── completeWorkflow.spec.ts
 └── reports/              # Test reports (gitignored except where noted)
     ├── index.html        # Landing page (tracked)
     ├── coverage/         # V8 coverage artifacts (gitignored)
     │   ├── dumps/        # Raw V8 dumps per test (gitignored)
     │   └── e2e/
     │       └── v8-report/  # Monocart V8 coverage UI (gitignored)
+    ├── monocart/         # Playwright report output (gitignored)
+    ├── playwright/       # Playwright HTML report (gitignored)
     └── utils/            # Reporting helpers (tracked)
         ├── collect-coverage.js  # Merges dumps and generates V8 report
         └── coverage.ts          # Playwright helper to save V8 dumps

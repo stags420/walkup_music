@@ -94,6 +94,7 @@ export default [
           ignore: [/vite-env\.d\.ts$/], // Allow vite-env.d.ts
         },
       ],
+      // General rules continue...
       'unicorn/no-nested-ternary': 'off', // Allow nested ternary (conflicts with Prettier)
       'no-redeclare': 'off', // TypeScript handles this better
     },
@@ -132,6 +133,8 @@ export default [
       'node_modules/**',
       '.eslintrc.cjs',
       'test/reports/**',
+      'steering/**',
+      'scripts/**',
     ],
   },
 ];

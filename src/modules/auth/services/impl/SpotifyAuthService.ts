@@ -16,7 +16,7 @@ import {
   deleteCookie,
 } from '@/modules/auth/utils/cookies';
 import type { AppConfig } from '@/modules/app';
-import { ApplicationContainerProvider } from '@/modules/app';
+import { supplyHttpService } from '@/modules/core/suppliers/HttpServiceSupplier';
 
 /**
  * Spotify authentication service implementing PKCE OAuth 2.0 flow
@@ -201,7 +201,7 @@ export class SpotifyAuthService implements AuthService {
       client_id: this.config.spotifyClientId,
     });
 
-    const { httpService } = ApplicationContainerProvider.get();
+    const httpService = supplyHttpService();
     const { data, status } = await httpService.post<Record<string, unknown>>(
       SpotifyAuthService.SPOTIFY_TOKEN_URL,
       Object.fromEntries(params.entries())
@@ -245,7 +245,7 @@ export class SpotifyAuthService implements AuthService {
       code_verifier: codeVerifier,
     });
 
-    const { httpService } = ApplicationContainerProvider.get();
+    const httpService = supplyHttpService();
     const { data: tokenData } = await httpService.post<Record<string, unknown>>(
       SpotifyAuthService.SPOTIFY_TOKEN_URL,
       Object.fromEntries(params.entries())
@@ -345,7 +345,7 @@ export class SpotifyAuthService implements AuthService {
       throw new Error('No access token available for premium verification');
     }
 
-    const { httpService } = ApplicationContainerProvider.get();
+    const httpService = supplyHttpService();
     const { data, status } = await httpService.get<Record<string, unknown>>(
       SpotifyAuthService.SPOTIFY_PROFILE_URL,
       { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -387,7 +387,7 @@ export class SpotifyAuthService implements AuthService {
         return undefined;
       }
 
-      const { httpService } = ApplicationContainerProvider.get();
+      const httpService = supplyHttpService();
       const { data, status } = await httpService.get<Record<string, unknown>>(
         SpotifyAuthService.SPOTIFY_PROFILE_URL,
         { headers: { Authorization: `Bearer ${accessToken}` } }

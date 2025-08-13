@@ -2,16 +2,16 @@
 inclusion: always
 ---
 
-# Dependency Injection Guidelines
+# Inversion of Control via Constructor Injection and Suppliers
 
-Apply explicit dependency injection patterns for maintainable, testable code. Prefer constructor injection and manual wiring over framework magic.
+Keep dependencies explicit and testable. Prefer simple factories (“suppliers”) over heavy containers. We do not use a global application container in this app.
 
 ## Core Rules
 
-### (Java) Constructor Injection Only
+### Constructor Injection (preferred)
 
-- Inject ALL dependencies via constructor parameters
-- Never use static access, global state, or service locators
+- Inject dependencies via constructor parameters
+- Avoid static access, global state, or service locators
 - Make dependencies explicit and visible in the API
 
 ### Depend on Interfaces
@@ -20,10 +20,10 @@ Apply explicit dependency injection patterns for maintainable, testable code. Pr
 - Consumers depend only on abstractions, never concrete implementations
 - Enables easy testing and implementation swapping
 
-### Manual Wiring
+### Manual Wiring via Suppliers
 
 - Avoid annotation-based injection (@Inject, @Autowired, @Injectable)
-- Keep dependency wiring explicit in composition root/factory classes
+- Wire dependencies explicitly in small factory modules called suppliers
 - Prefer compile-time safety over runtime discovery
 
 ### Single Responsibility
@@ -39,12 +39,11 @@ These extend the core rules with preferences specific to this codebase.
 ### Principles
 
 - React is only for UI. Business/services stay out of React entirely.
-- Use Zustand for UI state only (view state and UI-coordinated data), not for service singletons. Persist via `persist` middleware; do not call `localStorage` or `document.cookie` directly from application code. Provide custom `StateStorage` adapters instead.
-- Place state in the owning feature module under a `state/` folder (e.g., `src/modules/app/state/settingsStore.ts`). Do not centralize state under a cross-cutting "storage" module.
-- Never expose stores directly. Expose only custom hooks from the module’s `hooks/` folder (e.g., `useSettingsTheme`, `useSettingsActions`).
-- Create services as app-singletons, wired at bootstrap in plain TypeScript (no React Context).
-- Access services via small hooks or by passing them as props with defaults to those hooks.
-- Hooks are invoked at the top of components; props-with-default avoids prop drilling while keeping testability.
+- Use Zustand/TanStack Query for view and shared UI state (not for service singletons). Persist via `persist` middleware with adapters.
+- Place state in the owning feature module under `state/`. Expose only custom selector hooks from the module’s `hooks/` folder (e.g., `useSettingsTheme`, `useSettingsActions`).
+- Create services as app singletons via suppliers (factories) based on `AppConfig`. Avoid React Context for DI.
+- Prefer constructor injection in all non-React code. For React components/hooks, pass dependencies as props (with sensible defaults that call `supply*`) or call `supply*` at the top. Do not instantiate services inside components based on changing deps.
+- Access services via non-hook supplier utilities prefixed `supply*`. Reserve `use*` for state/query hooks.
 
 ### Minimal Patterns (TypeScript)
 
@@ -64,48 +63,40 @@ export class HttpPlayerService implements PlayerService {
 }
 ```
 
-2) Wire a typed container at app bootstrap (no Context):
+2) Create suppliers (factories) that decide implementations from `AppConfig`:
 
 ```ts
-// services/container.ts
-export interface AppContainer {
-  playerService: PlayerService;
-  // add other services here
-}
+// suppliers/PlayerServiceSupplier.ts
+import { AppConfig } from '@/modules/app/models/AppConfig';
 
-let container: AppContainer | null = null;
+let singleton: PlayerService | null = null;
 
-export function bootstrapServices(config: AppConfig): AppContainer {
+export function supplyPlayerService(config: AppConfig): PlayerService {
+  if (singleton) return singleton;
   const api = new HttpApiClient(config.apiBaseUrl, config.authToken);
-  container = { playerService: new HttpPlayerService(api) };
-  return container;
-}
-
-export function getContainer(): AppContainer {
-  if (!container) throw new Error('Services not bootstrapped');
-  return container;
+  singleton = new HttpPlayerService(api);
+  return singleton;
 }
 ```
 
-3) Provide tiny hooks that read from the container:
+3) Provide non-hook supplier utilities. Reserve `use*` strictly for state/query hooks; do not create `use*` hooks that return services.
 
 ```ts
-// hooks/useServices.ts
-import { getContainer } from '@/services/container';
+// suppliers
+import { AppConfigProvider } from '@/modules/app';
+import { supplyPlayerService } from '@/modules/game/suppliers/PlayerServiceSupplier';
 
-export function usePlayerService() {
-  // singletons; no need to memoize
-  return getContainer().playerService;
-}
+export const supplyPlayerServiceSingleton = () =>
+  supplyPlayerService(AppConfigProvider.get());
 ```
 
-4) Consume via props-with-default or direct hook at the top:
+4) Consume via props-with-default or call the `supply*` utility at the top:
 
 ```tsx
 // components/PlayerList.tsx
 type Props = { playerService?: PlayerService };
 
-export function PlayerList({ playerService = usePlayerService() }: Props) {
+export function PlayerList({ playerService = supplyPlayerServiceSingleton() }: Props) {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => { playerService.list().then(setPlayers); }, [playerService]);
@@ -154,19 +145,20 @@ const fake: PlayerService = { create: jest.fn(), list: jest.fn().mockResolvedVal
 render(<PlayerList playerService={fake} />);
 ```
 
-- For integration tests, temporarily replace the container during setup.
+- For integration tests, temporarily stub the `supply*` function via module mocking.
 
 ```ts
-// test helpers
-export function setTestContainer(c: AppContainer) { (container as any) = c; }
+jest.mock('@/modules/game/suppliers/PlayerServiceSupplier', () => ({
+  supplyPlayerService: () => fakePlayerService,
+}));
 ```
 
 ### Anti-Patterns (React/TS)
 
 - Instantiating services in components or hooks with changing deps.
 - Storing service instances in Zustand or React state.
-- React Context for DI (we avoid it in favor of a typed container + hooks/props).
-- String-keyed or implicit service locators. Use a typed `AppContainer` wired in one place.
+- React Context for DI.
+- Global containers/service locators.
 
 ## Implementation Patterns
 
@@ -243,24 +235,15 @@ export class UserManager {
 }
 ```
 
-### Composition Root
+### Example: Wiring with constructor injection + supplier
 
 ```ts
-// Centralized dependency wiring (non-React)
-export function createApplication(config: AppConfig) {
-  const storage = new LocalStorageService();
+// Supplier decides impls and returns singletons
+export function supplyUserManager(config: AppConfig) {
   const api = new HttpApiService(config.apiBaseUrl, config.authToken);
-  const userManager = new UserManager(storage, api);
-  return { userManager };
+  const storage = new LocalStorageService();
+  return new UserManager(storage, api);
 }
-```
-
-### Application Bootstrap
-
-```ts
-// Application bootstrap (called before React renders)
-const config: AppConfig = { apiBaseUrl: 'https://api.example.com' };
-bootstrapServices(config);
 ```
 
 ## Testing Benefits
@@ -293,7 +276,7 @@ describe('UserManager', () => {
 
 ## Anti-Patterns to Avoid
 
-- **Implicit/untype-safe Locators**: No string-keyed global registries. Use a typed `AppContainer` wired at bootstrap instead.
+- **Implicit/untype-safe Locators**: No string-keyed global registries.
 - **Static Dependencies**: Avoid static method calls that hide dependencies
 - **Constructor Overloading**: Don't provide multiple constructors for different dependency sets
 - **Optional Dependencies**: Make all dependencies required and explicit

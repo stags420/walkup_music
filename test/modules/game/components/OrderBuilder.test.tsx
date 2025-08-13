@@ -3,8 +3,9 @@ import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { Player } from '@/modules/game/models/Player';
 
 // Mock PlayerCard component
-jest.mock('@/modules/core/components', () => ({
-  PlayerCard: jest.fn((props: { player: { id: string; name: string } }) => (
+jest.mock('@/modules/game/components/PlayerCard', () => ({
+  __esModule: true,
+  default: jest.fn((props: { player: { id: string; name: string } }) => (
     <div data-testid={`player-card-${props.player.id}`}>
       <span>{props.player.name}</span>
     </div>

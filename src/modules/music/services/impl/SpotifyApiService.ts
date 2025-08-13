@@ -1,6 +1,6 @@
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { AuthService } from '@/modules/auth/services/AuthService';
-import { ApplicationContainerProvider } from '@/modules/app';
+import { supplyHttpService } from '@/modules/core/suppliers/HttpServiceSupplier';
 import type { HttpService } from '@/modules/core/services/HttpService';
 import { retry } from '@/modules/core/utils/retry';
 
@@ -53,8 +53,7 @@ export class SpotifyApiService {
 
   constructor(authService: AuthService, httpService?: HttpService) {
     this.authService = authService;
-    this.httpService =
-      httpService ?? ApplicationContainerProvider.get().httpService;
+    this.httpService = httpService ?? supplyHttpService();
   }
 
   /**

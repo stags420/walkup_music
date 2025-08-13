@@ -3,9 +3,9 @@ import { Modal, Form, Alert, Spinner } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
-import { useMusicService } from '@/modules/app/hooks/useServices';
+import { supplyMusicService } from '@/modules/music/suppliers/MusicServiceSupplier';
 import { useSearchTracks } from '@/modules/music/hooks/useSearchTracks';
-import { TrackCard } from '@/modules/core';
+import TrackCard from './TrackCard';
 
 interface SongSelectorProps {
   onSelectTrack: (track: SpotifyTrack) => void;
@@ -15,7 +15,7 @@ interface SongSelectorProps {
 
 export function SongSelector(props: SongSelectorProps) {
   const { onSelectTrack, onCancel, initialSearchQuery = '' } = props;
-  const musicService = useMusicService();
+  const musicService = supplyMusicService();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const {
     data: tracks = [],
@@ -60,9 +60,9 @@ export function SongSelector(props: SongSelectorProps) {
 
   const handlePlayPreview = async (
     track: SpotifyTrack,
-    event: React.MouseEvent
+    event?: React.MouseEvent
   ) => {
-    event.stopPropagation(); // Prevent track selection when clicking play button
+    event?.stopPropagation?.();
 
     // In test environment, just toggle the playing state
     if (
@@ -85,8 +85,8 @@ export function SongSelector(props: SongSelectorProps) {
     } else {
       // Stop any currently playing track and start new one
       try {
-        await musicService.pause(); // Stop any current playback
-        await musicService.previewTrack(track.uri, 0, 30_000); // 30 second preview
+        await musicService.pause();
+        await musicService.previewTrack(track.uri, 0, 30_000);
         setPlayingTrackId(track.id);
       } catch (error) {
         console.debug('Playback preview failed:', error);

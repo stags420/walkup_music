@@ -51,9 +51,9 @@ Example:
 
 ## Theming
 
-- Light/Dark is optional. If used, leverage Bootstrap theming (`data-bs-theme="dark"`) and CSS variables.
-- Keep contrast AA or better; test with devtools. Avoid low-contrast text on brand colors.
-- Theme switch should persist via Zustand `persist` (storage-backed store); components should access theme through the store/service selector pattern, not `localStorage`.
+- Light/Dark uses Bootstrap theming (`data-bs-theme`) via a single effect in the app shell. Do not set theme in individual components.
+- Keep contrast AA or better; test with devtools.
+- Theme selection persists via Zustand `persist`; access via hooks like `useSettingsTheme()`.
 
 ## Accessibility (A11y)
 
@@ -82,13 +82,13 @@ Example:
 
 ## Patterns to Prefer
 
-- **Lists**: Use `ListGroup` and `Table` for structured data; provide sorting/pagination only when necessary.
+- **Lists**: Use `ListGroup` and `Table` for structured data; add sorting/pagination only when needed (YAGNI).
 - **Forms**: Use `Form` controls with validation feedback. Disable submit during async; show progress via `Spinner` or `Button` `isLoading` pattern.
 - **Feedback**: Use `Toast`/`Alert` for transient messages; keep them dismissible.
 
 ## Quick Checklist
 
-- Uses React-Bootstrap components; minimal custom CSS
+- Uses React-Bootstrap components; minimal custom CSS; prefer reusing existing components or extracting subcomponents with meaningful names
 - Keyboard accessible; focus ring visible and not suppressed
 - Text contrast AA+; no color-only signals
 - Responsive grid; no hardcoded widths/heights

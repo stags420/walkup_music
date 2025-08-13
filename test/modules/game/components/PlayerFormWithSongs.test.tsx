@@ -1,7 +1,11 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
-import { MusicProvider } from '@/modules/music';
+// MusicProvider removed; wrap not needed anymore
+const MusicProvider = (props: { children: React.ReactNode }) => (
+  <>{props.children}</>
+);
 import type { Player } from '@/modules/game/models/Player';
 import { resetPlayersStore } from '@/modules/game/state/playersStore';
 

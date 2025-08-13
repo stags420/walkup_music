@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAuthActions } from '@/modules/auth/hooks/useAuthActions';
 import { useSettingsTheme } from '@/modules/app/hooks/useSettingsTheme';
 import { useSettingsActions } from '@/modules/app/hooks/useSettingsActions';
-import type { ThemeMode } from '@/modules/app/state/settingsStore';
 import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
 export function NavBar() {
@@ -13,15 +12,7 @@ export function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    const systemDark =
-      globalThis.matchMedia &&
-      globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
-    const effective: ThemeMode =
-      theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
-    root.dataset.bsTheme = effective === 'dark' ? 'dark' : 'light';
-  }, [theme]);
+  // Theme application handled in App component
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {

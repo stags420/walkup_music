@@ -1,8 +1,8 @@
 import { useAuthStore } from '@/modules/auth/state/authStore';
-import { useAuthService } from '@/modules/app';
+import { supplyAuthService } from '@/modules/auth/suppliers/AuthServiceSupplier';
 
 export function useAuthActions() {
-  const authService = useAuthService();
+  const authService = supplyAuthService();
   const storeActions = useAuthStore((s) => s.actions);
   return {
     ...storeActions,

@@ -18,8 +18,8 @@ const mockMusicService: MusicService = {
 };
 
 // Mock the hook that provides the music service
-jest.mock('@/modules/app/hooks/useServices', () => ({
-  useMusicService: () => mockMusicService,
+jest.mock('@/modules/music/suppliers/MusicServiceSupplier', () => ({
+  supplyMusicService: () => mockMusicService,
 }));
 
 const mockTrack: SpotifyTrack = {
@@ -283,7 +283,7 @@ describe('SongSelector', () => {
     });
 
     // Verify preview button exists and can be clicked
-    const previewButtons = screen.getAllByLabelText(/play preview/i);
+    const previewButtons = screen.getAllByRole('button', { name: /▶/ });
     expect(previewButtons).toHaveLength(2); // Should have 2 tracks with preview buttons
     const firstPreviewButton = previewButtons[0];
     fireEvent.click(firstPreviewButton);

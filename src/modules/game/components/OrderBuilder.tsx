@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import { PlayerCard } from '@/modules/core/components';
+import PlayerCard from '@/modules/game/components/PlayerCard';
 import { Button } from '@/modules/core/components/Button';
 // Music service is obtained within child components as needed
 // Using Bootstrap classes instead of custom CSS

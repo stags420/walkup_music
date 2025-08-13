@@ -5,7 +5,7 @@ import { AppConfigProvider } from '@/modules/app';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@/index.css';
 import '@/theme.css';
-import { ApplicationContainerProvider } from '@/modules/app';
+// Application container removed; using suppliers for services
 
 // Environment variables
 const VITE_MOCK_AUTH = import.meta.env.VITE_MOCK_AUTH === 'true';
@@ -56,15 +56,13 @@ const initializeAppConfig = () => {
 
   AppConfigProvider.initialize(config);
 
-  // Bootstrap application container after config
-  ApplicationContainerProvider.initialize();
+  // No app container to initialize; suppliers will create services on demand
 };
 
 // Initialize configuration before rendering the app
 initializeAppConfig();
 
-// Set Bootstrap dark theme via data attribute
-document.documentElement.dataset.bsTheme = 'dark';
+// Initial theme is set by App effect based on settings
 
 ReactDOM.createRoot(document.querySelector('#root')!).render(
   <StrictMode>

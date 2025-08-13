@@ -3,7 +3,7 @@ import type { Player } from '@/modules/game/models/Player';
 
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import { useBattingOrder, useGameActive } from '@/modules/game/hooks/useLineup';
-import { PlayerCard } from '@/modules/core/components';
+import PlayerCard from '@/modules/game/components/PlayerCard';
 // Using Bootstrap classes instead of custom CSS
 
 export function CurrentBatterDisplay() {

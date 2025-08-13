@@ -7,7 +7,7 @@ import {
 } from 'react';
 import type { MusicService } from '@/modules/music/services/MusicService';
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
-import { PlayerCard } from '@/modules/core/components';
+import PlayerCard from '@/modules/game/components/PlayerCard';
 import { Button } from '@/modules/core/components/Button';
 import './PlayerList.css';
 

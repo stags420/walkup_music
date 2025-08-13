@@ -1,7 +1,6 @@
 ---
 inclusion: always
 ---
-
 # Out-of-Date Information Guidelines
 
 ## Knowledge Limitations

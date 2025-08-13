@@ -1,3 +1,2 @@
-// Deprecated: This file is intentionally left minimal to preserve import paths.
-// Provide a no-op placeholder export to satisfy linter
-export const __authProviderNoop = true;
+// Deprecated: Provider removed. Keep file to avoid breaking imports; will be deleted in next major.
+export const __authProviderRemoved = true;

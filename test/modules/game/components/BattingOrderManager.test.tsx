@@ -66,10 +66,10 @@ jest.mock('@/modules/music', () => ({
   ),
 }));
 
-const useMusicService = jest.fn<MusicService, []>();
+const supplyMusicService = jest.fn<MusicService, []>();
 
-jest.mock('@/modules/app/hooks/useServices', () => ({
-  useMusicService: () => useMusicService(),
+jest.mock('@/modules/music/suppliers/MusicServiceSupplier', () => ({
+  supplyMusicService: () => supplyMusicService(),
 }));
 
 describe('BattingOrderManager', () => {
@@ -102,7 +102,7 @@ describe('BattingOrderManager', () => {
       isPlaybackConnected: jest.fn(),
       isPlaybackReady: jest.fn(),
     } as unknown as jest.Mocked<MusicService>;
-    useMusicService.mockReturnValue(mockMusicService);
+    supplyMusicService.mockReturnValue(mockMusicService);
     resetPlayersStore();
     resetLineupStore();
   });

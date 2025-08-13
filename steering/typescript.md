@@ -14,9 +14,9 @@ Use module-based imports with path aliases:
 
 ```typescript
 // Good: Import from module index files
-import { AuthProvider, useAuth, LoginPage } from '@/modules/auth';
+import { LoginPage } from '@/modules/auth';
 import { Player, BattingOrder } from '@/modules/game';
-import { AppConfig } from '@/modules/config';
+import { AppConfig } from '@/modules/app';
 
 // Bad: Deep imports bypass module boundaries
 import { SpotifyAuthService } from './modules/auth/services/SpotifyAuthService';
@@ -137,4 +137,4 @@ const player: Player = {
 1. **Module imports**: Use `@/modules/name` pattern
 2. **Trust TypeScript**: No runtime checks for typed parameters
 3. **Validate boundaries**: External data only (APIs, storage, cookies, URL params, env)
-4. **Service contracts**: Define interfaces for services and keep implementations outside React; see `steering/dependency-injection.md`
+4. **Service contracts**: Define interfaces for services and keep implementations outside React; construct via suppliers; see `steering/dependency-injection.md`

@@ -16,7 +16,7 @@ inclusion: always
 - **WebApps**: TypeScript React for all frontend development
 - **Mobile Apps**: React Native
 - Prefer React with functional components and hooks
-- Avoid using React Context. Prefer Zustand for UI state only. Services should live outside React.
+- Avoid using React Context. Prefer Zustand/TanStack Query for UI state only. Services should live outside React and be supplied via suppliers (factories), not a global container. Reserve `use*` for state/query hooks; access services via `supply*` utilities or component props.
 - Use strict TypeScript configuration with no implicit any
 
 ### Frameworks/Libraries
@@ -30,10 +30,10 @@ inclusion: always
 - **State**: Zustand for UI state (global/shared UI)
 - **Testing**: Playwright for e2e, Testing Library + Jest for unit
 
-### Dependency Injection (Frontend)
+### Dependency Wiring (Frontend)
 
-- Services are app-singletons created outside React (no Context). Wire them at bootstrap in a typed container. See `steering/dependency-injection.md`.
-- Access services via tiny `useXService()` hooks or via props with defaults to those hooks to avoid prop drilling.
+- Services are app-singletons created outside React by module-level suppliers based on `AppConfig`. No app-wide container. See `steering/dependency-injection.md`.
+- Access services via non-hook supplier utilities prefixed `supply*` or via props-with-defaults.
 - Do not store service instances in Zustand or React state.
 
 ### Imports/Aliases
@@ -42,12 +42,13 @@ inclusion: always
 
 ## Change Guidelines
 - YAGNI: "You aren't gonna need it". Don't add code that is not yet used in an active codepath. Don't write "extra" code. Someone needs to read the code you create.
-- Don't create documentation unless you are asked to. Anything worth documenting should either be captured in a code comment or automated in a script.
+- Don't over-document. Prefer code comments or scripts. The README should primarily point to steering docs.
 - Before completing any task, ensure any precommit scripts succeed. Fix all issues, even if unrelated. When fixing, do not suppress or ignore, actually fix. 
+- Refactors: finish the refactor. Do not keep legacy shims or compatibility layers. Remove old artifacts/files and update all references. Keep the tree free of dead code. Tests and lints must be green after the change.
 
 ## Code Architecture Principles
 
-See `steering/dependency-injection.md`.
+See `steering/dependency-injection.md` and `steering/react-concepts.md`.
 
 ### Single Responsibility Principle
 

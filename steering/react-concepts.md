@@ -28,7 +28,12 @@ inclusion: always
 
 ---
 
-### **State Management with Zustand**
+### **Keep it simple: embrace React re-renders**
+
+- Prefer letting state changes (via `useState`, Zustand selectors, or TanStack Query) drive UI updates.
+- Avoid custom event buses or manual DOM mutation to sync UI. Model the data well and subscribe with fine-grained selectors.
+
+### **State Management with Zustand/TanStack Query**
 
 Use Zustand for UI state only — both global UI state and shared UI state.
 
@@ -59,6 +64,8 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 ```
+
+Keep business logic out of stores. Services are separate and invoked by components or thin controllers.
 
 **Business Logic Separate:**
 ```ts
@@ -111,6 +118,7 @@ Application code should not know if data is persisted locally (Zustand + persist
 
 - Hooks should internally apply selectors and surface meaningful names: e.g., `useSettingsTheme()`, `useSettingsActions()`.
 - Group Zustand actions under a stable `actions` object in the store and select that object to avoid re-renders when only state changes. See “Working with Zustand” by TkDodo: [Working with Zustand | TkDodo’s blog](https://tkdodo.eu/blog/working-with-zustand).
+- Selectors should not create new objects/arrays each render. Prefer fine-grained selectors over composite objects. When you must return objects, memoize carefully.
 
 Example pattern for a view store + hooks (module-local):
 
@@ -173,41 +181,33 @@ This keeps components decoupled from how/where state lives, while still allowing
 
 ---
 
-### **Dependency Injection with Hooks (services outside React)**
+### **Supplying Services (no React providers)**
 
-Services are app-singletons created outside React at bootstrap. Access them via tiny hooks that read from a typed container (see `steering/dependency-injection.md`).
+We do not use a global application container or custom React providers for services. Instead, each module exposes supplier utilities (`supply*`) that construct singletons based on `AppConfig`. Reserve `use*` strictly for state/query hooks; avoid `use*`-named service hooks.
 
 ```ts
-// hooks/useServices.ts
-import { getContainer } from '@/services/container';
+// suppliers
+import { AppConfigProvider } from '@/modules/app';
+import { supplyPlayerService } from '@/modules/game/suppliers/PlayerServiceSupplier';
 
-export function useAuthService() { return getContainer().authService; }
-export function usePlayerService() { return getContainer().playerService; }
+export const supplyPlayerServiceSingleton = () =>
+  supplyPlayerService(AppConfigProvider.get());
 ```
 
-**Component Usage:**
+Component usage (prefer props-with-defaults so tests can pass fakes):
+
 ```tsx
 type Props = { playerService?: PlayerService };
-function PlayerList({ playerService = usePlayerService() }: Props) {
-  const { players, setPlayers } = usePlayerFormStore();
-  const { user } = useAuthStore();
-
+function PlayerList({ playerService = supplyPlayerServiceSingleton() }: Props) {
+  const players = usePlayerState();
+  const actions = usePlayerActions();
   const handleAddPlayer = async (player: Player) => {
     await playerService.save(player);
-    setPlayers([...players, player]);
+    actions.setPlayers([...players, player]);
   };
-
-  return (
-    <div>
-      {/* JSX here */}
-    </div>
-  );
+  return <div />;
 }
 ```
-
-> 🧠 Dependencies are clear and visible at the top of each component.
->
-> 🧪 Easy to test by mocking the hooks directly.
 
 ---
 
@@ -222,7 +222,7 @@ Context adds complexity without benefits when you have a typed container and hoo
 
 ---
 
-### **Testing with Mock Hooks**
+### **Testing with Mock Suppliers and Hooks**
 
 Mock the dependency hooks directly in tests:
 
@@ -232,8 +232,8 @@ import { render, screen } from '@testing-library/react';
 import { PlayerList } from './PlayerList';
 
 // Mock the hooks
-jest.mock('../hooks/useServices', () => ({
-  usePlayerService: () => ({
+jest.mock('@/modules/game/suppliers/PlayerServiceSupplier', () => ({
+  supplyPlayerService: () => ({
     save: jest.fn(),
     loadAll: jest.fn().mockResolvedValue([]),
   }),
@@ -362,6 +362,14 @@ function PlayerForm() {
 
 ---
 
+### **Component extraction and reuse**
+
+- Extract subcomponents with intention-revealing names when a chunk of JSX has its own concern.
+- Prefer reusing existing components; add props to extend behavior instead of forking.
+- Keep props minimal and specific; avoid passing big objects when a few fields suffice.
+
+---
+
 ## 🔁 React Re-renders: When and Why
 
 > React re-renders a component when a **tracked reference changes** — meaning the **pointer is new**, not just that internal fields were mutated.
@@ -470,23 +478,23 @@ useEffect(() => {
 * Avoid React Context entirely
 
 **Dependencies:**
-* Services live outside React; access via hooks or props-with-default
-* Mock hooks or pass fakes via props in tests
+* Services live outside React; access via `supply*` utilities or props-with-default
+* Mock suppliers or pass fakes via props in tests
 * Keep dependencies explicit and visible
 
 **Performance:**
-* Zustand handles subscriptions efficiently
-* Use `React.memo` for expensive components
-* Don't over-optimize with `useMemo`/`useCallback`
+* Prefer selectors that surface minimal state
+* Use `React.memo` for expensive components when props are stable
+* Avoid creating new objects/arrays in selectors; use fine-grained hooks
 
 ---
 
 ### 🧼 Final Rule of Thumb
 
-> **Use Zustand for state storage, not business logic.**
+> **Use Zustand/TanStack Query for state storage, not business logic.**
 > **Name store methods for what they do: set/clear/update, not business operations.**
-> **Keep business logic in services, accessed via custom hooks.**
+> **Keep business logic in services, accessed via `supply*` utilities.**
 > **Pull dependencies at the top of components.**
-> **Mock hooks directly in tests.**
+> **Mock suppliers/hooks directly in tests.**
 
 ---

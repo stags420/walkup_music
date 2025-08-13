@@ -1,7 +1,6 @@
 ---
 inclusion: always
 ---
-
 # Task Creation Guidelines
 
 Tasks should be in user stories - "as a _ i want to _ so that _" with "acceptance criteria". The acceptance criteria are what need to be completed to call the task done. They can be checked off independently. There can also be a notes section for any relative notes/comments. 
@@ -13,6 +12,8 @@ The tasks should flow from one to the other and logically build upon one another
 Tasks should be scoped to what would take a human about 2 days to do. This prevents large changes that are hard to review.
 
 “Definition of Done” checklist:
-- acceptance criteria are met
-- relevant documentation is updated
-- precommit script succeeds
+- tests green
+- lint clean
+- docs updated
+- e2e happy path passes
+- no TODOs left

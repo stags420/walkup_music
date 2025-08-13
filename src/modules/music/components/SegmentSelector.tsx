@@ -5,9 +5,9 @@ import './SegmentSelector.css';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { SongSegment } from '@/modules/music/models/SongSegment';
-import { TrackPreview, PlayButton } from '@/modules/core';
+import { PlayButton } from '@/modules/core';
 import type { MusicService } from '@/modules/music/services/MusicService';
-import { useMusicService } from '@/modules/app/hooks/useServices';
+import { supplyMusicService } from '@/modules/music/suppliers/MusicServiceSupplier';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
@@ -27,7 +27,7 @@ export function SegmentSelector(props: SegmentSelectorProps) {
     onCancel,
     maxDuration = 10,
   } = props;
-  const defaultMusicService = useMusicService();
+  const defaultMusicService = supplyMusicService();
   const resolvedMusicService = musicService ?? defaultMusicService;
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
@@ -186,19 +186,26 @@ export function SegmentSelector(props: SegmentSelectorProps) {
       </Modal.Header>
 
       <Modal.Body>
-        <TrackPreview
-          track={{
-            id: track.id,
-            name: track.name,
-            artists: track.artists.map((name) => ({ name })),
-            album: {
-              name: track.album,
-              images: [{ url: track.albumArt }],
-            },
-            duration_ms: track.durationMs,
-            preview_url: track.previewUrl,
-          }}
-        />
+        {/* Basic track details preview (no cross-module imports) */}
+        <div className="mb-3 d-flex align-items-center gap-3">
+          {track.albumArt && (
+            <img
+              src={track.albumArt}
+              alt={track.album}
+              className="rounded segsel-album-art"
+            />
+          )}
+          <div className="flex-grow-1 segsel-track-text">
+            <div className="fw-bold text-truncate song-title">{track.name}</div>
+            <div className="text-truncate artist-name">
+              {track.artists.join(', ')}
+            </div>
+            <div className="text-truncate album-name">{track.album}</div>
+            <small className="text-muted">
+              {formatTime(trackDurationSeconds)}
+            </small>
+          </div>
+        </div>
 
         {playbackError && (
           <Alert variant="danger" className="mt-3">

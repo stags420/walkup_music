@@ -9,7 +9,7 @@ if (globalThis.TextEncoder === undefined) {
   });
 }
 
-import { ApplicationContainerProvider, AppConfigProvider } from '@/modules/app';
+import { AppConfigProvider } from '@/modules/app';
 
 // Mock crypto.randomUUID for Node.js test environment
 Object.defineProperty(globalThis, 'crypto', {
@@ -53,4 +53,4 @@ AppConfigProvider.initialize({
   basePath: '',
   mockAuth: true,
 });
-ApplicationContainerProvider.initialize();
+// No app container; services are supplied on demand

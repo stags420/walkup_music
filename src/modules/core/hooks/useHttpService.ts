@@ -1,10 +1,7 @@
 import type { HttpService } from '@/modules/core/services/HttpService';
-import { ApplicationContainerProvider } from '@/modules/app';
+import { supplyHttpService } from '@/modules/core/suppliers/HttpServiceSupplier';
 
-/**
- * Returns the singleton HttpService from the application container.
- * This is a tiny helper to avoid importing the container everywhere.
- */
+// Deprecated: prefer calling supplyHttpService() directly or pass via props
 export function useHttpService(): HttpService {
-  return ApplicationContainerProvider.get().httpService;
+  return supplyHttpService();
 }

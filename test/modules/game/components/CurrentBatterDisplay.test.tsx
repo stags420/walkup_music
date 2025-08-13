@@ -24,8 +24,8 @@ const mockMusicService: jest.Mocked<MusicService> = {
   isPlaybackConnected: jest.fn(),
 } as unknown as jest.Mocked<MusicService>;
 
-jest.mock('@/modules/app/hooks/useServices', () => ({
-  useMusicService: () => mockMusicService,
+jest.mock('@/modules/music/suppliers/MusicServiceSupplier', () => ({
+  supplyMusicService: () => mockMusicService,
 }));
 
 describe('CurrentBatterDisplay', () => {

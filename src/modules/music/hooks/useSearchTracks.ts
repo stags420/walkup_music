@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMusicService } from '@/modules/app/hooks/useServices';
+import { supplyMusicService } from '@/modules/music/suppliers/MusicServiceSupplier';
 
 export function useSearchTracks(query: string) {
-  const music = useMusicService();
+  const music = supplyMusicService();
   return useQuery({
     queryKey: ['tracks', 'search', query],
     queryFn: async () => {

@@ -22,8 +22,8 @@ const mockMusicService = {
 } as unknown as jest.Mocked<MusicService>;
 
 // Mock hook to return our mocked music service
-jest.mock('@/modules/app/hooks/useServices', () => ({
-  useMusicService: () => mockMusicService,
+jest.mock('@/modules/music/suppliers/MusicServiceSupplier', () => ({
+  supplyMusicService: () => mockMusicService,
 }));
 
 // Mock players data

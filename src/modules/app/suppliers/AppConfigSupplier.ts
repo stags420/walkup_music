@@ -1,6 +1,6 @@
 import type { AppConfig } from '@/modules/app/models/AppConfig';
 
-export class AppConfigProvider {
+export class AppConfigSupplier {
   private static instance: AppConfig | undefined = undefined;
   private static isInitialized = false;
 

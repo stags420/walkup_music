@@ -23,3 +23,14 @@
 .timeline-segment.dragging {
   background: rgba(29, 185, 84, 1);
 }
+
+/* Inline-style replacements in SegmentSelector header */
+.segsel-album-art {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.segsel-track-text {
+  min-width: 0;
+}

@@ -12,5 +12,3 @@ export {
 export type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
 export { SongSelector } from '@/modules/music/components/SongSelector';
 export { SegmentSelector } from '@/modules/music/components/SegmentSelector';
-// Test-only provider (no-op) kept for compatibility in tests
-export { MusicProvider } from '@/modules/music/providers/MusicProvider';

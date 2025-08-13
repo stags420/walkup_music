@@ -28,7 +28,8 @@
     "deploy": "npm run predeploy && gh-pages -d dist",
     "deploy:raw": "echo 'AGENTS SHOULD NEVER USE THIS' && npm run build && gh-pages -d dist",
     "test:watch": "jest --watch",
-    "clean": "./scripts/clean-builds.sh"
+    "clean": "./scripts/clean-builds.sh",
+    "sync:steering": "node ./scripts/sync-steering.js"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

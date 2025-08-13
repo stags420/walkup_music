@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import { useMusicService } from '@/modules/app/hooks/useServices';
+import { supplyMusicService } from '@/modules/music/suppliers/MusicServiceSupplier';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
-import { Button } from '@/modules/core/components/Button';
-import { PlayButton } from '@/modules/core/components/PlayButton';
+import { Button, PlayButton } from '@/modules/core';
 import './PlayerCard.css';
 
 export interface PlayerCardProps {
@@ -28,7 +27,7 @@ const PlayerCard: React.FC<PlayerCardProps> = (props) => {
     onPlayerUpdated,
     className = '',
   } = props;
-  const musicService = useMusicService();
+  const musicService = supplyMusicService();
   const [showEditForm, setShowEditForm] = useState(false);
   const [fullPlayer, setFullPlayer] = useState<Player | undefined>();
 

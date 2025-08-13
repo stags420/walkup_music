@@ -1,7 +1,6 @@
 ---
 inclusion: always
 ---
-
 # Human Writing Style Guide
 
 Apply this style when writing documentation, explanations, or any content for human consumption.

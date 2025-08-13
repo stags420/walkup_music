@@ -8,7 +8,7 @@ A single-page web application that integrates with Spotify Premium accounts to m
 - Player management with personalized walk-up music
 - Batting order creation and management
 - Game mode for real-time music playback
-- Export/import functionality for data portability
+// Export/import functionality for data portability (planned)
 - Mock mode for local development and E2E tests (no Spotify login required)
 - GitHub Pages deployment ready
 
@@ -171,8 +171,9 @@ Notes:
 #### Import Guidelines
 
 - Import from module index files using the alias: `from '@/modules/auth'`
-- Avoid deep imports: `from '@/modules/auth/services/SpotifyAuthService'`
+- Avoid deep imports across module boundaries: `from '@/modules/auth/services/SpotifyAuthService'`
 - Use relative imports within modules: `from '../models/Player'`
+- Do not re-export components across domain modules (e.g., core must not re-export music components)
 
 ### Project Structure
 
@@ -183,8 +184,8 @@ src/
 ├── theme.css             # Theme tokens/styles
 ├── vite-env.d.ts         # Vite ambient types
 └── modules/              # Feature modules (public APIs via each module's index.ts)
-    ├── app/             # App shell: providers, app-level components/hooks
-    ├── auth/            # Auth (Spotify PKCE, providers, hooks, utils)
+    ├── app/             # App shell: suppliers (factories), app-level components/hooks
+    ├── auth/            # Auth (Spotify PKCE, suppliers, hooks, utils)
     ├── core/            # Shared UI + core services/utilities
     ├── game/            # Players, lineup, game mode UI
     ├── music/           # Spotify API + playback services and components
@@ -211,30 +212,31 @@ test/
 Each module follows a consistent structure:
 
 - **`components/`** - React components specific to the module
-- **`hooks/`** - Custom React hooks for the module
+- **`hooks/`** - Custom React hooks for state/query selectors
 - **`models/`** - TypeScript interfaces and type definitions
-- **`providers/`** - React context providers
+- **`suppliers/`** - Factories that decide and create service implementations based on `AppConfig` (access via `supply*` utilities; avoid `use*`-named service hooks)
 - **`services/`** - Business logic and external API integration
 - **`utils/`** - Utility functions and helpers
 - **`index.ts`** - Module's public API exports
 
 #### Import Patterns
 
-The modular structure enables clean imports:
+Import from module index files using the alias:
 
 ```typescript
-// Import from specific modules
-import { AuthProvider, useAuth, LoginPage } from '@/modules/auth';
+import { LoginPage } from '@/modules/auth';
 import { Player, BattingOrder } from '@/modules/game';
-import { AppConfig } from '@/modules/config';
+import { AppConfig } from '@/modules/app';
 ```
 
 #### Key Design Principles
 
 - **Domain-Driven Design**: Each module represents a business domain
-- **Dependency Injection**: Services are injected via constructors for testability
+- **Inversion of Control via Suppliers**: Services are created by suppliers (factories), not a global container
 - **Type Safety**: Strict TypeScript with external data validation
-- **Clean Architecture**: Clear separation between UI, business logic, and data layers
+- **Composition over ceremony**: Prefer simple wiring and passing props over frameworks
+- **YAGNI & KISS**: Build only what’s needed; keep designs simple
+- **TDD/E2E-first when possible**: Write a failing E2E for new flows before building the feature
 
 ## Deployment
 
@@ -250,7 +252,7 @@ If you fork this repo, update `homepage` in `package.json` and `base` in `vite.c
 
 ### Security Headers and CSP
 
-- The app adds a strict Content Security Policy in `index.html` that allows the Spotify Web Playback SDK and required Spotify API origins while disallowing inline scripts and styles. Inline redirect logic has been moved to `public/404.html` per the SPA GitHub Pages pattern.
+- The app sets a Content Security Policy in `index.html` that allows the Spotify Web Playback SDK and required Spotify API origins. Inline scripts are disallowed; inline styles are permitted to support component library styling.
 - If deploying somewhere other than GitHub Pages, ensure equivalent headers are set by your platform. See `docs/security-headers.md` for a minimal reverse proxy example with strong headers.
 
 ## Testing
@@ -303,82 +305,18 @@ How it works:
 
 ## Architecture
 
-### Module System
+High-level only here; see steering docs for details and rationale. Highlights:
 
-The application uses a modular architecture where each feature domain is self-contained:
+- React state: Zustand/TanStack Query with fine-grained selector hooks (`use*`).
+- Services: Plain TypeScript classes, instantiated by module-level suppliers (factories) based on `AppConfig`. Access via non-hook `supply*` utilities or pass as props. No app-wide container; no custom React providers.
+- Composition over strict DI; favor YAGNI/KISS.
 
-- **Auth Module**: Handles Spotify OAuth authentication, token management, and user sessions
-- **Game Module**: Manages players, batting orders, and game state
-- **Music Module**: Handles Spotify track data and song segments
-- **Storage Module**: Provides data persistence with localStorage
-- **Config Module**: Application configuration and settings
+See steering docs:
 
-### Dependency Injection
-
-This project uses constructor injection, explicit interfaces, and a typed container wired at bootstrap (no React Context for DI).
-
-Composition root and container:
-
-```ts
-// src/container.ts
-export interface AppContainer {
-  config: AppConfig;
-  httpService: HttpService;
-  // Add service singletons here as they are introduced
-}
-
-export class ApplicationContainerProvider {
-  private static instance: AppContainer | null = null;
-  private static isInitialized = false;
-
-  static initialize(): void {
-    if (this.isInitialized) return;
-    const config = AppConfigProvider.get();
-    const apiService = new FetchHttpService();
-    this.instance = { config, httpService: apiService };
-    this.isInitialized = true;
-  }
-
-  static get(): AppContainer {
-    if (!this.instance || !this.isInitialized) {
-      throw new Error('ApplicationContainer not initialized. Call ApplicationContainerProvider.initialize() after AppConfigProvider.initialize(config).');
-    }
-    return this.instance;
-  }
-}
-```
-
-Bootstrap at app startup:
-
-```ts
-// src/main.tsx
-AppConfigProvider.initialize(config);
-ApplicationContainerProvider.initialize();
-```
-
-Access services via small helpers or props-with-defaults:
-
-```ts
-// Example tiny hook
-export function useHttpService() {
-  return ApplicationContainerProvider.get().httpService;
-}
-
-// Example component using props-with-default
-type Props = { http?: HttpService };
-export function SomeComponent({ http = useHttpService() }: Props) {
-  // use `http` here
-}
-```
-
-Notes:
-
-- Business/services live outside React and depend on interfaces (constructor injection).
-- UI-related Contexts (like `AuthProvider`) are for view state, not for wiring service singletons.
-
-### State and Services
-
-Prefer colocated Zustand stores for UI/domain state within modules (e.g., `src/modules/game/state/playersStore.ts`, `src/modules/game/state/lineupStore.ts`). Expose selector hooks like `usePlayers`, `usePlayersActions`, `useBattingOrder`, and `useLineupActions` instead of container-backed services for this state. Core cross-cutting services (e.g., HTTP, Auth, Music) still live in the container and are accessed via small hooks from `ApplicationContainerProvider`.
+- `steering/react-concepts.md` — React state patterns, selectors, re-renders, component extraction
+- `steering/dependency-injection.md` — Suppliers, inversion of control, `supply*` utilities
+- `steering/typescript.md` — Type safety and validation at boundaries
+- `steering/ui-design.md` — UI conventions and component reuse
 
 ### Type Safety
 

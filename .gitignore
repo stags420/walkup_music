@@ -92,8 +92,6 @@ pids
 # Spotify API credentials (if applicable)
 spotify-credentials.json
 
-.cursor/
-
 .todo
 
 # Keep Playwright helper scripts under version control

@@ -1,5 +1,5 @@
 import type { AuthService } from '@/modules/auth/services/AuthService';
-import { ApplicationContainerProvider } from '@/modules/app';
+import { supplyHttpService } from '@/modules/core/suppliers/HttpServiceSupplier';
 
 /**
  * Spotify Web Playback SDK types
@@ -291,7 +291,7 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
       throw new Error('No access token available');
     }
 
-    const { httpService } = ApplicationContainerProvider.get();
+    const httpService = supplyHttpService();
     const { status } = await httpService.put<unknown>(
       `https://api.spotify.com/v1/me/player/play?device_id=${this.deviceId}`,
       { uris: [uri], position_ms: startPositionMs },

@@ -4,7 +4,6 @@ import { SpotifyMusicService } from '@/modules/music/services/impl/SpotifyMusicS
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
 import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
-import type { AuthService } from '@/modules/auth';
 import { AppConfigProvider } from '@/modules/app';
 
 /**
@@ -19,21 +18,12 @@ export class MusicServiceProvider {
    * @param authService - Required for real Spotify integration
    * @param useMockService - Whether to use mock service (default: false, but overridden by config.mockAuth)
    */
-  static getOrCreate(
-    authService?: AuthService,
-    useMockService = false
-  ): MusicService {
+  static getOrCreate(): MusicService {
     if (!this.instance) {
-      // Check if mock auth is enabled in config
-      const config = AppConfigProvider.get();
-      const shouldUseMock = config.mockAuth || useMockService || !authService;
+      const shouldUseMock = AppConfigProvider.get().mockAuth;
 
+      const playbackService = SpotifyPlaybackServiceProvider.getOrCreate();
       if (shouldUseMock) {
-        const mockPlaybackService = SpotifyPlaybackServiceProvider.getOrCreate(
-          undefined,
-          true
-        );
-
         // Check for test-injected tracks from window object (for e2e tests)
         const testTracks = (
           globalThis as { __TEST_MOCK_TRACKS__?: SpotifyTrack[] }
@@ -46,14 +36,9 @@ export class MusicServiceProvider {
           tracksToUse?.length || 'none'
         );
 
-        this.instance = new MockMusicService(mockPlaybackService, tracksToUse);
+        this.instance = new MockMusicService(playbackService, tracksToUse);
       } else {
-        const spotifyApiService =
-          SpotifyApiServiceProvider.getOrCreate(authService);
-        const playbackService = SpotifyPlaybackServiceProvider.getOrCreate(
-          authService,
-          false
-        );
+        const spotifyApiService = SpotifyApiServiceProvider.getOrCreate();
         this.instance = new SpotifyMusicService(
           spotifyApiService,
           playbackService

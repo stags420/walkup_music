@@ -10,8 +10,8 @@
     "format": "prettier --write \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "fixup": "npm run lint:fix && npm run format",
-    "build": "tsc && vite build",
-    "build:mock": "tsc && VITE_MOCK_AUTH=true vite build --outDir dist-mocked",
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "build:mock": "tsc -p tsconfig.build.json && VITE_MOCK_AUTH=true vite build --outDir dist-mocked",
     "preview": "npm run build && vite preview --port 4173 --host 127.0.0.1",
     "preview:mock": "npm run build:mock && vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked",
     "dev": "vite --host=127.0.0.1",
@@ -24,7 +24,7 @@
     "report:serve": "monocart show-report test/reports/index.html",
     "test:all": "concurrently \"npm run test:unit\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",
     "predeploy": "npm run fixup && npm run build && npm run test:all",
-    "precommit": "npm run fixup && npm run test:all",
+    "precommit": "npm run predeploy",
     "deploy": "npm run predeploy && gh-pages -d dist",
     "deploy:raw": "echo 'AGENTS SHOULD NEVER USE THIS' && npm run build && gh-pages -d dist",
     "test:watch": "jest --watch",
@@ -37,7 +37,8 @@
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.0",
-    "zustand": "^5.0.7"
+    "zustand": "^5.0.7",
+    "@tanstack/react-query": "^5.59.16"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",

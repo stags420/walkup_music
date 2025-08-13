@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import { useMusicService } from '@/modules/app/hooks/useServices';
+
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import { useBattingOrder, useGameActive } from '@/modules/game/hooks/useLineup';
 import { PlayerCard } from '@/modules/core/components';
@@ -10,7 +10,7 @@ export function CurrentBatterDisplay() {
   const currentBattingOrder = useBattingOrder();
   const isGameActive = useGameActive();
   const players = usePlayers();
-  const musicService = useMusicService();
+  // No longer passing music service down; components fetch their own
 
   const playersById = useMemo(() => {
     const map = new Map<string, Player>();
@@ -57,7 +57,6 @@ export function CurrentBatterDisplay() {
           size="large"
           displayAlbumArt={true}
           allowPlayMusic={true}
-          musicService={musicService}
           className="current-batter-card"
         />
       </div>
@@ -110,7 +109,6 @@ export function CurrentBatterDisplay() {
           displayAlbumArt={false}
           allowPlayMusic={false}
           borderColor={borderColors[position]}
-          musicService={musicService}
           className={`secondary-batter-card ${position}`}
         />
       </div>

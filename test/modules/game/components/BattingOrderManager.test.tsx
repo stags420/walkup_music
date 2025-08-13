@@ -74,7 +74,6 @@ jest.mock('@/modules/app/hooks/useServices', () => ({
 
 describe('BattingOrderManager', () => {
   let mockMusicService: jest.Mocked<MusicService>;
-  let mockOnStartGame: jest.Mock;
 
   const mockPlayers: Player[] = [
     {
@@ -92,13 +91,24 @@ describe('BattingOrderManager', () => {
   ];
 
   beforeEach(() => {
+    mockMusicService = {
+      searchTracks: jest.fn(),
+      playTrack: jest.fn(),
+      previewTrack: jest.fn(),
+      pause: jest.fn(),
+      resume: jest.fn(),
+      seek: jest.fn(),
+      getCurrentState: jest.fn(),
+      isPlaybackConnected: jest.fn(),
+      isPlaybackReady: jest.fn(),
+    } as unknown as jest.Mocked<MusicService>;
     useMusicService.mockReturnValue(mockMusicService);
     resetPlayersStore();
     resetLineupStore();
   });
 
   const renderComponent = () => {
-    return render(<BattingOrderManager onStartGame={mockOnStartGame} />);
+    return render(<BattingOrderManager />);
   };
 
   it('renders the lineup header', async () => {

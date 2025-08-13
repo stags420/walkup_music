@@ -3,7 +3,8 @@ import {
   SpotifyPlaybackServiceImpl,
   MockSpotifyPlaybackService,
 } from '@/modules/music/services/impl/SpotifyPlaybackService';
-import type { AuthService } from '@/modules/auth';
+import { AppConfigProvider } from '@/modules/app';
+import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
 
 /**
  * Provider for creating SpotifyPlaybackService instances with proper dependencies
@@ -13,18 +14,13 @@ export class SpotifyPlaybackServiceProvider {
 
   /**
    * Get a singleton instance of SpotifyPlaybackService
-   * @param authService - Required for real Spotify integration
-   * @param useMockService - Whether to use mock service (default: false)
    */
-  static getOrCreate(
-    authService?: AuthService,
-    useMockService = false
-  ): SpotifyPlaybackService {
+  static getOrCreate(): SpotifyPlaybackService {
     if (!this.instance) {
-      this.instance =
-        useMockService || !authService
-          ? new MockSpotifyPlaybackService()
-          : new SpotifyPlaybackServiceImpl(authService);
+      const appConfig = AppConfigProvider.get();
+      this.instance = appConfig.mockAuth
+        ? new MockSpotifyPlaybackService()
+        : new SpotifyPlaybackServiceImpl(AuthServiceProvider.getOrCreate());
     }
     return this.instance;
   }

@@ -2,14 +2,13 @@ import { forwardRef, useImperativeHandle } from 'react';
 import type { Player } from '@/modules/game/models/Player';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
-import type { MusicService } from '@/modules/music/services/MusicService';
+// Music service is obtained within child components as needed
 // Using Bootstrap classes instead of custom CSS
 
 interface OrderBuilderProps {
   lineup: Player[];
   availablePlayers: Player[];
   onLineupChange: (lineup: Player[], available: Player[]) => void;
-  musicService: MusicService;
 }
 
 export interface OrderBuilderRef {
@@ -20,7 +19,6 @@ interface PlayerCardProps {
   player: Player;
   index: number;
   fromLineup: boolean;
-  musicService: MusicService;
   onAddToLineup?: (player: Player) => void;
   onRemoveFromLineup?: (player: Player) => void;
   onMoveUp?: (player: Player) => void;
@@ -55,7 +53,6 @@ const PlayerCardComponent = (props: PlayerCardProps) => {
           <div className="col">
             <PlayerCard
               player={props.player}
-              musicService={props.musicService}
               allowPlayMusic={false}
               displayAlbumArt={false}
               size="small"
@@ -178,7 +175,6 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
                       player={player}
                       index={index}
                       fromLineup={true}
-                      musicService={props.musicService}
                       onRemoveFromLineup={handleRemoveFromLineup}
                       onMoveUp={handleMoveUp}
                       onMoveDown={handleMoveDown}
@@ -217,7 +213,6 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
                       player={player}
                       index={index}
                       fromLineup={false}
-                      musicService={props.musicService}
                       onAddToLineup={handleAddToLineup}
                     />
                   ))}

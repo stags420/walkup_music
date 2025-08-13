@@ -7,7 +7,6 @@ import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
-import { useMusicService } from '@/modules/app/hooks/useServices';
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import { useLineupActions } from '@/modules/game/hooks/useLineup';
 import './PlayerManager.css';
@@ -18,7 +17,6 @@ interface PlayerManagerProps {
 
 export function PlayerManager(props: PlayerManagerProps) {
   const { onStartGame } = props;
-  const musicService = useMusicService();
   const players = usePlayers();
   const lineupActions = useLineupActions();
   const [showForm, setShowForm] = useState(false);
@@ -27,7 +25,7 @@ export function PlayerManager(props: PlayerManagerProps) {
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [, setPlayersState] = useState<Player[]>([]);
 
-  const playerListRef = useRef<PlayerListRef>(undefined);
+  const playerListRef = useRef<PlayerListRef | null>(null);
 
   // Load players on component mount
   useEffect(() => {
@@ -106,11 +104,10 @@ export function PlayerManager(props: PlayerManagerProps) {
         </div>
       </div>
 
-      <PlayerList ref={playerListRef} musicService={musicService} />
+      <PlayerList ref={playerListRef} />
 
       {showForm && (
         <PlayerForm
-          musicService={musicService}
           player={editingPlayer}
           segmentEditOnly={editingSegmentOnly}
           onSave={handleSavePlayer}
@@ -121,7 +118,6 @@ export function PlayerManager(props: PlayerManagerProps) {
       {showSegmentSelector && editingPlayer?.song && (
         <SegmentSelector
           track={editingPlayer.song.track}
-          musicService={musicService}
           initialSegment={editingPlayer.song}
           onConfirm={async (_segment: SongSegment) => {
             // Segment-only editing handled by PlayerForm where applicable

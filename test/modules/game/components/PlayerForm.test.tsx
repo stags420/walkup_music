@@ -94,12 +94,7 @@ const mockPlayer: Player = {
 const renderPlayerForm = (props = {}) => {
   return render(
     <MusicProvider musicService={mockMusicService}>
-      <PlayerForm
-        musicService={mockMusicService}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        {...props}
-      />
+      <PlayerForm onSave={mockOnSave} onCancel={mockOnCancel} {...props} />
     </MusicProvider>
   );
 };

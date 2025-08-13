@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { Player } from '@/modules/game/models/Player';
-import type { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock PlayerCard component
 jest.mock('@/modules/core/components', () => ({
@@ -13,7 +12,6 @@ jest.mock('@/modules/core/components', () => ({
 }));
 
 describe('OrderBuilder', () => {
-  let mockMusicService: jest.Mocked<MusicService>;
   let mockOnLineupChange: jest.Mock;
 
   const mockLineupPlayers: Player[] = [
@@ -47,18 +45,6 @@ describe('OrderBuilder', () => {
   ];
 
   beforeEach(() => {
-    mockMusicService = {
-      searchTracks: jest.fn(),
-      playTrack: jest.fn(),
-      pausePlayback: jest.fn(),
-      resumePlayback: jest.fn(),
-      stopPlayback: jest.fn(),
-      seekToPosition: jest.fn(),
-      getCurrentTrack: jest.fn(),
-      getPlaybackState: jest.fn(),
-      isPlaybackReady: jest.fn(),
-    } as unknown as jest.Mocked<MusicService>;
-
     mockOnLineupChange = jest.fn();
   });
 
@@ -71,7 +57,6 @@ describe('OrderBuilder', () => {
         lineup={lineup}
         availablePlayers={available}
         onLineupChange={mockOnLineupChange}
-        musicService={mockMusicService}
       />
     );
   };

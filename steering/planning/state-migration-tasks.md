@@ -54,6 +54,7 @@ References:
   - File: `src/modules/storage/services/cookieStateStorage.ts`
   - Use secure defaults: `SameSite=strict`, `path=/`, add `secure` on https
   - Wire with `createJSONStorage(() => cookieStorage)`
+  - Actually use it in auth flow
 - Update docs with link to discussion for patterns and caveats.
 
 References:

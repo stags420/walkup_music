@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { createContext } from 'react';
 import type { MusicService } from '@/modules/music/services/MusicService';
 // (all provider logic removed)
-import type { AuthService } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth/services/AuthService';
 
 interface MusicContextType {
   musicService: MusicService;

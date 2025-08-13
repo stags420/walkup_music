@@ -1,50 +1,41 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import type { AuthContextType } from '@/modules/auth';
-import { useAuth, LoginPage, CallbackPage } from '@/modules/auth';
+
+import { LoginPage, CallbackPage } from '@/modules/auth';
 import { BattingOrderManager, GameMode } from '@/modules/game';
 import { AppConfigProvider } from '@/modules/app';
 import { useState, useEffect } from 'react';
 import { useSettingsTheme } from '@/modules/app/hooks/useSettingsTheme';
 import { useGameActive } from '@/modules/game/hooks/useLineup';
-import { useSettingsActions } from '@/modules/app/hooks/useSettingsActions';
+import { NavBar } from '@/modules/app/components/NavBar';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ThemeMode } from '@/modules/app/state/settingsStore';
 import './App.css';
+import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
-interface AppContentProps {
-  auth: AuthContextType;
-}
-
-function AppContent(props: AppContentProps) {
-  const auth = props.auth;
+function AppContent() {
+  const authUser = useAuthUser();
   return (
     <div className="App">
       <Routes>
-        <Route path="/callback" element={<CallbackPage auth={auth} />} />
+        <Route path="/callback" element={<CallbackPage />} />
         <Route
           path="/"
-          element={
-            auth.state.isAuthenticated ? (
-              <AuthenticatedApp auth={auth} />
-            ) : (
-              <LoginPage auth={auth} />
-            )
-          }
+          element={authUser ? <AuthenticatedApp /> : <LoginPage />}
         />
       </Routes>
     </div>
   );
 }
 
-// Authenticated portion of the app with dependencies injected as props
-function AuthenticatedApp(props: { auth: AuthContextType }) {
-  const auth = props.auth;
+function AuthenticatedApp() {
+  const authUser = useAuthUser();
   const isGameMode = useGameActive();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // With Zustand lineup store, assume not in game on initial load
     setIsLoading(false);
-  }, [auth.state.isAuthenticated]);
+  }, [authUser]);
 
   if (isLoading) {
     return (
@@ -70,7 +61,7 @@ function AuthenticatedApp(props: { auth: AuthContextType }) {
     <div className="container-fluid">
       <div className="visually-hidden">
         <h1>Walk Up Music</h1>
-        <p>Welcome, {auth.state.user?.displayName}!</p>
+        <p>Welcome, {authUser?.displayName ?? ''}!</p>
       </div>
       <main>
         <div className="container">
@@ -85,19 +76,10 @@ function AuthenticatedApp(props: { auth: AuthContextType }) {
   );
 }
 
-function AppContainer() {
-  const auth = useAuth();
-  return <AppContent auth={auth} />;
-}
-
 export function App() {
   const config = AppConfigProvider.get();
   const basename = config.basePath || '/';
   const theme = useSettingsTheme();
-  const { setTheme } = useSettingsActions();
-  const auth = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -109,109 +91,14 @@ export function App() {
     root.dataset.bsTheme = effective === 'dark' ? 'dark' : 'light';
   }, [theme]);
 
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('#user-menu')) {
-        setMenuOpen(false);
-        setThemeOpen(false);
-      }
-    };
-    globalThis.addEventListener('click', onDocClick);
-    return () => globalThis.removeEventListener('click', onDocClick);
-  }, []);
-
+  const queryClient = new QueryClient();
   return (
-    <Router basename={basename}>
-      <nav
-        className="navbar navbar-dark bg-dark px-3"
-        style={{ borderBottom: '1px solid #2a2a2a' }}
-      >
-        <span className="navbar-brand mb-0 h1">Walk Up Music</span>
-        <div id="user-menu" className="ms-auto position-relative">
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-success"
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen((v) => !v);
-            }}
-          >
-            {auth.state.user
-              ? `Welcome, ${auth.state.user.displayName}!`
-              : 'Menu'}{' '}
-            ▾
-          </button>
-          {menuOpen && (
-            <div
-              className="dropdown-menu dropdown-menu-end show"
-              style={{ right: 0, left: 'auto', minWidth: 200 }}
-            >
-              <button
-                className="dropdown-item d-flex justify-content-between align-items-center"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setThemeOpen((v) => !v);
-                }}
-              >
-                Theme
-                <span className="text-muted small">{theme}</span>
-              </button>
-              {themeOpen && (
-                <div className="px-2 pb-2">
-                  <button
-                    className={`dropdown-item ${theme === 'dark' ? 'active' : ''}`}
-                    onClick={() => {
-                      setTheme('dark');
-                      setThemeOpen(false);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    Dark
-                  </button>
-                  <button
-                    className={`dropdown-item ${theme === 'light' ? 'active' : ''}`}
-                    onClick={() => {
-                      setTheme('light');
-                      setThemeOpen(false);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    Light
-                  </button>
-                  <button
-                    className={`dropdown-item ${theme === 'system' ? 'active' : ''}`}
-                    onClick={() => {
-                      setTheme('system');
-                      setThemeOpen(false);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    System
-                  </button>
-                </div>
-              )}
-              {auth.state.isAuthenticated && (
-                <>
-                  <div className="dropdown-divider"></div>
-                  <button
-                    className="dropdown-item text-danger"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setThemeOpen(false);
-                      void auth.logout();
-                    }}
-                  >
-                    Log out
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </nav>
-      <AppContainer />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router basename={basename}>
+        <NavBar />
+        <AppContent />
+      </Router>
+    </QueryClientProvider>
   );
 }
 

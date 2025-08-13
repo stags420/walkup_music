@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SongSelector } from '@/modules/music/components/SongSelector';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { MusicService, SpotifyTrack } from '@/modules/music';
 
 // Mock music service
@@ -122,12 +123,15 @@ describe('SongSelector', () => {
   });
 
   const renderSongSelector = (props = {}) => {
+    const client = new QueryClient();
     return render(
-      <SongSelector
-        onSelectTrack={mockOnSelectTrack}
-        onCancel={mockOnCancel}
-        {...props}
-      />
+      <QueryClientProvider client={client}>
+        <SongSelector
+          onSelectTrack={mockOnSelectTrack}
+          onCancel={mockOnCancel}
+          {...props}
+        />
+      </QueryClientProvider>
     );
   };
 

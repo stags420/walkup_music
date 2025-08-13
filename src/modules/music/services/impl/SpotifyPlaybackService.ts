@@ -1,4 +1,4 @@
-import type { AuthService } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth/services/AuthService';
 import { ApplicationContainerProvider } from '@/modules/app';
 
 /**

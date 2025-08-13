@@ -4,6 +4,7 @@ import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import { useMusicService } from '@/modules/app/hooks/useServices';
+import { useSearchTracks } from '@/modules/music/hooks/useSearchTracks';
 import { TrackCard } from '@/modules/core';
 
 interface SongSelectorProps {
@@ -16,37 +17,21 @@ export function SongSelector(props: SongSelectorProps) {
   const { onSelectTrack, onCancel, initialSearchQuery = '' } = props;
   const musicService = useMusicService();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
-  const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>();
+  const {
+    data: tracks = [],
+    isLoading: loading,
+    error,
+  } = useSearchTracks(searchQuery);
+  const errorMessage = error instanceof Error ? error.message : undefined;
   const [selectedTrackId, setSelectedTrackId] = useState<string | undefined>();
   const [playingTrackId, setPlayingTrackId] = useState<string | undefined>();
 
   useEffect(() => {
-    const searchTracks = async () => {
-      if (!searchQuery.trim()) {
-        setTracks([]);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(undefined);
-        const results = await musicService.searchTracks(searchQuery.trim());
-        setTracks(results);
-      } catch (error_) {
-        setError(error_ instanceof Error ? error_.message : 'Search failed');
-        setTracks([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const timeoutId = setTimeout(() => {
-      void searchTracks();
-    }, 500);
+      // debounce input only; query hook handles fetching
+    }, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, musicService]);
+  }, [searchQuery]);
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -169,9 +154,9 @@ export function SongSelector(props: SongSelectorProps) {
             </div>
           )}
 
-          {error && (
+          {errorMessage && (
             <Alert variant="danger">
-              <Alert.Heading>Error: {error}</Alert.Heading>
+              <Alert.Heading>Error: {errorMessage}</Alert.Heading>
               <Button
                 variant="outline-danger"
                 size="sm"
@@ -182,15 +167,19 @@ export function SongSelector(props: SongSelectorProps) {
             </Alert>
           )}
 
-          {!loading && !error && searchQuery.trim() && tracks.length === 0 && (
-            <div className="text-center py-4 text-muted">
-              <p>
-                No songs found for "{searchQuery}". Try a different search term.
-              </p>
-            </div>
-          )}
+          {!loading &&
+            !errorMessage &&
+            searchQuery.trim() &&
+            tracks.length === 0 && (
+              <div className="text-center py-4 text-muted">
+                <p>
+                  No songs found for "{searchQuery}". Try a different search
+                  term.
+                </p>
+              </div>
+            )}
 
-          {!loading && !error && tracks.length > 0 && (
+          {!loading && !errorMessage && tracks.length > 0 && (
             <div className="d-flex flex-column gap-2">
               {tracks
                 .filter(

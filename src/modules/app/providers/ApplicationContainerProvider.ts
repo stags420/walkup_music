@@ -2,11 +2,8 @@ import type { AppContainer } from '@/modules/app/models/AppContainer';
 import { AppConfigProvider } from '@/modules/app';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { MusicService } from '@/modules/music/services/MusicService';
-import type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
 import { HttpServiceProvider } from '@/modules/core/providers/HttpServiceProvider';
 import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
-import { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
-import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
 
 export class ApplicationContainerProvider {
@@ -18,18 +15,7 @@ export class ApplicationContainerProvider {
     const config = AppConfigProvider.get();
     const httpService = HttpServiceProvider.getOrCreate();
 
-    // Auth service via provider
     const authService = AuthServiceProvider.getOrCreate();
-
-    // Storage removed; using Zustand/TanStack for state
-
-    // Game state via Zustand hooks; no service creation
-
-    // Music service dependencies via providers
-    const spotifyApiService =
-      SpotifyApiServiceProvider.getOrCreate(authService);
-    const spotifyPlaybackService: SpotifyPlaybackService =
-      SpotifyPlaybackServiceProvider.getOrCreate(authService, config.mockAuth);
 
     // In mock mode (used in preview/E2E), MusicServiceProvider reads test-injected tracks
     const injectedTestTracks = (
@@ -42,10 +28,7 @@ export class ApplicationContainerProvider {
         injectedTestTracks as SpotifyTrack[]
       );
     }
-    const musicService: MusicService = MusicServiceProvider.getOrCreate(
-      authService,
-      config.mockAuth
-    );
+    const musicService: MusicService = MusicServiceProvider.getOrCreate();
 
     // Lineup state via Zustand hooks; no service creation
 
@@ -53,8 +36,6 @@ export class ApplicationContainerProvider {
       config,
       httpService,
       authService,
-      spotifyApiService,
-      spotifyPlaybackService,
       musicService,
     };
     this.isInitialized = true;

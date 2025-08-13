@@ -1,6 +1,6 @@
 import { SpotifyApiService } from '@/modules/music/services/impl/SpotifyApiService';
-import type { AuthService } from '@/modules/auth';
 import { HttpServiceProvider } from '@/modules/core/providers/HttpServiceProvider';
+import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
 
 /**
  * Provider for creating SpotifyApiService instances with proper dependencies
@@ -10,12 +10,13 @@ export class SpotifyApiServiceProvider {
 
   /**
    * Get a singleton instance of SpotifyApiService
-   * @param authService - Required for real Spotify integration
    */
-  static getOrCreate(authService: AuthService): SpotifyApiService {
+  static getOrCreate(): SpotifyApiService {
     if (!this.instance) {
-      const httpService = HttpServiceProvider.getOrCreate();
-      this.instance = new SpotifyApiService(authService, httpService);
+      this.instance = new SpotifyApiService(
+        AuthServiceProvider.getOrCreate(),
+        HttpServiceProvider.getOrCreate()
+      );
     }
     return this.instance;
   }

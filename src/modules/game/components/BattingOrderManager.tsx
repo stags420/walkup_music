@@ -5,7 +5,6 @@ import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
-import { useMusicService } from '@/modules/app/hooks/useServices';
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import {
   useBattingOrder,
@@ -14,7 +13,6 @@ import {
 // Using Bootstrap classes instead of custom CSS
 
 export function BattingOrderManager() {
-  const musicService = useMusicService();
   const allPlayersState = usePlayers();
   const currentBattingOrder = useBattingOrder();
   const lineupActions = useLineupActions();
@@ -163,7 +161,6 @@ export function BattingOrderManager() {
             lineup={lineup}
             availablePlayers={availablePlayers}
             onLineupChange={handleLineupChange}
-            musicService={musicService}
           />
         </div>
       </div>
@@ -171,7 +168,6 @@ export function BattingOrderManager() {
       {showForm && (
         <div data-testid="player-form">
           <PlayerForm
-            musicService={musicService}
             player={editingPlayer}
             segmentEditOnly={editingSegmentOnly}
             onSave={handleSavePlayer}
@@ -183,7 +179,6 @@ export function BattingOrderManager() {
       {showSegmentSelector && editingPlayer?.song && (
         <SegmentSelector
           track={editingPlayer.song.track}
-          musicService={musicService}
           initialSegment={editingPlayer.song}
           onConfirm={async (_segment: SongSegment) => {
             void handleSegmentSaved();

@@ -1,10 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppContent, AuthenticatedApp } from '@/modules/app/components/App';
-import type { AuthContextType } from '@/modules/auth/models/AuthContextType';
-
-// Mock the service providers
-// Remove provider-specific mocks; components now get services via container hooks
+import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
 // Mock the components
 jest.mock('@/modules/auth/components/LoginPage', () => ({
@@ -38,27 +35,15 @@ jest.mock('@/modules/game/components/GameMode', () => ({
   GameMode: () => <div data-testid="game-mode">Game Mode</div>,
 }));
 
-// Mock the auth hook to control auth state
-jest.mock('@/modules/auth', () => {
-  const actual = jest.requireActual('@/modules/auth');
-  return { ...actual, useAuth: jest.fn() };
-});
-import { useAuth } from '@/modules/auth';
-
+// Mock the auth user hook used by App to control auth state in tests
+jest.mock('@/modules/auth/hooks/useAuthUser', () => ({
+  useAuthUser: jest.fn(),
+}));
+const mockUseAuthUser = useAuthUser as jest.MockedFunction<typeof useAuthUser>;
 describe('App Component Rendering', () => {
-  const mockAuth: AuthContextType = {
-    state: {
-      isAuthenticated: false,
-      user: undefined,
-    },
-    login: jest.fn(),
-    logout: jest.fn(),
-    handleCallback: jest.fn(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (useAuth as jest.Mock).mockReturnValue(mockAuth);
+    mockUseAuthUser.mockReturnValue();
   });
 
   describe('AppContent (simplified)', () => {
@@ -67,7 +52,7 @@ describe('App Component Rendering', () => {
       // When I render AppContent
       render(
         <MemoryRouter initialEntries={['/']}>
-          <AppContent auth={mockAuth} />
+          <AppContent />
         </MemoryRouter>
       );
 
@@ -77,23 +62,16 @@ describe('App Component Rendering', () => {
 
     test('should render authenticated app when user is logged in', async () => {
       // Given I have an authenticated user
-      const authenticatedAuth = {
-        ...mockAuth,
-        state: {
-          ...mockAuth.state,
-          isAuthenticated: true,
-          user: {
-            id: 'test-user',
-            email: 'test@example.com',
-            displayName: 'Test User',
-          },
-        },
-      };
+      mockUseAuthUser.mockReturnValue({
+        id: 'test-user',
+        email: 'test@example.com',
+        displayName: 'Test User',
+      });
 
       // When I render AppContent
       render(
         <MemoryRouter initialEntries={['/']}>
-          <AppContent auth={authenticatedAuth} />
+          <AppContent />
         </MemoryRouter>
       );
 
@@ -112,7 +90,7 @@ describe('App Component Rendering', () => {
       // Given I start with unauthenticated state
       const { rerender } = render(
         <MemoryRouter initialEntries={['/']}>
-          <AppContent auth={mockAuth} />
+          <AppContent />
         </MemoryRouter>
       );
 
@@ -120,21 +98,14 @@ describe('App Component Rendering', () => {
       expect(screen.getByTestId('login-page')).toBeInTheDocument();
 
       // When user becomes authenticated
-      const authenticatedAuth = {
-        ...mockAuth,
-        state: {
-          ...mockAuth.state,
-          isAuthenticated: true,
-          user: {
-            id: 'test-user',
-            email: 'test@example.com',
-            displayName: 'Test User',
-          },
-        },
-      };
+      mockUseAuthUser.mockReturnValue({
+        id: 'test-user',
+        email: 'test@example.com',
+        displayName: 'Test User',
+      });
       rerender(
         <MemoryRouter initialEntries={['/']}>
-          <AppContent auth={authenticatedAuth} />
+          <AppContent />
         </MemoryRouter>
       );
 
@@ -148,21 +119,12 @@ describe('App Component Rendering', () => {
   describe('AuthenticatedApp', () => {
     test('should render authenticated app with user information', async () => {
       // Given I have an authenticated user
-      const authenticatedAuth = {
-        ...mockAuth,
-        state: {
-          ...mockAuth.state,
-          isAuthenticated: true,
-          user: {
-            id: 'john-doe',
-            email: 'john@example.com',
-            displayName: 'John Doe',
-          },
-        },
-      };
-
-      // When I render AuthenticatedApp
-      render(<AuthenticatedApp auth={authenticatedAuth} />);
+      mockUseAuthUser.mockReturnValue({
+        id: 'john-doe',
+        email: 'john@example.com',
+        displayName: 'John Doe',
+      });
+      render(<AuthenticatedApp />);
 
       // Then it should display the app header and user welcome
       expect(screen.getByText('Walk Up Music')).toBeInTheDocument();
@@ -181,17 +143,8 @@ describe('App Component Rendering', () => {
 
     test('should handle missing user display name gracefully', async () => {
       // Given I have an authenticated user without display name
-      const authenticatedAuth = {
-        ...mockAuth,
-        state: {
-          ...mockAuth.state,
-          isAuthenticated: true,
-          user: undefined, // No user object
-        },
-      };
-
-      // When I render AuthenticatedApp
-      render(<AuthenticatedApp auth={authenticatedAuth} />);
+      mockUseAuthUser.mockReturnValue();
+      render(<AuthenticatedApp />);
 
       // Then it should still render without crashing
       expect(screen.getByText('Walk Up Music')).toBeInTheDocument();

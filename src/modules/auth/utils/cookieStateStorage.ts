@@ -1,12 +1,15 @@
 import type { StateStorage } from 'zustand/middleware';
 
 export const cookieStateStorage: StateStorage = {
+  // Zustand StateStorage.getItem should return null when not found.
+
   getItem: (name: string) => {
     const match = document.cookie
       .split('; ')
       .find((row) => row.startsWith(`${encodeURIComponent(name)}=`));
     const raw = match?.split('=')[1];
-    return raw ? decodeURIComponent(raw) : undefined;
+    // eslint-disable-next-line unicorn/no-null
+    return raw ? decodeURIComponent(raw) : null;
   },
   setItem: (name: string, value: string) => {
     const secure = globalThis.location.protocol === 'https:';

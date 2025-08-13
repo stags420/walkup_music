@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { MusicService } from '@/modules/music/services/MusicService';
+import { useMusicService } from '@/modules/app/hooks/useServices';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Button } from '@/modules/core/components/Button';
 import { PlayButton } from '@/modules/core/components/PlayButton';
@@ -13,7 +13,6 @@ export interface PlayerCardProps {
   size?: 'small' | 'medium' | 'large';
   allowPlayMusic?: boolean;
   borderColor?: string;
-  musicService?: MusicService;
   onPlayerUpdated?: () => void;
   className?: string;
 }
@@ -26,10 +25,10 @@ const PlayerCard: React.FC<PlayerCardProps> = (props) => {
     size = 'medium',
     allowPlayMusic = false,
     borderColor,
-    musicService,
     onPlayerUpdated,
     className = '',
   } = props;
+  const musicService = useMusicService();
   const [showEditForm, setShowEditForm] = useState(false);
   const [fullPlayer, setFullPlayer] = useState<Player | undefined>();
 
@@ -149,7 +148,6 @@ const PlayerCard: React.FC<PlayerCardProps> = (props) => {
       {/* Edit Player Modal */}
       {showEditForm && musicService && fullPlayer && (
         <PlayerForm
-          musicService={musicService}
           player={fullPlayer}
           onSave={handleSavePlayer}
           onCancel={handleCancelForm}

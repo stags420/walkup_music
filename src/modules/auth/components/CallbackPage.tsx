@@ -1,18 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { AuthContextType } from '@/modules/auth/models/AuthContextType';
-import { useAuth } from '@/modules/auth';
+import { useAuthActions } from '@/modules/auth/hooks/useAuthActions';
 
-interface CallbackPageProps {
-  auth?: AuthContextType;
-}
-
-export function CallbackPage(props: CallbackPageProps) {
+export function CallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Always call hook unconditionally, then choose handler
-  const hookAuth = useAuth();
-  const { handleCallback } = props.auth ?? hookAuth;
+  const { handleCallback } = useAuthActions();
   const processedRef = useRef(false);
 
   useEffect(() => {

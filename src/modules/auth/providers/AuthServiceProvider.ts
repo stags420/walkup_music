@@ -1,4 +1,4 @@
-import type { AuthService } from '@/modules/auth';
+import type { AuthService } from '@/modules/auth/services/AuthService';
 import { SpotifyAuthService } from '@/modules/auth/services/impl/SpotifyAuthService';
 import { MockAuthService } from '@/modules/auth/services/impl/MockAuthService';
 import { AppConfigProvider } from '@/modules/app';

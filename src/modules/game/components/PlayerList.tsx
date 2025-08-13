@@ -6,7 +6,6 @@ import {
   useImperativeHandle,
 } from 'react';
 import type { MusicService } from '@/modules/music/services/MusicService';
-import { useMusicService } from '@/modules/app/hooks/useServices';
 import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
@@ -22,7 +21,6 @@ export interface PlayerListRef {
 
 export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
   function PlayerList(_props, ref) {
-    const musicService = useMusicService();
     const players = usePlayers();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | undefined>();
@@ -96,7 +94,6 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
               size="medium"
               displayAlbumArt={false}
               allowPlayMusic={false}
-              musicService={musicService}
               onPlayerUpdated={loadPlayers}
               className="player-management-card"
             />

@@ -37,7 +37,7 @@ export function SegmentSelector(props: SegmentSelectorProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartTime, setDragStartTime] = useState(0);
-  const timelineRef = useRef<HTMLDivElement>(undefined);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 

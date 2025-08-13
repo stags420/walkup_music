@@ -3,13 +3,12 @@ import { Modal, Form, Alert, Card } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { FormEvent, MouseEvent } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
+import type { SpotifyTrack, SongSegment } from '@/modules/music';
 import { SongSelector, SegmentSelector } from '@/modules/music';
 import { usePlayers, usePlayersActions } from '@/modules/game/hooks/usePlayers';
 // import './PlayerForm.css'; // Using Bootstrap classes instead
 
 interface PlayerFormProps {
-  musicService: MusicService;
   player?: Player; // If provided, we're editing; otherwise creating
   segmentEditOnly?: boolean; // If true, only allow editing the song segment
   onSave: (player: Player) => void;
@@ -17,13 +16,7 @@ interface PlayerFormProps {
 }
 
 export function PlayerForm(props: PlayerFormProps) {
-  const {
-    musicService,
-    player,
-    segmentEditOnly = false,
-    onSave,
-    onCancel,
-  } = props;
+  const { player, segmentEditOnly = false, onSave, onCancel } = props;
   const players = usePlayers();
   const actions = usePlayersActions();
   const [name, setName] = useState(player?.name || '');
@@ -430,7 +423,6 @@ export function PlayerForm(props: PlayerFormProps) {
       {showSegmentSelector && selectedTrack && (
         <SegmentSelector
           track={selectedTrack}
-          musicService={musicService}
           initialSegment={song}
           onConfirm={handleSegmentConfirmed}
           onCancel={handleCancelSegmentSelection}

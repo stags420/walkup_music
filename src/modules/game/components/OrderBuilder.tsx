@@ -1,6 +1,5 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
 import type { MusicService } from '@/modules/music/services/MusicService';
@@ -11,7 +10,6 @@ interface OrderBuilderProps {
   availablePlayers: Player[];
   onLineupChange: (lineup: Player[], available: Player[]) => void;
   musicService: MusicService;
-  playerService: PlayerService;
 }
 
 export interface OrderBuilderRef {
@@ -23,42 +21,31 @@ interface PlayerCardProps {
   index: number;
   fromLineup: boolean;
   musicService: MusicService;
-  playerService: PlayerService;
   onAddToLineup?: (player: Player) => void;
   onRemoveFromLineup?: (player: Player) => void;
   onMoveUp?: (player: Player) => void;
   onMoveDown?: (player: Player) => void;
 }
 
-const PlayerCardComponent = ({
-  player,
-  index,
-  fromLineup,
-  musicService,
-  playerService,
-  onAddToLineup,
-  onRemoveFromLineup,
-  onMoveUp,
-  onMoveDown,
-}: PlayerCardProps) => {
+const PlayerCardComponent = (props: PlayerCardProps) => {
   return (
     <div
       className="card mb-2"
-      data-testid={fromLineup ? 'lineup-player' : 'available-player'}
+      data-testid={props.fromLineup ? 'lineup-player' : 'available-player'}
     >
       <div className="card-body p-2">
         <div className="row align-items-center">
           <div className="col-auto">
             <div className="d-flex flex-column align-items-center">
               <div className="fw-bold text-primary">
-                {fromLineup ? `${index + 1}.` : ''}
+                {props.fromLineup ? `${props.index + 1}.` : ''}
               </div>
-              {fromLineup && (
+              {props.fromLineup && (
                 <Button
                   variant="outline-danger"
                   size="sm"
-                  onClick={() => onRemoveFromLineup?.(player)}
-                  data-testid={`remove-${player.name}`}
+                  onClick={() => props.onRemoveFromLineup?.(props.player)}
+                  data-testid={`remove-${props.player.name}`}
                 >
                   −
                 </Button>
@@ -67,9 +54,8 @@ const PlayerCardComponent = ({
           </div>
           <div className="col">
             <PlayerCard
-              player={player}
-              musicService={musicService}
-              playerService={playerService}
+              player={props.player}
+              musicService={props.musicService}
               allowPlayMusic={false}
               displayAlbumArt={false}
               size="small"
@@ -77,23 +63,23 @@ const PlayerCardComponent = ({
             />
           </div>
           <div className="col-auto">
-            {fromLineup ? (
+            {props.fromLineup ? (
               <div className="d-flex flex-column gap-1">
                 <Button
                   variant="outline-secondary"
                   size="sm"
-                  onClick={() => onMoveUp?.(player)}
-                  disabled={index === 0}
-                  data-testid={`move-up-${player.name}`}
+                  onClick={() => props.onMoveUp?.(props.player)}
+                  disabled={props.index === 0}
+                  data-testid={`move-up-${props.player.name}`}
                 >
                   ↑
                 </Button>
                 <Button
                   variant="outline-secondary"
                   size="sm"
-                  onClick={() => onMoveDown?.(player)}
-                  disabled={index >= 8}
-                  data-testid={`move-down-${player.name}`}
+                  onClick={() => props.onMoveDown?.(props.player)}
+                  disabled={props.index >= 8}
+                  data-testid={`move-down-${props.player.name}`}
                 >
                   ↓
                 </Button>
@@ -102,8 +88,8 @@ const PlayerCardComponent = ({
               <Button
                 variant="outline-success"
                 size="sm"
-                onClick={() => onAddToLineup?.(player)}
-                data-testid={`add-${player.name}`}
+                onClick={() => props.onAddToLineup?.(props.player)}
+                data-testid={`add-${props.player.name}`}
               >
                 +
               </Button>
@@ -116,10 +102,8 @@ const PlayerCardComponent = ({
 };
 
 export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
-  (
-    { lineup, availablePlayers, onLineupChange, musicService, playerService },
-    ref
-  ) => {
+  (props, ref) => {
+    // Avoid destructuring per lint rules
     useImperativeHandle(ref, () => ({
       refreshData: () => {
         // This could trigger a re-render or data refresh if needed
@@ -128,38 +112,40 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
     }));
 
     const handleAddToLineup = (player: Player) => {
-      const newLineup = [...lineup, player];
-      const newAvailable = availablePlayers.filter((p) => p.id !== player.id);
-      onLineupChange(newLineup, newAvailable);
+      const newLineup = [...props.lineup, player];
+      const newAvailable = props.availablePlayers.filter(
+        (p) => p.id !== player.id
+      );
+      props.onLineupChange(newLineup, newAvailable);
     };
 
     const handleRemoveFromLineup = (player: Player) => {
-      const newLineup = lineup.filter((p) => p.id !== player.id);
-      const newAvailable = [...availablePlayers, player];
-      onLineupChange(newLineup, newAvailable);
+      const newLineup = props.lineup.filter((p) => p.id !== player.id);
+      const newAvailable = [...props.availablePlayers, player];
+      props.onLineupChange(newLineup, newAvailable);
     };
 
     const handleMoveUp = (player: Player) => {
-      const currentIndex = lineup.findIndex((p) => p.id === player.id);
+      const currentIndex = props.lineup.findIndex((p) => p.id === player.id);
       if (currentIndex > 0) {
-        const newLineup = [...lineup];
+        const newLineup = [...props.lineup];
         [newLineup[currentIndex], newLineup[currentIndex - 1]] = [
           newLineup[currentIndex - 1],
           newLineup[currentIndex],
         ];
-        onLineupChange(newLineup, availablePlayers);
+        props.onLineupChange(newLineup, props.availablePlayers);
       }
     };
 
     const handleMoveDown = (player: Player) => {
-      const currentIndex = lineup.findIndex((p) => p.id === player.id);
-      if (currentIndex < lineup.length - 1) {
-        const newLineup = [...lineup];
+      const currentIndex = props.lineup.findIndex((p) => p.id === player.id);
+      if (currentIndex < props.lineup.length - 1) {
+        const newLineup = [...props.lineup];
         [newLineup[currentIndex], newLineup[currentIndex + 1]] = [
           newLineup[currentIndex + 1],
           newLineup[currentIndex],
         ];
-        onLineupChange(newLineup, availablePlayers);
+        props.onLineupChange(newLineup, props.availablePlayers);
       }
     };
 
@@ -172,12 +158,12 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
               <div className="d-flex justify-content-between align-items-center">
                 <h2 className="h5 mb-0">Batting Lineup</h2>
                 <span className="badge bg-primary">
-                  {lineup.length} players
+                  {props.lineup.length} players
                 </span>
               </div>
             </div>
             <div className="card-body">
-              {lineup.length === 0 ? (
+              {props.lineup.length === 0 ? (
                 <div className="text-center text-muted p-4">
                   <p className="mb-0">
                     Click the + button next to players to add them to the
@@ -186,14 +172,13 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-2">
-                  {lineup.map((player, index) => (
+                  {props.lineup.map((player, index) => (
                     <PlayerCardComponent
                       key={player.id}
                       player={player}
                       index={index}
                       fromLineup={true}
-                      musicService={musicService}
-                      playerService={playerService}
+                      musicService={props.musicService}
                       onRemoveFromLineup={handleRemoveFromLineup}
                       onMoveUp={handleMoveUp}
                       onMoveDown={handleMoveDown}
@@ -215,25 +200,24 @@ export const OrderBuilder = forwardRef<OrderBuilderRef, OrderBuilderProps>(
               <div className="d-flex justify-content-between align-items-center">
                 <h2 className="h5 mb-0">Bench</h2>
                 <span className="badge bg-secondary">
-                  {availablePlayers.length} players
+                  {props.availablePlayers.length} players
                 </span>
               </div>
             </div>
             <div className="card-body">
-              {availablePlayers.length === 0 ? (
+              {props.availablePlayers.length === 0 ? (
                 <div className="text-center text-muted p-4">
                   <p className="mb-0">All players are in the lineup</p>
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-2">
-                  {availablePlayers.map((player, index) => (
+                  {props.availablePlayers.map((player, index) => (
                     <PlayerCardComponent
                       key={player.id}
                       player={player}
                       index={index}
                       fromLineup={false}
-                      musicService={musicService}
-                      playerService={playerService}
+                      musicService={props.musicService}
                       onAddToLineup={handleAddToLineup}
                     />
                   ))}

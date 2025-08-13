@@ -105,7 +105,7 @@ export class FetchHttpService implements HttpService {
     const id =
       timeoutMs && timeoutMs > 0
         ? setTimeout(() => controller.abort(), timeoutMs)
-        : null;
+        : undefined;
     try {
       const options: RequestInit = init
         ? { ...init, signal: controller.signal }

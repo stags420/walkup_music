@@ -1,61 +1,46 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
-import type { MusicService } from '@/modules/music/services/MusicService';
-import type { LineupService } from '@/modules/game/services/LineupService';
+
 import type { PlayerListRef } from '@/modules/game/components/PlayerList';
 import { PlayerList } from '@/modules/game/components/PlayerList';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
-import {
-  useLineupService,
-  useMusicService,
-  usePlayerService,
-} from '@/modules/app/hooks/useServices';
+import { useMusicService } from '@/modules/app/hooks/useServices';
+import { usePlayers } from '@/modules/game/hooks/usePlayers';
+import { useLineupActions } from '@/modules/game/hooks/useLineup';
 import './PlayerManager.css';
 
 interface PlayerManagerProps {
-  playerService?: PlayerService;
-  musicService?: MusicService;
-  lineupService?: LineupService;
   onStartGame: () => void;
 }
 
-export function PlayerManager({
-  playerService: injectedPlayerService,
-  musicService: injectedMusicService,
-  lineupService: injectedLineupService,
-  onStartGame,
-}: PlayerManagerProps) {
-  const defaultPlayerService = usePlayerService();
-  const defaultMusicService = useMusicService();
-  const defaultLineupService = useLineupService();
-  const playerService = injectedPlayerService ?? defaultPlayerService;
-  const musicService = injectedMusicService ?? defaultMusicService;
-  const lineupService = injectedLineupService ?? defaultLineupService;
+export function PlayerManager(props: PlayerManagerProps) {
+  const { onStartGame } = props;
+  const musicService = useMusicService();
+  const players = usePlayers();
+  const lineupActions = useLineupActions();
   const [showForm, setShowForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
   const [editingSegmentOnly, setEditingSegmentOnly] = useState(false);
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [, setPlayersState] = useState<Player[]>([]);
 
-  const playerListRef = useRef<PlayerListRef>(null);
+  const playerListRef = useRef<PlayerListRef>(undefined);
 
   // Load players on component mount
   useEffect(() => {
     const loadPlayers = async () => {
       try {
-        const allPlayers = await playerService.getAllPlayers();
-        setPlayers(allPlayers);
+        setPlayersState(players);
       } catch (error) {
         console.error('Failed to load players:', error);
       }
     };
 
     void loadPlayers();
-  }, [playerService]);
+  }, [players]);
 
   const handleAddPlayer = () => {
     setEditingPlayer(undefined);
@@ -68,8 +53,7 @@ export function PlayerManager({
     setEditingSegmentOnly(false);
     // Refresh the player list after save
     playerListRef.current?.refreshPlayers();
-    // Reload players to update local state
-    void playerService.getAllPlayers().then(setPlayers);
+    setPlayersState(players);
   };
 
   const handleCancelForm = () => {
@@ -83,8 +67,7 @@ export function PlayerManager({
     setEditingPlayer(undefined);
     // Refresh the player list after save
     playerListRef.current?.refreshPlayers();
-    // Reload players to update local state
-    void playerService.getAllPlayers().then(setPlayers);
+    setPlayersState(players);
   };
 
   const handleSegmentCancelled = () => {
@@ -94,10 +77,9 @@ export function PlayerManager({
 
   const handleStartGame = async () => {
     try {
-      const allPlayers = await playerService.getAllPlayers();
-      const playerIds = allPlayers.map((player) => player.id);
-      await lineupService.createBattingOrder(playerIds);
-      lineupService.startGame();
+      const playerIds = players.map((player) => player.id);
+      lineupActions.createBattingOrder(playerIds);
+      lineupActions.setGameActive(true);
       onStartGame();
     } catch (error) {
       console.error('Failed to start game:', error);
@@ -124,15 +106,10 @@ export function PlayerManager({
         </div>
       </div>
 
-      <PlayerList
-        ref={playerListRef}
-        playerService={playerService}
-        musicService={musicService}
-      />
+      <PlayerList ref={playerListRef} musicService={musicService} />
 
       {showForm && (
         <PlayerForm
-          playerService={playerService}
           musicService={musicService}
           player={editingPlayer}
           segmentEditOnly={editingSegmentOnly}
@@ -146,15 +123,9 @@ export function PlayerManager({
           track={editingPlayer.song.track}
           musicService={musicService}
           initialSegment={editingPlayer.song}
-          onConfirm={async (segment: SongSegment) => {
-            try {
-              await playerService.updatePlayer(editingPlayer.id, {
-                song: segment,
-              });
-              void handleSegmentSaved();
-            } catch (error) {
-              console.error('Failed to update timing:', error);
-            }
+          onConfirm={async (_segment: SongSegment) => {
+            // Segment-only editing handled by PlayerForm where applicable
+            void handleSegmentSaved();
           }}
           onCancel={handleSegmentCancelled}
         />

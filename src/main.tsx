@@ -30,7 +30,7 @@ const detectBasePath = (): string => {
 };
 
 // Get the current origin and convert localhost to 127.0.0.1 for Spotify compatibility
-const getRedirectUri = (basePath: string = '') => {
+const getRedirectUri = (basePath = '') => {
   const origin = globalThis.location.origin;
   // Replace localhost with 127.0.0.1 as required by Spotify
   const spotifyCompatibleOrigin = origin.replace('localhost', '127.0.0.1');

@@ -53,7 +53,7 @@ Example:
 
 - Light/Dark is optional. If used, leverage Bootstrap theming (`data-bs-theme="dark"`) and CSS variables.
 - Keep contrast AA or better; test with devtools. Avoid low-contrast text on brand colors.
-- Theme switch should persist (e.g., localStorage) but don’t build it unless needed.
+- Theme switch should persist via Zustand `persist` (storage-backed store); components should access theme through the store/service selector pattern, not `localStorage`.
 
 ## Accessibility (A11y)
 

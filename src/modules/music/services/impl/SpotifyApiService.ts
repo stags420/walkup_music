@@ -37,7 +37,7 @@ interface SpotifyApiTrack {
     name: string;
     images: Array<{ url: string; height: number; width: number }>;
   };
-  preview_url: string | null;
+  preview_url: string | undefined;
   duration_ms: number;
   uri: string;
 }
@@ -193,7 +193,9 @@ export class SpotifyApiService {
     const tracks = obj.tracks as Record<string, unknown>;
 
     if (!Array.isArray(tracks.items)) {
-      throw new Error('Invalid search response: tracks.items must be an array');
+      throw new TypeError(
+        'Invalid search response: tracks.items must be an array'
+      );
     }
 
     return data as SpotifySearchResponse;

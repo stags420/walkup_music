@@ -9,7 +9,7 @@ import type { AuthService } from '@/modules/auth';
  * Provider for creating SpotifyPlaybackService instances with proper dependencies
  */
 export class SpotifyPlaybackServiceProvider {
-  private static instance: SpotifyPlaybackService | null = null;
+  private static instance: SpotifyPlaybackService | undefined = undefined;
 
   /**
    * Get a singleton instance of SpotifyPlaybackService
@@ -42,6 +42,6 @@ export class SpotifyPlaybackServiceProvider {
    * Reset the singleton instance (useful for testing)
    */
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
   }
 }

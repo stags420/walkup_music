@@ -8,7 +8,7 @@
  * @param targetLength Target length of the code verifier (43-128 characters)
  * @returns Base64URL-encoded random string
  */
-export function generateCodeVerifier(targetLength: number = 128): string {
+export function generateCodeVerifier(targetLength = 128): string {
   if (targetLength < 43 || targetLength > 128) {
     throw new Error(
       'Code verifier length must be between 43 and 128 characters'

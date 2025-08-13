@@ -6,7 +6,7 @@ import { HttpServiceProvider } from '@/modules/core/providers/HttpServiceProvide
  * Provider for creating SpotifyApiService instances with proper dependencies
  */
 export class SpotifyApiServiceProvider {
-  private static instance: SpotifyApiService | null = null;
+  private static instance: SpotifyApiService | undefined = undefined;
 
   /**
    * Get a singleton instance of SpotifyApiService
@@ -31,6 +31,6 @@ export class SpotifyApiServiceProvider {
    * Reset the singleton instance (useful for testing)
    */
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
   }
 }

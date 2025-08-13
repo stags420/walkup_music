@@ -54,7 +54,7 @@ describe('SpotifyApiService', () => {
               ],
             },
             preview_url: 'https://example.com/preview.mp3',
-            duration_ms: 180000,
+            duration_ms: 180_000,
             uri: 'spotify:track:track1',
           },
         ],
@@ -90,7 +90,7 @@ describe('SpotifyApiService', () => {
 
     test('should throw error when no access token available', async () => {
       // Given no access token is available
-      mockAuthService.getAccessToken.mockResolvedValue(null);
+      mockAuthService.getAccessToken.mockResolvedValue();
 
       // When searching for tracks
       const searchPromise = spotifyApiService.searchTracks('test query');
@@ -122,7 +122,7 @@ describe('SpotifyApiService', () => {
         album: 'Test Album',
         albumArt: 'https://example.com/image.jpg',
         previewUrl: 'https://example.com/preview.mp3',
-        durationMs: 180000,
+        durationMs: 180_000,
         uri: 'spotify:track:track1',
       });
 
@@ -144,7 +144,7 @@ describe('SpotifyApiService', () => {
           items: [
             {
               ...mockSpotifyResponse.tracks.items[0],
-              preview_url: null,
+              preview_url: undefined,
             },
           ],
           total: 1,

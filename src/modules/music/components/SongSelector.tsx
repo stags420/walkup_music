@@ -3,31 +3,24 @@ import { Modal, Form, Alert, Spinner } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
-import type { MusicService } from '@/modules/music/services/MusicService';
 import { useMusicService } from '@/modules/app/hooks/useServices';
 import { TrackCard } from '@/modules/core';
 
 interface SongSelectorProps {
-  musicService?: MusicService;
   onSelectTrack: (track: SpotifyTrack) => void;
   onCancel: () => void;
   initialSearchQuery?: string;
 }
 
-export function SongSelector({
-  musicService: injectedMusicService,
-  onSelectTrack,
-  onCancel,
-  initialSearchQuery = '',
-}: SongSelectorProps) {
-  const defaultMusicService = useMusicService();
-  const musicService = injectedMusicService ?? defaultMusicService;
+export function SongSelector(props: SongSelectorProps) {
+  const { onSelectTrack, onCancel, initialSearchQuery = '' } = props;
+  const musicService = useMusicService();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [tracks, setTracks] = useState<SpotifyTrack[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
-  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>();
+  const [selectedTrackId, setSelectedTrackId] = useState<string | undefined>();
+  const [playingTrackId, setPlayingTrackId] = useState<string | undefined>();
 
   useEffect(() => {
     const searchTracks = async () => {
@@ -38,7 +31,7 @@ export function SongSelector({
 
       try {
         setLoading(true);
-        setError(null);
+        setError(undefined);
         const results = await musicService.searchTracks(searchQuery.trim());
         setTracks(results);
       } catch (error_) {
@@ -57,7 +50,7 @@ export function SongSelector({
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setSelectedTrackId(null);
+    setSelectedTrackId(undefined);
   };
 
   const handleTrackSelect = (track: SpotifyTrack) => {
@@ -70,7 +63,7 @@ export function SongSelector({
       // Stop any playing preview before confirming selection
       try {
         await musicService.pause();
-        setPlayingTrackId(null);
+        setPlayingTrackId(undefined);
       } catch (error) {
         console.debug('Failed to stop preview:', error);
       }
@@ -91,7 +84,7 @@ export function SongSelector({
       globalThis.window === undefined ||
       globalThis.process?.env.NODE_ENV?.includes('test')
     ) {
-      setPlayingTrackId(playingTrackId === track.id ? null : track.id);
+      setPlayingTrackId(playingTrackId === track.id ? undefined : track.id);
       return;
     }
 
@@ -99,20 +92,20 @@ export function SongSelector({
       // Stop current track
       try {
         await musicService.pause();
-        setPlayingTrackId(null);
+        setPlayingTrackId(undefined);
       } catch (error) {
         console.debug('Playback pause failed:', error);
-        setPlayingTrackId(null);
+        setPlayingTrackId(undefined);
       }
     } else {
       // Stop any currently playing track and start new one
       try {
         await musicService.pause(); // Stop any current playback
-        await musicService.previewTrack(track.uri, 0, 30000); // 30 second preview
+        await musicService.previewTrack(track.uri, 0, 30_000); // 30 second preview
         setPlayingTrackId(track.id);
       } catch (error) {
         console.debug('Playback preview failed:', error);
-        setPlayingTrackId(null);
+        setPlayingTrackId(undefined);
       }
     }
   };
@@ -128,7 +121,7 @@ export function SongSelector({
           console.debug('Failed to stop preview on unmount:', error);
         }
       })();
-      setPlayingTrackId(null);
+      setPlayingTrackId(undefined);
     };
   }, [musicService]);
 
@@ -140,7 +133,7 @@ export function SongSelector({
       } catch (error) {
         console.debug('Failed to stop preview on tracks change:', error);
       }
-      setPlayingTrackId(null);
+      setPlayingTrackId(undefined);
     })();
   }, [tracks, musicService]);
 

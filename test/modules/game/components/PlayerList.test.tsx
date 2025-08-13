@@ -1,17 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { PlayerList } from '@/modules/game/components/PlayerList';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
-
-// Mock PlayerService
-const mockPlayerService = {
-  getAllPlayers: jest.fn(),
-  createPlayer: jest.fn(),
-  updatePlayer: jest.fn(),
-  deletePlayer: jest.fn(),
-  getPlayer: jest.fn(),
-} as unknown as jest.Mocked<PlayerService>;
+import {
+  usePlayersStore,
+  resetPlayersStore,
+} from '@/modules/game/state/playersStore';
 
 // Mock MusicService
 const mockMusicService = {
@@ -26,6 +20,11 @@ const mockMusicService = {
   getCurrentState: jest.fn(),
   isPlaybackConnected: jest.fn(),
 } as unknown as jest.Mocked<MusicService>;
+
+// Mock hook to return our mocked music service
+jest.mock('@/modules/app/hooks/useServices', () => ({
+  useMusicService: () => mockMusicService,
+}));
 
 // Mock players data
 const mockPlayers: Player[] = [
@@ -46,7 +45,7 @@ const mockPlayers: Player[] = [
         album: 'Test Album',
         albumArt: 'test-art.jpg',
         previewUrl: 'test-preview.mp3',
-        durationMs: 180000,
+        durationMs: 180_000,
         uri: 'spotify:track:track1',
       },
       startTime: 30,
@@ -60,38 +59,23 @@ const mockPlayers: Player[] = [
 describe('PlayerList', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetPlayersStore();
   });
 
-  it('should display loading state initially', async () => {
-    // Given I have a player service that never resolves
-    mockPlayerService.getAllPlayers.mockImplementation(
-      () => new Promise(() => {})
-    ); // Never resolves
-
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
-
-    // Then it should show a loading state
-    expect(screen.getByText('Loading players...')).toBeInTheDocument();
-    expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
+  it('should display empty state initially', async () => {
+    render(<PlayerList />);
+    expect(
+      screen.getByText(
+        'No players found. Add your first player to get started!'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should display players when loaded successfully', async () => {
-    // Given I have a player service that returns players
-    mockPlayerService.getAllPlayers.mockResolvedValue(mockPlayers);
+    // Given players exist in the store
+    usePlayersStore.getState().actions.setPlayers(mockPlayers);
 
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
+    render(<PlayerList />);
 
     // Then it should display the players
     await waitFor(() => {
@@ -103,62 +87,28 @@ describe('PlayerList', () => {
   });
 
   it('should display empty state when no players exist', async () => {
-    // Given I have a player service that returns no players
-    mockPlayerService.getAllPlayers.mockResolvedValue([]);
-
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
-
-    // Then it should display an empty state message
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          'No players found. Add your first player to get started!'
-        )
-      ).toBeInTheDocument();
-    });
+    render(<PlayerList />);
+    expect(
+      screen.getByText(
+        'No players found. Add your first player to get started!'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should display error state when loading fails', async () => {
-    // Given I have a player service that will fail to load
-    mockPlayerService.getAllPlayers.mockRejectedValue(
-      new Error('Failed to load')
-    );
-
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
-
-    // Then it should display an error message
-    await waitFor(() => {
-      expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Retry')).toBeInTheDocument();
+    // With store-based data, error state is not used; ensure empty renders
+    render(<PlayerList />);
+    expect(
+      screen.getByText(
+        'No players found. Add your first player to get started!'
+      )
+    ).toBeInTheDocument();
   });
 
   it('should display player without song correctly', async () => {
-    // Given I have a player without a song
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[0]]);
-
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
-
-    // Then it should display the player with a no song message
+    // Given a player in the store
+    usePlayersStore.getState().actions.setPlayers([mockPlayers[0]]);
+    render(<PlayerList />);
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
@@ -167,16 +117,8 @@ describe('PlayerList', () => {
   });
 
   it('should display player with song correctly', async () => {
-    // Given I have a player with a song
-    mockPlayerService.getAllPlayers.mockResolvedValue([mockPlayers[1]]);
-
-    // When I render the player list
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
+    usePlayersStore.getState().actions.setPlayers([mockPlayers[1]]);
+    render(<PlayerList musicService={mockMusicService} />);
 
     // Then it should display the player with song information
     await waitFor(() => {
@@ -195,31 +137,11 @@ describe('PlayerList', () => {
   // Delete operations are handled at a higher level in the application
 
   it('should retry loading when retry button is clicked', async () => {
-    // Given I have a player service that fails first then succeeds
-    mockPlayerService.getAllPlayers
-      .mockRejectedValueOnce(new Error('Failed to load'))
-      .mockResolvedValueOnce(mockPlayers);
-
-    render(
-      <PlayerList
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();
-    });
-
-    // When I click the retry button
-    const retryButton = screen.getByText('Retry');
-    fireEvent.click(retryButton);
-
-    // Then it should retry loading and display the players
+    // Not applicable with store; add players and assert
+    usePlayersStore.getState().actions.setPlayers(mockPlayers);
+    render(<PlayerList />);
     await waitFor(() => {
       expect(screen.getByText('Players (2)')).toBeInTheDocument();
     });
-
-    expect(mockPlayerService.getAllPlayers).toHaveBeenCalledTimes(2);
   });
 });

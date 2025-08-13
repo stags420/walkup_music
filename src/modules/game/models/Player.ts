@@ -27,15 +27,19 @@ export const Player = {
     const createdAt = obj.createdAt
       ? new Date(obj.createdAt as string)
       : new Date();
-    if (isNaN(createdAt.getTime())) {
-      throw new Error('Invalid player data: createdAt must be a valid date');
+    if (Number.isNaN(createdAt.getTime())) {
+      throw new TypeError(
+        'Invalid player data: createdAt must be a valid date'
+      );
     }
 
     const updatedAt = obj.updatedAt
       ? new Date(obj.updatedAt as string)
       : new Date();
-    if (isNaN(updatedAt.getTime())) {
-      throw new Error('Invalid player data: updatedAt must be a valid date');
+    if (Number.isNaN(updatedAt.getTime())) {
+      throw new TypeError(
+        'Invalid player data: updatedAt must be a valid date'
+      );
     }
 
     let song: SongSegment | undefined;

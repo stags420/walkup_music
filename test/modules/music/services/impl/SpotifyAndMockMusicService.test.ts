@@ -186,7 +186,7 @@ describe('MockMusicService', () => {
     it('should delegate playTrack to playback service', async () => {
       // Given a track URI and start position
       const uri = 'spotify:track:test123';
-      const startPositionMs = 30000;
+      const startPositionMs = 30_000;
 
       // When playing a track
       await musicService.playTrack(uri, startPositionMs);
@@ -216,7 +216,7 @@ describe('MockMusicService', () => {
 
     it('should throw error for seek (not implemented)', async () => {
       // Given a position in milliseconds
-      const positionMs = 60000;
+      const positionMs = 60_000;
 
       // When trying to seek to position
       const seekPromise = musicService.seek(positionMs);
@@ -286,7 +286,7 @@ describe('SpotifyMusicService', () => {
           album: 'Test Album',
           albumArt: 'https://example.com/art.jpg',
           previewUrl: 'https://example.com/preview.mp3',
-          durationMs: 180000,
+          durationMs: 180_000,
           uri: 'spotify:track:track1',
         },
       ];
@@ -331,7 +331,7 @@ describe('SpotifyMusicService', () => {
     it('should delegate playTrack to playback service', async () => {
       // Given a track URI and start position
       const uri = 'spotify:track:test123';
-      const startPositionMs = 30000;
+      const startPositionMs = 30_000;
 
       // When playing a track
       await musicService.playTrack(uri, startPositionMs);
@@ -361,7 +361,7 @@ describe('SpotifyMusicService', () => {
 
     it('should throw error for seek (not implemented)', async () => {
       // Given a position in milliseconds
-      const positionMs = 60000;
+      const positionMs = 60_000;
 
       // When trying to seek to position
       const seekPromise = musicService.seek(positionMs);

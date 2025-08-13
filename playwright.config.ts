@@ -113,12 +113,12 @@ export default defineConfig({
     trace: 'on-first-retry',
     
     /* Increase timeout for mobile tests */
-    actionTimeout: 15000,
-    navigationTimeout: 30000,
+    actionTimeout: 15_000,
+    navigationTimeout: 30_000,
   },
   
   /* Increase test timeout */
-  timeout: 60000,
+  timeout: 60_000,
 
   /* Configure projects for major browsers */
   projects: [

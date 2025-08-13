@@ -1,35 +1,43 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BattingOrderManager } from '@/modules/game/components/BattingOrderManager';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
-import type { LineupService } from '@/modules/game/services/LineupService';
 import type { Player } from '@/modules/game/models/Player';
-import type { BattingOrder } from '@/modules/game/models/BattingOrder';
+import {
+  usePlayersStore,
+  resetPlayersStore,
+} from '@/modules/game/state/playersStore';
+import {
+  useLineupStore,
+  resetLineupStore,
+} from '@/modules/game/state/lineupStore';
 
 // Mock the OrderBuilder component
 jest.mock('@/modules/game/components/OrderBuilder', () => ({
-  OrderBuilder: jest.fn(({ onLineupChange }) => {
-    return (
-      <div data-testid="order-builder">
-        <button
-          onClick={() => onLineupChange([], [])}
-          data-testid="mock-lineup-change"
-        >
-          Mock Lineup Change
-        </button>
-      </div>
-    );
-  }),
+  OrderBuilder: jest.fn(
+    (props: { onLineupChange: (a: unknown[], b: unknown[]) => void }) => {
+      const { onLineupChange } = props;
+      return (
+        <div data-testid="order-builder">
+          <button
+            onClick={() => onLineupChange([], [])}
+            data-testid="mock-lineup-change"
+          >
+            Mock Lineup Change
+          </button>
+        </div>
+      );
+    }
+  ),
 }));
 
 // Mock the PlayerForm component
 jest.mock('@/modules/game/components/PlayerForm', () => ({
-  PlayerForm: jest.fn(({ onSave, onCancel }) => (
+  PlayerForm: jest.fn((props: { onSave: () => void; onCancel: () => void }) => (
     <div>
-      <button onClick={onSave} data-testid="save-player">
+      <button onClick={props.onSave} data-testid="save-player">
         Save
       </button>
-      <button onClick={onCancel} data-testid="cancel-player">
+      <button onClick={props.onCancel} data-testid="cancel-player">
         Cancel
       </button>
     </div>
@@ -38,25 +46,34 @@ jest.mock('@/modules/game/components/PlayerForm', () => ({
 
 // Mock the SegmentSelector component
 jest.mock('@/modules/music', () => ({
-  SegmentSelector: jest.fn(({ onConfirm, onCancel }) => (
-    <div data-testid="segment-selector">
-      <button
-        onClick={() => onConfirm({} as unknown)}
-        data-testid="confirm-segment"
-      >
-        Confirm
-      </button>
-      <button onClick={onCancel} data-testid="cancel-segment">
-        Cancel
-      </button>
-    </div>
-  )),
+  SegmentSelector: jest.fn(
+    (props: {
+      onConfirm: (segment: unknown) => void;
+      onCancel: () => void;
+    }) => (
+      <div data-testid="segment-selector">
+        <button
+          onClick={() => props.onConfirm({} as unknown)}
+          data-testid="confirm-segment"
+        >
+          Confirm
+        </button>
+        <button onClick={props.onCancel} data-testid="cancel-segment">
+          Cancel
+        </button>
+      </div>
+    )
+  ),
+}));
+
+const useMusicService = jest.fn<MusicService, []>();
+
+jest.mock('@/modules/app/hooks/useServices', () => ({
+  useMusicService: () => useMusicService(),
 }));
 
 describe('BattingOrderManager', () => {
-  let mockPlayerService: jest.Mocked<PlayerService>;
   let mockMusicService: jest.Mocked<MusicService>;
-  let mockLineupService: jest.Mocked<LineupService>;
   let mockOnStartGame: jest.Mock;
 
   const mockPlayers: Player[] = [
@@ -74,47 +91,14 @@ describe('BattingOrderManager', () => {
     },
   ];
 
-  const mockBattingOrder: BattingOrder = {
-    id: 'order-1',
-    name: 'Test Lineup',
-    playerIds: ['1'],
-    currentPosition: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   beforeEach(() => {
-    mockPlayerService = {
-      getAllPlayers: jest.fn().mockResolvedValue(mockPlayers),
-      deletePlayer: jest.fn().mockResolvedValue(undefined),
-      updatePlayer: jest.fn().mockResolvedValue(mockPlayers[0]),
-      createPlayer: jest.fn(),
-      getPlayer: jest.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockMusicService = {} as any;
-
-    mockLineupService = {
-      getCurrentBattingOrder: jest.fn().mockReturnValue(mockBattingOrder),
-      createBattingOrder: jest.fn().mockResolvedValue(mockBattingOrder),
-      startGame: jest.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-
-    mockOnStartGame = jest.fn();
+    useMusicService.mockReturnValue(mockMusicService);
+    resetPlayersStore();
+    resetLineupStore();
   });
 
   const renderComponent = () => {
-    return render(
-      <BattingOrderManager
-        playerService={mockPlayerService}
-        musicService={mockMusicService}
-        lineupService={mockLineupService}
-        onStartGame={mockOnStartGame}
-      />
-    );
+    return render(<BattingOrderManager onStartGame={mockOnStartGame} />);
   };
 
   it('renders the lineup header', async () => {
@@ -134,6 +118,7 @@ describe('BattingOrderManager', () => {
   });
 
   it('shows the Start Game button when players are available', async () => {
+    usePlayersStore.getState().actions.setPlayers(mockPlayers);
     renderComponent();
 
     await waitFor(() => {
@@ -188,7 +173,8 @@ describe('BattingOrderManager', () => {
     });
   });
 
-  it('starts game with existing lineup when Start Game is clicked', async () => {
+  it('starts game with players when Start Game is clicked', async () => {
+    usePlayersStore.getState().actions.setPlayers(mockPlayers);
     renderComponent();
 
     await waitFor(() => {
@@ -196,9 +182,11 @@ describe('BattingOrderManager', () => {
       fireEvent.click(startButton);
     });
 
-    expect(mockLineupService.createBattingOrder).toHaveBeenCalledWith(['1']);
-    expect(mockLineupService.startGame).toHaveBeenCalled();
-    expect(mockOnStartGame).toHaveBeenCalled();
+    await waitFor(() => {
+      const order = useLineupStore.getState().currentBattingOrder;
+      expect(order?.playerIds).toEqual(['1', '2']);
+    });
+    expect(useLineupStore.getState().isGameActive).toBe(true);
   });
 
   it('renders the OrderBuilder component', async () => {
@@ -211,10 +199,8 @@ describe('BattingOrderManager', () => {
 
   it('loads players and lineup on mount', async () => {
     renderComponent();
-
     await waitFor(() => {
-      expect(mockPlayerService.getAllPlayers).toHaveBeenCalled();
-      expect(mockLineupService.getCurrentBattingOrder).toHaveBeenCalled();
+      expect(screen.getByText('Lineup')).toBeInTheDocument();
     });
   });
 
@@ -231,11 +217,7 @@ describe('BattingOrderManager', () => {
   });
 
   it('does not show Start Game button when no players are available', async () => {
-    mockPlayerService.getAllPlayers.mockResolvedValueOnce([]);
-    mockLineupService.getCurrentBattingOrder.mockReturnValueOnce(null);
-
     renderComponent();
-
     await waitFor(() => {
       expect(screen.queryByText('Start Game')).not.toBeInTheDocument();
     });

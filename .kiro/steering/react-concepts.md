@@ -83,6 +83,74 @@ export const usePlayerFormStore = create<PlayerFormState>((set) => ({
 
 ---
 
+### **Module-local State Hooks (abstract local vs. remote)**
+
+Application code should not know if data is persisted locally (Zustand + persist) or fetched remotely (TanStack Query). Never expose the store directly. Expose only custom hooks from each feature module’s `hooks/` directory.
+
+- Hooks should internally apply selectors and surface meaningful names: e.g., `useSettingsTheme()`, `useSettingsActions()`.
+- Group Zustand actions under a stable `actions` object in the store and select that object to avoid re-renders when only state changes. See “Working with Zustand” by TkDodo: [Working with Zustand | TkDodo’s blog](https://tkdodo.eu/blog/working-with-zustand).
+
+Example pattern for a view store + hooks (module-local):
+
+```ts
+// src/modules/app/state/settingsStore.ts
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+type SettingsState = {
+  theme: ThemeMode;
+  actions: {
+    setTheme: (mode: ThemeMode) => void;
+  };
+};
+
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      theme: 'dark',
+      actions: {
+        setTheme: (mode) => set({ theme: mode }),
+      },
+    }),
+    { name: 'app-settings', storage: createJSONStorage(() => localStorage) }
+  )
+);
+
+// src/modules/app/hooks/useSettingsTheme.ts
+import { useSettingsStore } from '../state/settingsStore';
+export function useSettingsTheme() {
+  return useSettingsStore((s) => s.theme);
+}
+
+// src/modules/app/hooks/useSettingsActions.ts
+import { useSettingsStore } from '../state/settingsStore';
+export function useSettingsActions() {
+  return useSettingsStore((s) => s.actions);
+}
+```
+
+Example pattern for remote data via TanStack Query as hooks (module-local):
+
+```ts
+// src/modules/music/hooks/useSearchTracks.ts
+import { useQuery } from '@tanstack/react-query';
+
+export function useSearchTracks(query: string) {
+  return useQuery({
+    queryKey: ['tracks', 'search', query],
+    queryFn: () => api.searchTracks(query),
+    // select shapes data and minimizes downstream render churn
+    select: (tracks) => tracks.map((t) => ({ id: t.id, name: t.name, artists: t.artists })),
+  });
+}
+```
+
+This keeps components decoupled from how/where state lives, while still allowing fine-grained selection for optimal render behavior.
+
+---
+
 ### **Dependency Injection with Hooks (services outside React)**
 
 Services are app-singletons created outside React at bootstrap. Access them via tiny hooks that read from a typed container (see `steering/dependency-injection.md`).
@@ -168,7 +236,7 @@ test('renders player list', () => {
 
 ### **Persistence with Zustand**
 
-Use Zustand's persist middleware for localStorage and cookies:
+Use Zustand's persist middleware for localStorage and cookies. Prefer a custom `StateStorage` adapter rather than interacting with cookies/localStorage directly in application code.
 
 ```ts
 // For localStorage
@@ -184,22 +252,25 @@ export const useSettingsStore = create<SettingsState>()(
   )
 );
 
-// For cookies with custom storage
+// For cookies with custom storage (StateStorage adapter)
 import { createJSONStorage } from 'zustand/middleware';
 
+// Minimal cookie-backed storage; in production prefer a utility like `typescript-cookie`.
+// See: https://github.com/pmndrs/zustand/discussions/1716
 const cookieStorage = {
   getItem: (name: string) => {
-    const value = document.cookie
+    const match = document.cookie
       .split('; ')
-      .find(row => row.startsWith(`${name}=`))
-      ?.split('=')[1];
-    return value ? JSON.parse(decodeURIComponent(value)) : null;
+      .find((row) => row.startsWith(`${encodeURIComponent(name)}=`));
+    const raw = match?.split('=')[1];
+    return raw ? decodeURIComponent(raw) : null;
   },
-  setItem: (name: string, value: any) => {
-    document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; path=/`;
+  setItem: (name: string, value: string) => {
+    const secure = globalThis.location.protocol === 'https:';
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; samesite=strict${secure ? '; secure' : ''}`;
   },
   removeItem: (name: string) => {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   },
 };
 
@@ -290,7 +361,7 @@ function PlayerForm() {
 
 ### Zustand and Re-renders
 
-Zustand automatically handles subscriptions and only re-renders components that use changed state:
+Zustand automatically handles subscriptions and only re-renders components that use changed state. Always subscribe with selectors to minimize re-renders:
 
 ```tsx
 // Only re-renders when user changes, not when theme changes

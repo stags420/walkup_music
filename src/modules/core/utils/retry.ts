@@ -49,7 +49,7 @@ async function withTimeout<T>(
   timeoutMs?: number
 ): Promise<T> {
   if (!timeoutMs || timeoutMs <= 0) return fn();
-  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined = undefined;
   try {
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutHandle = setTimeout(

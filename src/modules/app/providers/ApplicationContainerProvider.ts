@@ -5,15 +5,12 @@ import type { MusicService } from '@/modules/music/services/MusicService';
 import type { SpotifyPlaybackService } from '@/modules/music/services/impl/SpotifyPlaybackService';
 import { HttpServiceProvider } from '@/modules/core/providers/HttpServiceProvider';
 import { AuthServiceProvider } from '@/modules/auth/providers/AuthServiceProvider';
-import { StorageServiceProvider } from '@/modules/storage';
-import { PlayerServiceProvider } from '@/modules/game/providers/PlayerServiceProvider';
 import { SpotifyApiServiceProvider } from '@/modules/music/providers/SpotifyApiServiceProvider';
 import { SpotifyPlaybackServiceProvider } from '@/modules/music/providers/SpotifyPlaybackServiceProvider';
 import { MusicServiceProvider } from '@/modules/music/providers/MusicServiceProvider';
-import { LineupServiceProvider } from '@/modules/game/providers/LineupServiceProvider';
 
 export class ApplicationContainerProvider {
-  private static instance: AppContainer | null = null;
+  private static instance: AppContainer | undefined = undefined;
   private static isInitialized = false;
 
   static initialize(): void {
@@ -24,11 +21,9 @@ export class ApplicationContainerProvider {
     // Auth service via provider
     const authService = AuthServiceProvider.getOrCreate();
 
-    // Storage via provider
-    const storageService = StorageServiceProvider.getOrCreate();
+    // Storage removed; using Zustand/TanStack for state
 
-    // Game services via provider
-    const playerService = PlayerServiceProvider.getOrCreate();
+    // Game state via Zustand hooks; no service creation
 
     // Music service dependencies via providers
     const spotifyApiService =
@@ -52,23 +47,15 @@ export class ApplicationContainerProvider {
       config.mockAuth
     );
 
-    // Lineup service via provider
-    const lineupService = LineupServiceProvider.getOrCreate(
-      playerService,
-      musicService,
-      storageService
-    );
+    // Lineup state via Zustand hooks; no service creation
 
     this.instance = {
       config,
       httpService,
       authService,
-      storageService,
-      playerService,
       spotifyApiService,
       spotifyPlaybackService,
       musicService,
-      lineupService,
     };
     this.isInitialized = true;
   }
@@ -83,7 +70,7 @@ export class ApplicationContainerProvider {
   }
 
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
     this.isInitialized = false;
   }
 }

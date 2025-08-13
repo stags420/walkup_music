@@ -24,20 +24,21 @@ interface TrackCardProps {
 }
 
 const formatDuration = (ms: number) => {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = Math.floor((ms % 60000) / 1000);
+  const minutes = Math.floor(ms / 60_000);
+  const seconds = Math.floor((ms % 60_000) / 1000);
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export function TrackCard({
-  track,
-  isSelected = false,
-  onSelect,
-  onPreview,
-  isPlaying = false,
-  variant = 'compact',
-  'data-testid': dataTestId,
-}: TrackCardProps) {
+export function TrackCard(props: TrackCardProps) {
+  const {
+    track,
+    isSelected = false,
+    onSelect,
+    onPreview,
+    isPlaying = false,
+    variant = 'compact',
+    'data-testid': dataTestId,
+  } = props;
   const albumArt = track.album.images[0]?.url;
   const artistNames = track.artists.map((artist) => artist.name).join(', ');
 

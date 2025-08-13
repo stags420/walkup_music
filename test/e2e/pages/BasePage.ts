@@ -37,7 +37,7 @@ export class BasePage {
   /**
    * Wait for an element to be visible
    */
-  async waitForSelector(selector: string, timeout = 10000): Promise<Locator> {
+  async waitForSelector(selector: string, timeout = 10_000): Promise<Locator> {
     await this.page.waitForSelector(selector, { timeout });
     return this.page.locator(selector);
   }
@@ -75,14 +75,15 @@ export class BasePage {
   /**
    * Get text content of an element
    */
-  async getTextContent(selector: string): Promise<string | null>;
-  async getTextContent(locator: Locator): Promise<string | null>;
+  async getTextContent(selector: string): Promise<string | undefined>;
+  async getTextContent(locator: Locator): Promise<string | undefined>;
   async getTextContent(
     selectorOrLocator: string | Locator
-  ): Promise<string | null> {
-    return await (typeof selectorOrLocator === 'string'
+  ): Promise<string | undefined> {
+    const result = await (typeof selectorOrLocator === 'string'
       ? this.page.textContent(selectorOrLocator)
       : selectorOrLocator.textContent());
+    return result === null ? undefined : result;
   }
 
   /**

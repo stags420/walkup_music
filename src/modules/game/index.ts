@@ -2,9 +2,8 @@
 export { Player } from '@/modules/game/models/Player';
 export { BattingOrder } from '@/modules/game/models/BattingOrder';
 
-export { PlayerService } from '@/modules/game/services/PlayerService';
-export type { LineupService } from '@/modules/game/services/LineupService';
-export { LineupServiceImpl } from '@/modules/game/services/LineupService';
+export { usePlayers, usePlayersActions } from '@/modules/game/hooks/usePlayers';
+export { useLineupActions } from '@/modules/game/hooks/useLineup';
 
 // Components
 export { PlayerManager } from '@/modules/game/components/PlayerManager';

@@ -3,23 +3,19 @@ import type { AuthContextType } from '@/modules/auth';
 import { useAuth, LoginPage, CallbackPage } from '@/modules/auth';
 import { BattingOrderManager, GameMode } from '@/modules/game';
 import { AppConfigProvider } from '@/modules/app';
-import {
-  usePlayerService,
-  useMusicService,
-  useLineupService,
-} from '@/modules/app/hooks/useServices';
 import { useState, useEffect } from 'react';
-import {
-  useSettingsStore,
-  type ThemeMode,
-} from '@/modules/storage/hooks/useSettingsStore';
+import { useSettingsTheme } from '@/modules/app/hooks/useSettingsTheme';
+import { useGameActive } from '@/modules/game/hooks/useLineup';
+import { useSettingsActions } from '@/modules/app/hooks/useSettingsActions';
+import type { ThemeMode } from '@/modules/app/state/settingsStore';
 import './App.css';
 
 interface AppContentProps {
   auth: AuthContextType;
 }
 
-function AppContent({ auth }: AppContentProps) {
+function AppContent(props: AppContentProps) {
+  const auth = props.auth;
   return (
     <div className="App">
       <Routes>
@@ -40,33 +36,15 @@ function AppContent({ auth }: AppContentProps) {
 }
 
 // Authenticated portion of the app with dependencies injected as props
-function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
-  const [isGameMode, setIsGameMode] = useState(false);
+function AuthenticatedApp(props: { auth: AuthContextType }) {
+  const auth = props.auth;
+  const isGameMode = useGameActive();
   const [isLoading, setIsLoading] = useState(true);
 
-  const playerService = usePlayerService();
-  const musicService = useMusicService();
-  const lineupService = useLineupService();
-
   useEffect(() => {
-    const checkGameState = async () => {
-      try {
-        await lineupService.loadGameState();
-        if (lineupService.isGameInProgress()) {
-          setIsGameMode(true);
-        }
-      } catch (error) {
-        console.error('Failed to load game state:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void checkGameState();
-  }, [lineupService, auth.state.isAuthenticated]);
-
-  const handleStartGame = () => setIsGameMode(true);
-  const handleEndGame = () => setIsGameMode(false);
+    // With Zustand lineup store, assume not in game on initial load
+    setIsLoading(false);
+  }, [auth.state.isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -98,21 +76,7 @@ function AuthenticatedApp({ auth }: { auth: AuthContextType }) {
         <div className="container">
           <div className="row">
             <div className="col-12">
-              {isGameMode ? (
-                <GameMode
-                  lineupService={lineupService}
-                  playerService={playerService}
-                  musicService={musicService}
-                  onEndGame={handleEndGame}
-                />
-              ) : (
-                <BattingOrderManager
-                  playerService={playerService}
-                  musicService={musicService}
-                  lineupService={lineupService}
-                  onStartGame={handleStartGame}
-                />
-              )}
+              {isGameMode ? <GameMode /> : <BattingOrderManager />}
             </div>
           </div>
         </div>
@@ -129,7 +93,8 @@ function AppContainer() {
 export function App() {
   const config = AppConfigProvider.get();
   const basename = config.basePath || '/';
-  const { theme, setTheme } = useSettingsStore();
+  const theme = useSettingsTheme();
+  const { setTheme } = useSettingsActions();
   const auth = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);

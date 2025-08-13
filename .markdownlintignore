@@ -1,0 +1,14 @@
+# Ignore third-party and build artifacts
+node_modules/**
+dist/**
+dist-mocked/**
+
+# Ignore generated or external reports
+test/reports/**
+
+# Ignore internal steering/notes and editor artifacts
+.kiro/**
+.cursor/**
+steering/**
+docs/**
+

@@ -1,58 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { LineupService } from '@/modules/game/services/LineupService';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
-import type { MusicService } from '@/modules/music/services/MusicService';
-import {
-  useLineupService,
-  useMusicService,
-  usePlayerService,
-} from '@/modules/app/hooks/useServices';
+import { useMusicService } from '@/modules/app/hooks/useServices';
+import { usePlayers } from '@/modules/game/hooks/usePlayers';
+import { useBattingOrder, useGameActive } from '@/modules/game/hooks/useLineup';
 import { PlayerCard } from '@/modules/core/components';
 // Using Bootstrap classes instead of custom CSS
 
-interface CurrentBatterDisplayProps {
-  lineupService?: LineupService;
-  playerService?: PlayerService;
-  musicService?: MusicService;
-}
+export function CurrentBatterDisplay() {
+  const currentBattingOrder = useBattingOrder();
+  const isGameActive = useGameActive();
+  const players = usePlayers();
+  const musicService = useMusicService();
 
-export function CurrentBatterDisplay({
-  lineupService: injectedLineupService,
-  playerService: injectedPlayerService,
-  musicService: injectedMusicService,
-}: CurrentBatterDisplayProps) {
-  const defaultLineupService = useLineupService();
-  const defaultPlayerService = usePlayerService();
-  const defaultMusicService = useMusicService();
-  const lineupService = injectedLineupService ?? defaultLineupService;
-  const playerService = injectedPlayerService ?? defaultPlayerService;
-  const musicService = injectedMusicService ?? defaultMusicService;
-  const [currentBatter, setCurrentBatter] = useState<Player | null>(null);
-  const [onDeckBatter, setOnDeckBatter] = useState<Player | null>(null);
-  const [inTheHoleBatter, setInTheHoleBatter] = useState<Player | null>(null);
+  const playersById = useMemo(() => {
+    const map = new Map<string, Player>();
+    for (const player of players) map.set(player.id, player);
+    return map;
+  }, [players]);
 
-  // Refresh batter information
-  const refreshBatters = useCallback(async () => {
-    try {
-      const [current, onDeck, inTheHole] = await Promise.all([
-        lineupService.getCurrentBatter(),
-        lineupService.getOnDeckBatter(),
-        lineupService.getInTheHoleBatter(),
-      ]);
+  const getBatterAtOffset = (offset: number): Player | undefined => {
+    if (!currentBattingOrder || !isGameActive) return undefined;
+    const { playerIds, currentPosition } = currentBattingOrder;
+    if (playerIds.length === 0) return undefined;
+    const pos = (currentPosition + offset) % playerIds.length;
+    return playersById.get(playerIds[pos]);
+  };
 
-      setCurrentBatter(current);
-      setOnDeckBatter(onDeck);
-      setInTheHoleBatter(inTheHole);
-    } catch (error) {
-      console.error('Failed to refresh batters:', error);
-    }
-  }, [lineupService]);
-
-  // Refresh batters when component mounts or lineup service changes
-  useEffect(() => {
-    void refreshBatters();
-  }, [refreshBatters]);
+  const currentBatter = getBatterAtOffset(0);
+  const lineupLength = currentBattingOrder?.playerIds.length ?? 0;
+  const onDeckBatter = lineupLength >= 2 ? getBatterAtOffset(1) : undefined;
+  const inTheHoleBatter = lineupLength >= 3 ? getBatterAtOffset(2) : undefined;
 
   const renderCurrentBatter = () => {
     if (!currentBatter) {
@@ -80,9 +57,7 @@ export function CurrentBatterDisplay({
           size="large"
           displayAlbumArt={true}
           allowPlayMusic={true}
-          playerService={playerService}
           musicService={musicService}
-          onPlayerUpdated={refreshBatters}
           className="current-batter-card"
         />
       </div>
@@ -90,18 +65,18 @@ export function CurrentBatterDisplay({
   };
 
   const renderSecondaryBatter = (
-    batter: Player | null,
+    batter: Player | undefined,
     position: 'on-deck' | 'in-the-hole'
   ) => {
     const positionLabels = {
       'on-deck': 'On Deck',
       'in-the-hole': 'In The Hole',
-    };
+    } as const;
 
     const borderColors = {
       'on-deck': '#1db954',
       'in-the-hole': '#666666',
-    };
+    } as const;
 
     if (!batter) {
       return (
@@ -135,9 +110,7 @@ export function CurrentBatterDisplay({
           displayAlbumArt={false}
           allowPlayMusic={false}
           borderColor={borderColors[position]}
-          playerService={playerService}
           musicService={musicService}
-          onPlayerUpdated={refreshBatters}
           className={`secondary-batter-card ${position}`}
         />
       </div>
@@ -146,14 +119,12 @@ export function CurrentBatterDisplay({
 
   return (
     <div data-testid="current-batter-display">
-      {/* Current batter - prominent display */}
       <div className="row mb-4">
         <div className="col-12 col-md-8 col-lg-6 mx-auto">
           {renderCurrentBatter()}
         </div>
       </div>
 
-      {/* Secondary batters - on deck and in the hole */}
       <div className="row">
         <div className="col-12 col-md-6 mb-3">
           {renderSecondaryBatter(onDeckBatter, 'on-deck')}

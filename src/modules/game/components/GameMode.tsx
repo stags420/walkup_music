@@ -1,36 +1,12 @@
 import { useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
-import type { LineupService } from '@/modules/game/services/LineupService';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
-import type { MusicService } from '@/modules/music/services/MusicService';
-import {
-  useLineupService,
-  useMusicService,
-  usePlayerService,
-} from '@/modules/app/hooks/useServices';
+import { useLineupActions } from '@/modules/game/hooks/useLineup';
 import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
 // Using Bootstrap classes instead of custom CSS
 
-interface GameModeProps {
-  lineupService?: LineupService;
-  playerService?: PlayerService;
-  musicService?: MusicService;
-  onEndGame: () => void;
-}
-
-export function GameMode({
-  lineupService: injectedLineupService,
-  playerService: injectedPlayerService,
-  musicService: injectedMusicService,
-  onEndGame,
-}: GameModeProps) {
-  const defaultLineupService = useLineupService();
-  const defaultPlayerService = usePlayerService();
-  const defaultMusicService = useMusicService();
-  const lineupService = injectedLineupService ?? defaultLineupService;
-  const playerService = injectedPlayerService ?? defaultPlayerService;
-  const musicService = injectedMusicService ?? defaultMusicService;
+export function GameMode() {
+  const lineupActions = useLineupActions();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showEndGameConfirmation, setShowEndGameConfirmation] = useState(false);
@@ -45,8 +21,7 @@ export function GameMode({
   };
 
   const handleConfirmEndGame = () => {
-    lineupService.endGame();
-    onEndGame();
+    lineupActions.setGameActive(false);
     setShowEndGameConfirmation(false);
   };
 
@@ -57,7 +32,7 @@ export function GameMode({
   const handleNextBatter = async () => {
     setIsLoading(true);
     try {
-      await lineupService.nextBatter();
+      lineupActions.next();
       handleBatterChanged();
     } catch (error) {
       console.error('Failed to advance to next batter:', error);
@@ -95,11 +70,7 @@ export function GameMode({
       <div className="row">
         <div className="col-12">
           <div key={refreshKey}>
-            <CurrentBatterDisplay
-              lineupService={lineupService}
-              playerService={playerService}
-              musicService={musicService}
-            />
+            <CurrentBatterDisplay />
           </div>
         </div>
       </div>

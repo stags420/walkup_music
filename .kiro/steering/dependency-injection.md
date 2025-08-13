@@ -39,7 +39,9 @@ These extend the core rules with preferences specific to this codebase.
 ### Principles
 
 - React is only for UI. Business/services stay out of React entirely.
-- Use Zustand for UI state only (view state and UI-coordinated data), not for service singletons.
+- Use Zustand for UI state only (view state and UI-coordinated data), not for service singletons. Persist via `persist` middleware; do not call `localStorage` or `document.cookie` directly from application code. Provide custom `StateStorage` adapters instead.
+- Place state in the owning feature module under a `state/` folder (e.g., `src/modules/app/state/settingsStore.ts`). Do not centralize state under a cross-cutting "storage" module.
+- Never expose stores directly. Expose only custom hooks from the module’s `hooks/` folder (e.g., `useSettingsTheme`, `useSettingsActions`).
 - Create services as app-singletons, wired at bootstrap in plain TypeScript (no React Context).
 - Access services via small hooks or by passing them as props with defaults to those hooks.
 - Hooks are invoked at the top of components; props-with-default avoids prop drilling while keeping testability.
@@ -112,7 +114,7 @@ export function PlayerList({ playerService = usePlayerService() }: Props) {
 }
 ```
 
-5) UI state with Zustand; keep services out of the store:
+5) UI state with Zustand; keep services out of the store. Expose custom hooks that select state and actions:
 
 ```ts
 // stores/usePlayerStore.ts
@@ -125,8 +127,20 @@ type PlayerState = {
 
 export const usePlayerStore = create<PlayerState>((set) => ({
   players: [],
-  setPlayers: (players) => set({ players }),
+  actions: {
+    setPlayers: (players: Player[]) => set({ players }),
+  },
 }));
+
+// hooks/usePlayerState.ts
+export function usePlayerState() {
+  return usePlayerStore((s) => s.players);
+}
+
+// hooks/usePlayerActions.ts
+export function usePlayerActions() {
+  return usePlayerStore((s) => s.actions);
+}
 ```
 
 Load/update via components or small controller functions, not inside the store definition.

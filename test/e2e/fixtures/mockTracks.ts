@@ -12,7 +12,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'The Razors Edge',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273thunderstruck',
     previewUrl: 'https://p.scdn.co/mp3-preview/thunderstruck',
-    durationMs: 292000,
+    durationMs: 292_000,
     uri: 'spotify:track:thunderstruck-test',
   },
   {
@@ -22,7 +22,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Astro Lounge',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273allstar',
     previewUrl: 'https://p.scdn.co/mp3-preview/allstar',
-    durationMs: 200000,
+    durationMs: 200_000,
     uri: 'spotify:track:allstar-test',
   },
   {
@@ -32,7 +32,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Monkey Business',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273pumpit',
     previewUrl: 'https://p.scdn.co/mp3-preview/pumpit',
-    durationMs: 215000,
+    durationMs: 215_000,
     uri: 'spotify:track:pumpit-test',
   },
   {
@@ -42,7 +42,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Barrio Fino',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273gasolina',
     previewUrl: 'https://p.scdn.co/mp3-preview/gasolina',
-    durationMs: 195000,
+    durationMs: 195_000,
     uri: 'spotify:track:gasolina-test',
   },
   {
@@ -52,7 +52,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Vida',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273despacito',
     previewUrl: 'https://p.scdn.co/mp3-preview/despacito',
-    durationMs: 228000,
+    durationMs: 228_000,
     uri: 'spotify:track:despacito-test',
   },
   // Add some additional tracks for variety in search results
@@ -63,7 +63,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Eye of the Tiger',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273eyeoftiger',
     previewUrl: 'https://p.scdn.co/mp3-preview/eyeoftiger',
-    durationMs: 245000,
+    durationMs: 245_000,
     uri: 'spotify:track:eyeoftiger-test',
   },
   {
@@ -73,7 +73,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'News of the World',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273wewillrockyou',
     previewUrl: 'https://p.scdn.co/mp3-preview/wewillrockyou',
-    durationMs: 122000,
+    durationMs: 122_000,
     uri: 'spotify:track:wewillrockyou-test',
   },
   {
@@ -83,7 +83,7 @@ export const testMockTracks: SpotifyTrack[] = [
     album: 'Appetite for Destruction',
     albumArt: 'https://i.scdn.co/image/ab67616d0000b273welcometojungle',
     previewUrl: 'https://p.scdn.co/mp3-preview/welcometojungle',
-    durationMs: 267000,
+    durationMs: 267_000,
     uri: 'spotify:track:welcometojungle-test',
   },
 ];

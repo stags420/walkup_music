@@ -50,7 +50,9 @@ export const SpotifyTokenResponse = {
     }
 
     if (typeof obj.scope !== 'string') {
-      throw new Error('Invalid Spotify token response: scope must be a string');
+      throw new TypeError(
+        'Invalid Spotify token response: scope must be a string'
+      );
     }
 
     if (typeof obj.expires_in !== 'number' || obj.expires_in <= 0) {
@@ -94,7 +96,7 @@ export const SpotifyUserProfile = {
     }
 
     if (typeof obj.display_name !== 'string') {
-      throw new Error(
+      throw new TypeError(
         'Invalid Spotify user profile: display_name must be a string'
       );
     }

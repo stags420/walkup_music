@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
 import { MusicProvider } from '@/modules/music';
 import type { Player } from '@/modules/game/models/Player';
+import { resetPlayersStore } from '@/modules/game/state/playersStore';
 
 // Mock SongSelector to avoid portal issues
 jest.mock('@/modules/music/components/SongSelector', () => {
@@ -13,10 +13,7 @@ jest.mock('@/modules/music/components/SongSelector', () => {
     [key: string]: unknown;
   }
 
-  const MockSongSelector = ({
-    onSelectTrack,
-    onCancel,
-  }: MockSongSelectorProps) => {
+  const MockSongSelector = (props: MockSongSelectorProps) => {
     return (
       <div data-testid="song-selector">
         <h2>Select a Song</h2>
@@ -28,41 +25,28 @@ jest.mock('@/modules/music/components/SongSelector', () => {
         />
         <button
           onClick={() =>
-            onSelectTrack({
+            props.onSelectTrack({
               id: 'test-track',
               name: 'Test Song',
               artists: ['Test Artist'],
               album: 'Test Album',
               albumArt: 'test-art.jpg',
               previewUrl: 'test-preview.mp3',
-              durationMs: 180000,
+              durationMs: 180_000,
               uri: 'spotify:track:test-track',
             })
           }
         >
           Select Song
         </button>
-        <button onClick={onCancel}>Cancel</button>
+        <button onClick={props.onCancel}>Cancel</button>
       </div>
     );
   };
   return { SongSelector: MockSongSelector };
 });
 
-// Mock services
-const mockPlayerService = {
-  createPlayer: jest.fn(),
-  updatePlayer: jest.fn(),
-  deletePlayer: jest.fn(),
-  getPlayer: jest.fn(),
-  getAllPlayers: jest.fn(),
-  storageKey: 'players',
-  storageService: {
-    get: jest.fn(),
-    set: jest.fn(),
-    remove: jest.fn(),
-  },
-} as unknown as jest.Mocked<PlayerService>;
+// No player service; using store
 
 const mockMusicService: MusicService = {
   searchTracks: jest.fn(),
@@ -83,7 +67,7 @@ const mockTrack: SpotifyTrack = {
   album: 'Test Album',
   albumArt: 'https://example.com/album.jpg',
   previewUrl: 'https://example.com/preview.mp3',
-  durationMs: 180000,
+  durationMs: 180_000,
   uri: 'spotify:track:test123',
 };
 
@@ -107,13 +91,13 @@ describe('PlayerForm with Song Selection', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetPlayersStore();
   });
 
   const renderPlayerForm = (props = {}) => {
     return render(
       <MusicProvider musicService={mockMusicService}>
         <PlayerForm
-          playerService={mockPlayerService}
           musicService={mockMusicService}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -237,22 +221,11 @@ describe('PlayerForm with Song Selection', () => {
   });
 
   it('should handle form submission with song', async () => {
-    const updatedPlayer = { ...mockPlayerWithSong, name: 'Updated Player' };
-    mockPlayerService.updatePlayer.mockResolvedValue(updatedPlayer);
-
     renderPlayerForm({ player: mockPlayerWithSong });
 
     const submitButton = screen.getByText('Update Player');
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockPlayerService.updatePlayer).toHaveBeenCalledWith(
-        mockPlayerWithSong.id,
-        {
-          name: 'Test Player',
-          song: mockSegment,
-        }
-      );
-    });
+    await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
   });
 });

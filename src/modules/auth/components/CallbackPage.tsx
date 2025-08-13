@@ -7,12 +7,12 @@ interface CallbackPageProps {
   auth?: AuthContextType;
 }
 
-export function CallbackPage({ auth }: CallbackPageProps) {
+export function CallbackPage(props: CallbackPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Always call hook unconditionally, then choose handler
   const hookAuth = useAuth();
-  const { handleCallback } = auth ?? hookAuth;
+  const { handleCallback } = props.auth ?? hookAuth;
   const processedRef = useRef(false);
 
   useEffect(() => {

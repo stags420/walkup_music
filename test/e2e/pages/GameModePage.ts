@@ -35,7 +35,7 @@ export class GameModePage extends BasePage {
   /**
    * Get the current batter name
    */
-  async getCurrentBatterName(): Promise<string | null> {
+  async getCurrentBatterName(): Promise<string | undefined> {
     // Get the player name from within the current batter display
     const playerNameElement = this.page.locator(
       `${this.currentBatterName} [data-testid="player-name"]`
@@ -46,7 +46,7 @@ export class GameModePage extends BasePage {
   /**
    * Get the on-deck batter name
    */
-  async getOnDeckBatterName(): Promise<string | null> {
+  async getOnDeckBatterName(): Promise<string | undefined> {
     // Get the player name from within the on-deck batter display
     const playerNameElement = this.page.locator(
       `${this.onDeckBatterName} [data-testid="player-name"]`
@@ -57,7 +57,7 @@ export class GameModePage extends BasePage {
   /**
    * Get the in-the-hole batter name
    */
-  async getInTheHoleBatterName(): Promise<string | null> {
+  async getInTheHoleBatterName(): Promise<string | undefined> {
     // Get the player name from within the in-the-hole batter display
     const playerNameElement = this.page.locator(
       `${this.inTheHoleBatterName} [data-testid="player-name"]`
@@ -112,21 +112,21 @@ export class GameModePage extends BasePage {
   /**
    * Get the current song title
    */
-  async getCurrentSongTitle(): Promise<string | null> {
+  async getCurrentSongTitle(): Promise<string | undefined> {
     if (await this.isVisible(this.currentSongTitle)) {
       return await this.getTextContent(this.currentSongTitle);
     }
-    return null;
+    return undefined;
   }
 
   /**
    * Get the current song artist
    */
-  async getCurrentSongArtist(): Promise<string | null> {
+  async getCurrentSongArtist(): Promise<string | undefined> {
     if (await this.isVisible(this.currentSongArtist)) {
       return await this.getTextContent(this.currentSongArtist);
     }
-    return null;
+    return undefined;
   }
 
   /**

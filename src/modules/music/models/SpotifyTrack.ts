@@ -50,11 +50,13 @@ export const SpotifyTrack = {
     }
 
     if (typeof obj.albumArt !== 'string') {
-      throw new Error('Invalid Spotify track data: albumArt must be a string');
+      throw new TypeError(
+        'Invalid Spotify track data: albumArt must be a string'
+      );
     }
 
     if (typeof obj.previewUrl !== 'string') {
-      throw new Error(
+      throw new TypeError(
         'Invalid Spotify track data: previewUrl must be a string'
       );
     }

@@ -7,7 +7,7 @@ import { AppConfigProvider } from '@/modules/app';
  * Provider for creating AuthService instances with proper dependencies
  */
 export class AuthServiceProvider {
-  private static instance: AuthService | null = null;
+  private static instance: AuthService | undefined = undefined;
 
   /**
    * Get a singleton instance of AuthService with AppConfig
@@ -35,6 +35,6 @@ export class AuthServiceProvider {
    * Reset the singleton instance (useful for testing)
    */
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
   }
 }

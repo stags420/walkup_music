@@ -195,7 +195,7 @@ export class PlayerManagementPage extends BasePage {
         ) as HTMLButtonElement;
         return button && !button.disabled;
       },
-      { timeout: 10000 } // Longer timeout for mobile
+      { timeout: 10_000 } // Longer timeout for mobile
     );
 
     await this.clickWithRetry(this.selectSongResultButton);
@@ -221,7 +221,7 @@ export class PlayerManagementPage extends BasePage {
 
     // Wait for at least one result
     try {
-      await this.waitForSelector(this.songResult, 10000);
+      await this.waitForSelector(this.songResult, 10_000);
     } catch (error) {
       // If no results found, try a more generic search
       console.log(
@@ -231,7 +231,7 @@ export class PlayerManagementPage extends BasePage {
       await this.page.locator(this.songSearchInput).clear();
       await this.fillWithRetry(this.songSearchInput, 'Thunder');
       await this.page.waitForTimeout(3000);
-      await this.waitForSelector(this.songResult, 10000);
+      await this.waitForSelector(this.songResult, 10_000);
     }
 
     // Select the first matching result

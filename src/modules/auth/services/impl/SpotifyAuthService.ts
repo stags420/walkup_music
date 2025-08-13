@@ -45,7 +45,7 @@ export class SpotifyAuthService implements AuthService {
     STATE: 'spotify_state',
   };
 
-  private tokens: SpotifyTokens | null = null;
+  private tokens: SpotifyTokens | undefined = undefined;
 
   constructor(private config: AppConfig) {
     if (!areCookiesAvailable()) {
@@ -139,21 +139,21 @@ export class SpotifyAuthService implements AuthService {
    * Logs out the user by clearing all stored tokens
    */
   async logout(): Promise<void> {
-    this.tokens = null;
+    this.tokens = undefined;
 
     // Clear all auth-related cookies using the same path they were stored with
     const cookiePath = this.config.basePath || '/';
-    Object.values(SpotifyAuthService.COOKIE_NAMES).forEach((cookieName) => {
+    for (const cookieName of Object.values(SpotifyAuthService.COOKIE_NAMES)) {
       deleteCookie(cookieName, cookiePath);
-    });
+    }
   }
 
   /**
    * Gets the current access token, refreshing if necessary
    */
-  async getAccessToken(): Promise<string | null> {
+  async getAccessToken(): Promise<string | undefined> {
     if (!this.tokens) {
-      return null;
+      return undefined;
     }
 
     // Check if token is expired (with configurable buffer)
@@ -167,11 +167,11 @@ export class SpotifyAuthService implements AuthService {
         console.info('Failed to refresh token:', error);
         // Clear invalid tokens and logout
         await this.logout();
-        return null;
+        return undefined;
       }
     }
 
-    return this.tokens?.accessToken || null;
+    return this.tokens?.accessToken || undefined;
   }
 
   /**
@@ -323,9 +323,9 @@ export class SpotifyAuthService implements AuthService {
     const scope = getCookie(SpotifyAuthService.COOKIE_NAMES.SCOPE);
 
     if (accessToken && expiresAtStr && scope) {
-      const expiresAt = parseInt(expiresAtStr, 10);
+      const expiresAt = Number.parseInt(expiresAtStr, 10);
 
-      if (!isNaN(expiresAt)) {
+      if (!Number.isNaN(expiresAt)) {
         this.tokens = {
           accessToken,
           refreshToken: refreshToken || undefined,
@@ -368,20 +368,23 @@ export class SpotifyAuthService implements AuthService {
   /**
    * Gets user information from Spotify API
    */
-  async getUserInfo(): Promise<{
-    id: string;
-    email: string;
-    displayName: string;
-  } | null> {
+  async getUserInfo(): Promise<
+    | {
+        id: string;
+        email: string;
+        displayName: string;
+      }
+    | undefined
+  > {
     if (!this.isAuthenticated()) {
-      return null;
+      return undefined;
     }
 
     try {
       const accessToken = await this.getAccessToken();
       if (!accessToken) {
         await this.logout();
-        return null;
+        return undefined;
       }
 
       const { httpService } = ApplicationContainerProvider.get();
@@ -393,7 +396,7 @@ export class SpotifyAuthService implements AuthService {
       if (status === 401) {
         console.error('Access token is invalid, clearing authentication');
         await this.logout();
-        return null;
+        return undefined;
       }
       if (status < 200 || status >= 300) {
         throw new Error(`Failed to fetch user profile: ${status}`);
@@ -411,7 +414,7 @@ export class SpotifyAuthService implements AuthService {
       console.error('Failed to get user info:', error);
       // If there's an error getting user info, clear authentication
       await this.logout();
-      return null;
+      return undefined;
     }
   }
 }

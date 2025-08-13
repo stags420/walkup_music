@@ -28,7 +28,9 @@ export const BattingOrder = {
     }
 
     if (!Array.isArray(obj.playerIds)) {
-      throw new Error('Invalid batting order data: playerIds must be an array');
+      throw new TypeError(
+        'Invalid batting order data: playerIds must be an array'
+      );
     }
 
     if (obj.playerIds.some((id) => typeof id !== 'string' || !id.trim())) {
@@ -55,8 +57,8 @@ export const BattingOrder = {
     const createdAt = obj.createdAt
       ? new Date(obj.createdAt as string)
       : new Date();
-    if (isNaN(createdAt.getTime())) {
-      throw new Error(
+    if (Number.isNaN(createdAt.getTime())) {
+      throw new TypeError(
         'Invalid batting order data: createdAt must be a valid date'
       );
     }
@@ -64,8 +66,8 @@ export const BattingOrder = {
     const updatedAt = obj.updatedAt
       ? new Date(obj.updatedAt as string)
       : new Date();
-    if (isNaN(updatedAt.getTime())) {
-      throw new Error(
+    if (Number.isNaN(updatedAt.getTime())) {
+      throw new TypeError(
         'Invalid batting order data: updatedAt must be a valid date'
       );
     }

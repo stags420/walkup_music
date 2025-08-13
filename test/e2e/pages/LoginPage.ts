@@ -34,17 +34,17 @@ export class LoginPage extends BasePage {
    */
   async waitForAuthentication() {
     // In mock mode, we should be redirected immediately
-    await this.page.waitForURL('/walkup_music/', { timeout: 10000 });
+    await this.page.waitForURL('/walkup_music/', { timeout: 10_000 });
   }
 
   /**
    * Get error message if login fails
    */
-  async getErrorMessage(): Promise<string | null> {
+  async getErrorMessage(): Promise<string | undefined> {
     if (await this.isVisible(this.errorMessage)) {
       return await this.getTextContent(this.errorMessage);
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -55,7 +55,7 @@ export class LoginPage extends BasePage {
     // In mock mode, authentication happens immediately without redirect
     // Wait for authenticated content to appear
     await this.page.waitForSelector('[data-testid="add-player-button"]', {
-      timeout: 10000,
+      timeout: 10_000,
     });
   }
 }

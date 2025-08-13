@@ -74,9 +74,9 @@ export class MockAuthService implements AuthService {
     console.log('MockAuthService: User logged out');
   }
 
-  async getAccessToken(): Promise<string | null> {
+  async getAccessToken(): Promise<string | undefined> {
     if (!this.authenticated) {
-      return null;
+      return undefined;
     }
     return 'mock-access-token-12345';
   }
@@ -97,13 +97,16 @@ export class MockAuthService implements AuthService {
     console.log('MockAuthService: Handled callback, user authenticated');
   }
 
-  async getUserInfo(): Promise<{
-    id: string;
-    email: string;
-    displayName: string;
-  } | null> {
+  async getUserInfo(): Promise<
+    | {
+        id: string;
+        email: string;
+        displayName: string;
+      }
+    | undefined
+  > {
     if (!this.authenticated) {
-      return null;
+      return undefined;
     }
     return { ...this.mockUser };
   }

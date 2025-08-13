@@ -12,6 +12,7 @@ test.describe('Complete E2E Workflow', () => {
   let lineupPage: LineupManagementPage;
   let gamePage: GameModePage;
 
+  // eslint-disable-next-line destructuring/in-params
   test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     playerPage = new PlayerManagementPage(page);
@@ -27,6 +28,7 @@ test.describe('Complete E2E Workflow', () => {
     }, testMockTracks);
   });
 
+  // eslint-disable-next-line destructuring/in-params
   test('song selection and segment selection workflow', async ({ page }) => {
     // 1. Authentication
     await loginPage.goto();
@@ -58,6 +60,7 @@ test.describe('Complete E2E Workflow', () => {
 
   // No manual coverage start/stop; reporter handles V8 capture and reporting
 
+  // eslint-disable-next-line destructuring/in-params
   test('edit player song selection workflow', async ({ page }) => {
     // 1. Authentication and setup
     await loginPage.goto();
@@ -86,6 +89,7 @@ test.describe('Complete E2E Workflow', () => {
     expect(await playerPage.playerExists(testPlayer.name)).toBe(true);
   });
 
+  // eslint-disable-next-line destructuring/in-params
   test('complete end-to-end workflow: auth → add 4 players with songs → lineup → game', async ({
     page,
   }) => {

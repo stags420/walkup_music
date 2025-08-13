@@ -10,7 +10,8 @@ import type { SpotifyPlaybackService } from './SpotifyPlaybackService';
 export class SpotifyMusicService implements MusicService {
   private spotifyApiService: SpotifyApiService;
   private playbackService: SpotifyPlaybackService;
-  private previewTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private previewTimeoutId: ReturnType<typeof setTimeout> | undefined =
+    undefined;
 
   constructor(
     spotifyApiService: SpotifyApiService,
@@ -48,7 +49,7 @@ export class SpotifyMusicService implements MusicService {
         void (async () => {
           try {
             await this.playbackService.pause();
-            this.previewTimeoutId = null;
+            this.previewTimeoutId = undefined;
             onTrackEnd?.();
           } catch (error) {
             console.error('Failed to auto-pause preview:', error);
@@ -67,7 +68,7 @@ export class SpotifyMusicService implements MusicService {
   private clearPreviewTimeout(): void {
     if (this.previewTimeoutId) {
       clearTimeout(this.previewTimeoutId);
-      this.previewTimeoutId = null;
+      this.previewTimeoutId = undefined;
     }
   }
 

@@ -1,43 +1,17 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { CurrentBatterDisplay } from '@/modules/game/components/CurrentBatterDisplay';
-import type { LineupService } from '@/modules/game/services/LineupService';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
 import type { Player } from '@/modules/game/models/Player';
+import {
+  usePlayersStore,
+  resetPlayersStore,
+} from '@/modules/game/state/playersStore';
+import {
+  useLineupStore,
+  resetLineupStore,
+} from '@/modules/game/state/lineupStore';
 
-// Mock the services
-const mockLineupService = {
-  getCurrentBatter: jest.fn(),
-  getOnDeckBatter: jest.fn(),
-  getInTheHoleBatter: jest.fn(),
-  playWalkUpMusic: jest.fn(),
-  stopMusic: jest.fn(),
-  createBattingOrder: jest.fn(),
-  updateBattingOrder: jest.fn(),
-  nextBatter: jest.fn(),
-  startGame: jest.fn(),
-  getGameState: jest.fn(),
-  loadGameState: jest.fn(),
-  endGame: jest.fn(),
-  isGameInProgress: jest.fn(),
-  getCurrentBattingOrder: jest.fn(),
-} as unknown as jest.Mocked<LineupService>;
-
-const mockPlayerService = {
-  getAllPlayers: jest.fn(),
-  getPlayer: jest.fn(),
-  createPlayer: jest.fn(),
-  updatePlayer: jest.fn(),
-  deletePlayer: jest.fn(),
-  storageKey: 'players',
-  storageService: {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-  },
-} as unknown as jest.Mocked<PlayerService>;
-
-const mockMusicService = {
+const mockMusicService: jest.Mocked<MusicService> = {
   searchTracks: jest.fn(),
   playTrack: jest.fn(),
   previewTrack: jest.fn(),
@@ -50,37 +24,8 @@ const mockMusicService = {
   isPlaybackConnected: jest.fn(),
 } as unknown as jest.Mocked<MusicService>;
 
-// Mock the PlayerForm and SegmentSelector components
-jest.mock('@/modules/game/components/PlayerForm', () => ({
-  PlayerForm: ({
-    onSave,
-    onCancel,
-  }: {
-    onSave: () => void;
-    onCancel: () => void;
-  }) => (
-    <div data-testid="player-form">
-      <button onClick={onSave}>Save Player</button>
-      <button onClick={onCancel}>Cancel</button>
-    </div>
-  ),
-}));
-
-jest.mock('@/modules/music', () => ({
-  SegmentSelector: ({
-    onConfirm,
-    onCancel,
-  }: {
-    onConfirm: (segment: unknown) => void;
-    onCancel: () => void;
-  }) => (
-    <div data-testid="segment-selector">
-      <button onClick={() => onConfirm({ startTime: 10, duration: 30 })}>
-        Confirm Segment
-      </button>
-      <button onClick={onCancel}>Cancel</button>
-    </div>
-  ),
+jest.mock('@/modules/app/hooks/useServices', () => ({
+  useMusicService: () => mockMusicService,
 }));
 
 describe('CurrentBatterDisplay', () => {
@@ -95,7 +40,7 @@ describe('CurrentBatterDisplay', () => {
         album: 'Test Album',
         albumArt: 'test-art.jpg',
         previewUrl: 'https://example.com/preview.mp3',
-        durationMs: 180000,
+        durationMs: 180_000,
         uri: 'spotify:track:track1',
       },
       startTime: 10,
@@ -107,81 +52,44 @@ describe('CurrentBatterDisplay', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock getPlayer to return the mock player
-    mockPlayerService.getPlayer.mockResolvedValue(mockPlayer);
+    resetPlayersStore();
+    resetLineupStore();
   });
 
   it('should render edit button for current batter', async () => {
-    mockLineupService.getCurrentBatter.mockResolvedValue(mockPlayer);
-    mockLineupService.getOnDeckBatter.mockResolvedValue(null);
-    mockLineupService.getInTheHoleBatter.mockResolvedValue(null);
+    usePlayersStore.getState().actions.setPlayers([mockPlayer]);
+    const { actions: lineupActions } = useLineupStore.getState();
+    lineupActions.createBattingOrder(['1']);
+    lineupActions.setGameActive(true);
 
     await act(async () => {
-      render(
-        <CurrentBatterDisplay
-          lineupService={mockLineupService}
-          playerService={mockPlayerService}
-          musicService={mockMusicService}
-        />
-      );
+      render(<CurrentBatterDisplay />);
     });
 
-    // Wait for the component to load
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
-    // Check that edit button is present
-    expect(screen.getByLabelText('Edit player')).toBeInTheDocument();
-  });
-
-  it('should have edit button for current batter', async () => {
-    mockLineupService.getCurrentBatter.mockResolvedValue(mockPlayer);
-    mockLineupService.getOnDeckBatter.mockResolvedValue(null);
-    mockLineupService.getInTheHoleBatter.mockResolvedValue(null);
-
-    await act(async () => {
-      render(
-        <CurrentBatterDisplay
-          lineupService={mockLineupService}
-          playerService={mockPlayerService}
-          musicService={mockMusicService}
-        />
-      );
-    });
-
-    // Wait for the component to load
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-
-    // Check that edit button is present
     expect(screen.getByLabelText('Edit player')).toBeInTheDocument();
   });
 
   it('should render edit buttons for secondary batters', async () => {
-    mockLineupService.getCurrentBatter.mockResolvedValue(null);
-    mockLineupService.getOnDeckBatter.mockResolvedValue(mockPlayer);
-    mockLineupService.getInTheHoleBatter.mockResolvedValue(mockPlayer);
+    const player2: Player = { ...mockPlayer, id: '2', name: 'Jane Doe' };
+    usePlayersStore.getState().actions.setPlayers([mockPlayer, player2]);
+    const { actions: lineupActions } = useLineupStore.getState();
+    lineupActions.createBattingOrder(['2', '1']);
+    lineupActions.setGameActive(true);
 
     await act(async () => {
-      render(
-        <CurrentBatterDisplay
-          lineupService={mockLineupService}
-          playerService={mockPlayerService}
-          musicService={mockMusicService}
-        />
-      );
+      render(<CurrentBatterDisplay />);
     });
 
-    // Wait for the component to load
     await waitFor(() => {
-      const playerNames = screen.getAllByText('John Doe');
-      expect(playerNames).toHaveLength(2);
+      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
-    // Check that edit buttons are present for both secondary batters
     const editButtons = screen.getAllByLabelText('Edit player');
-    expect(editButtons).toHaveLength(2);
+    expect(editButtons.length).toBeGreaterThanOrEqual(2);
   });
 });

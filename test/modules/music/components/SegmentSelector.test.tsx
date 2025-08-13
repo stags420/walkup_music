@@ -10,7 +10,7 @@ const mockTrack: SpotifyTrack = {
   album: 'Test Album',
   albumArt: 'https://example.com/album.jpg',
   previewUrl: 'https://example.com/preview.mp3',
-  durationMs: 180000, // 3 minutes
+  durationMs: 180_000, // 3 minutes
   uri: 'spotify:track:test123',
 };
 
@@ -40,11 +40,11 @@ describe('SegmentSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Set up default mock implementations that return Promises
-    (mockMusicService.playTrack as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.pause as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.resume as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.seek as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.playTrack as jest.Mock).mockResolvedValue();
+    (mockMusicService.pause as jest.Mock).mockResolvedValue();
+    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue();
+    (mockMusicService.resume as jest.Mock).mockResolvedValue();
+    (mockMusicService.seek as jest.Mock).mockResolvedValue();
     (mockMusicService.getCurrentState as jest.Mock).mockResolvedValue({});
   });
 

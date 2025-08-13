@@ -3,13 +3,12 @@ import { Modal, Form, Alert, Card } from 'react-bootstrap';
 import { Button } from '@/modules/core/components/Button';
 import type { FormEvent, MouseEvent } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService, SpotifyTrack, SongSegment } from '@/modules/music';
 import { SongSelector, SegmentSelector } from '@/modules/music';
+import { usePlayers, usePlayersActions } from '@/modules/game/hooks/usePlayers';
 // import './PlayerForm.css'; // Using Bootstrap classes instead
 
 interface PlayerFormProps {
-  playerService: PlayerService;
   musicService: MusicService;
   player?: Player; // If provided, we're editing; otherwise creating
   segmentEditOnly?: boolean; // If true, only allow editing the song segment
@@ -17,22 +16,26 @@ interface PlayerFormProps {
   onCancel: () => void;
 }
 
-export function PlayerForm({
-  playerService,
-  musicService,
-  player,
-  segmentEditOnly = false,
-  onSave,
-  onCancel,
-}: PlayerFormProps) {
+export function PlayerForm(props: PlayerFormProps) {
+  const {
+    musicService,
+    player,
+    segmentEditOnly = false,
+    onSave,
+    onCancel,
+  } = props;
+  const players = usePlayers();
+  const actions = usePlayersActions();
   const [name, setName] = useState(player?.name || '');
   const [song, setSong] = useState<SongSegment | undefined>(player?.song);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>();
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [hideMainModal, setHideMainModal] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<
+    SpotifyTrack | undefined
+  >();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isEditing = !!player;
@@ -41,7 +44,7 @@ export function PlayerForm({
   useEffect(() => {
     setName(player?.name || '');
     setSong(player?.song);
-    setError(null);
+    setError(undefined);
     // If this is a segment-only edit, auto-show the segment selector
     if (segmentEditOnly && player?.song) {
       setSelectedTrack(player.song.track);
@@ -52,10 +55,10 @@ export function PlayerForm({
   const handleCancel = useCallback(() => {
     setName(player?.name || '');
     setSong(player?.song);
-    setError(null);
+    setError(undefined);
     setShowSongSelector(false);
     setShowSegmentSelector(false);
-    setSelectedTrack(null);
+    setSelectedTrack(undefined);
     onCancel();
   }, [player?.name, player?.song, onCancel]);
 
@@ -91,19 +94,30 @@ export function PlayerForm({
 
     try {
       setLoading(true);
-      setError(null);
+      setError(undefined);
+
+      if (!actions?.createPlayer || !actions?.updatePlayerById) {
+        throw new Error('Player actions are unavailable');
+      }
 
       let savedPlayer: Player;
-      const playerData = { name: trimmedName, song };
-      savedPlayer = await (isEditing
-        ? playerService.updatePlayer(player.id, playerData)
-        : playerService.createPlayer(trimmedName));
-
-      // Update the song if it was selected
-      if (song && savedPlayer.id) {
-        savedPlayer = await playerService.updatePlayer(savedPlayer.id, {
+      if (isEditing && player) {
+        // Update existing player
+        // Ensure the player exists in the store
+        if (!players.some((p) => p.id === player.id)) {
+          actions.addPlayer?.(player);
+        }
+        savedPlayer = actions.updatePlayerById(player.id, {
+          name: trimmedName,
           song,
         });
+      } else {
+        // Create new player
+        const created = actions.createPlayer(trimmedName);
+        // Optionally attach song
+        savedPlayer = song
+          ? actions.updatePlayerById(created.id, { song })
+          : created;
       }
 
       onSave(savedPlayer);
@@ -121,8 +135,11 @@ export function PlayerForm({
 
     try {
       setLoading(true);
-      setError(null);
-      await playerService.deletePlayer(player.id);
+      setError(undefined);
+      if (!actions?.deletePlayerById) {
+        throw new Error('Player actions are unavailable');
+      }
+      actions.deletePlayerById(player.id);
       onSave({ ...player, id: '' }); // Signal deletion
     } catch (error_) {
       setError(
@@ -149,20 +166,21 @@ export function PlayerForm({
   const handleSegmentConfirmed = async (segment: SongSegment) => {
     setSong(segment);
     setShowSegmentSelector(false);
-    setSelectedTrack(null);
+    setSelectedTrack(undefined);
     setHideMainModal(false);
 
     // If we're in segment-only edit mode, save immediately
     if (isSegmentEdit && player) {
       try {
         setLoading(true);
-        setError(null);
-
-        const updatedPlayer = await playerService.updatePlayer(player.id, {
+        setError(undefined);
+        if (!actions?.updatePlayerById) {
+          throw new Error('Player actions are unavailable');
+        }
+        const updatedPlayer = actions.updatePlayerById(player.id, {
           song: segment,
         });
-
-        onSave(updatedPlayer);
+        onSave(updatedPlayer as Player);
       } catch (error_) {
         setError(
           error_ instanceof Error ? error_.message : 'Failed to update timing'
@@ -183,13 +201,13 @@ export function PlayerForm({
 
   const handleCancelSongSelection = () => {
     setShowSongSelector(false);
-    setSelectedTrack(null);
+    setSelectedTrack(undefined);
     setHideMainModal(false);
   };
 
   const handleCancelSegmentSelection = () => {
     setShowSegmentSelector(false);
-    setSelectedTrack(null);
+    setSelectedTrack(undefined);
     setHideMainModal(false);
   };
 
@@ -309,7 +327,7 @@ export function PlayerForm({
                     </div>
                   </Card.Body>
                 </Card>
-              ) : isSegmentEdit ? null : (
+              ) : isSegmentEdit ? undefined : (
                 <Card>
                   <Card.Body className="text-center p-4">
                     <p className="mb-3 no-song-text">
@@ -404,7 +422,6 @@ export function PlayerForm({
 
       {showSongSelector && (
         <SongSelector
-          musicService={musicService}
           onSelectTrack={handleTrackSelected}
           onCancel={handleCancelSongSelection}
         />

@@ -5,19 +5,14 @@ import {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
-import {
-  useMusicService,
-  usePlayerService,
-} from '@/modules/app/hooks/useServices';
+import { useMusicService } from '@/modules/app/hooks/useServices';
+import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import { PlayerCard } from '@/modules/core/components';
 import { Button } from '@/modules/core/components/Button';
 import './PlayerList.css';
 
 interface PlayerListProps {
-  playerService?: PlayerService;
   musicService?: MusicService;
 }
 
@@ -26,35 +21,22 @@ export interface PlayerListRef {
 }
 
 export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
-  function PlayerList(
-    {
-      playerService: injectedPlayerService,
-      musicService: injectedMusicService,
-    },
-    ref
-  ) {
-    const defaultPlayerService = usePlayerService();
-    const defaultMusicService = useMusicService();
-    const playerService = injectedPlayerService ?? defaultPlayerService;
-    const musicService = injectedMusicService ?? defaultMusicService;
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  function PlayerList(_props, ref) {
+    const musicService = useMusicService();
+    const players = usePlayers();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | undefined>();
 
     const loadPlayers = useCallback(async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const loadedPlayers = await playerService.getAllPlayers();
-        setPlayers(loadedPlayers);
+        setLoading(false);
+        setError(undefined);
       } catch (error_) {
         setError(
           error_ instanceof Error ? error_.message : 'Failed to load players'
         );
-      } finally {
-        setLoading(false);
       }
-    }, [playerService]);
+    }, []);
 
     // Expose refresh function to parent component
     useImperativeHandle(
@@ -114,7 +96,6 @@ export const PlayerList = forwardRef<PlayerListRef, PlayerListProps>(
               size="medium"
               displayAlbumArt={false}
               allowPlayMusic={false}
-              playerService={playerService}
               musicService={musicService}
               onPlayerUpdated={loadPlayers}
               className="player-management-card"

@@ -7,6 +7,7 @@ import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { SongSegment } from '@/modules/music/models/SongSegment';
 import { TrackPreview, PlayButton } from '@/modules/core';
 import type { MusicService } from '@/modules/music/services/MusicService';
+import { useMusicService } from '@/modules/app/hooks/useServices';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
@@ -17,23 +18,26 @@ interface SegmentSelectorProps {
   maxDuration?: number; // seconds, default 10
 }
 
-export function SegmentSelector({
-  track,
-  musicService,
-  initialSegment,
-  onConfirm,
-  onCancel,
-  maxDuration = 10,
-}: SegmentSelectorProps) {
+export function SegmentSelector(props: SegmentSelectorProps) {
+  const {
+    track,
+    musicService,
+    initialSegment,
+    onConfirm,
+    onCancel,
+    maxDuration = 10,
+  } = props;
+  const defaultMusicService = useMusicService();
+  const resolvedMusicService = musicService ?? defaultMusicService;
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
   );
-  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [playbackError, setPlaybackError] = useState<string | undefined>();
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartTime, setDragStartTime] = useState(0);
-  const timelineRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(undefined);
 
   const trackDurationSeconds = Math.floor(track.durationMs / 1000);
 
@@ -133,7 +137,7 @@ export function SegmentSelector({
   const handleStartTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newStartTime = Math.max(
       0,
-      Math.min(trackDurationSeconds - 1, parseFloat(e.target.value) || 0)
+      Math.min(trackDurationSeconds - 1, Number.parseFloat(e.target.value) || 0)
     );
     setStartTime(newStartTime);
   };
@@ -141,7 +145,7 @@ export function SegmentSelector({
   const handleDurationChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newDuration = Math.max(
       1,
-      Math.min(maxDuration, parseFloat(e.target.value) || 1)
+      Math.min(maxDuration, Number.parseFloat(e.target.value) || 1)
     );
     setDuration(newDuration);
   };
@@ -310,7 +314,7 @@ export function SegmentSelector({
 
                 <PlayButton
                   track={track}
-                  musicService={musicService}
+                  musicService={resolvedMusicService}
                   startTime={startTime}
                   duration={duration}
                   variant="success"

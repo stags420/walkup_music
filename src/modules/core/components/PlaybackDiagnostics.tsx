@@ -27,10 +27,9 @@ interface DiagnosticInfo {
 const getStatusIcon = (condition: boolean) => (condition ? '✅' : '❌');
 const getWarningIcon = (condition: boolean) => (condition ? '⚠️' : '✅');
 
-export function PlaybackDiagnostics({
-  musicService,
-}: PlaybackDiagnosticsProps) {
-  const [diagnostics, setDiagnostics] = useState<DiagnosticInfo | null>(null);
+export function PlaybackDiagnostics(props: PlaybackDiagnosticsProps) {
+  const { musicService } = props;
+  const [diagnostics, setDiagnostics] = useState<DiagnosticInfo | undefined>();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -107,7 +106,7 @@ export function PlaybackDiagnostics({
   }, [musicService]);
 
   if (!diagnostics) {
-    return null;
+    return;
   }
 
   return (

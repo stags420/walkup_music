@@ -17,7 +17,8 @@ interface MusicProviderProps {
 }
 
 // Deprecated test-only provider; kept temporarily for compatibility in tests
-export function MusicProvider({ children }: MusicProviderProps) {
+export function MusicProvider(props: MusicProviderProps) {
+  const { children } = props;
   return <>{children}</>;
 }
 

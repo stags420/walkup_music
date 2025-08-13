@@ -53,11 +53,11 @@ export interface SpotifyPlaybackService {
  * Real implementation using Spotify Web Playback SDK
  */
 export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
-  private player: SpotifyPlayer | null = null;
+  private player: SpotifyPlayer | undefined = undefined;
   private isReadyFlag = false;
-  private deviceId: string | null = null;
+  private deviceId: string | undefined = undefined;
   private authService: AuthService;
-  private initializationPromise: Promise<void> | null = null;
+  private initializationPromise: Promise<void> | undefined = undefined;
   private isInitializing = false;
 
   constructor(authService: AuthService) {
@@ -130,22 +130,26 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
       });
 
       // Handle initialization errors
-      this.player.addListener('initialization_error', ({ message }) => {
+      this.player.addListener('initialization_error', (payload) => {
+        const { message } = payload;
         console.error('Spotify Player initialization error:', message);
       });
 
       // Handle authentication errors
-      this.player.addListener('authentication_error', ({ message }) => {
+      this.player.addListener('authentication_error', (payload) => {
+        const { message } = payload;
         console.error('Spotify Player authentication error:', message);
       });
 
       // Handle account errors (e.g., non-premium users)
-      this.player.addListener('account_error', ({ message }) => {
+      this.player.addListener('account_error', (payload) => {
+        const { message } = payload;
         console.error('Spotify Player account error:', message);
       });
 
       // Handle playback errors
-      this.player.addListener('playback_error', ({ message }) => {
+      this.player.addListener('playback_error', (payload) => {
+        const { message } = payload;
         console.error('Spotify Player playback error:', message);
       });
 
@@ -179,11 +183,11 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
         if (!(globalThis.window as Window & { Spotify: SpotifySDK }).Spotify) {
           throw new Error('Spotify Web Playback SDK failed to load');
         }
-      }, 10000);
+      }, 10_000);
     });
   }
 
-  async play(uri: string, startPositionMs: number = 0): Promise<void> {
+  async play(uri: string, startPositionMs = 0): Promise<void> {
     // Initialize on first play call (user interaction) to satisfy mobile browser autoplay policies
     if (!this.player && !this.isInitializing) {
       await this.ensureInitialized();
@@ -261,7 +265,7 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
 
   private async waitForReady(): Promise<void> {
     // Wait up to 10 seconds for the service to be ready
-    const maxWaitTime = 10000;
+    const maxWaitTime = 10_000;
     const checkInterval = 100;
     const maxChecks = maxWaitTime / checkInterval;
 
@@ -277,10 +281,7 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
     );
   }
 
-  private async loadTrack(
-    uri: string,
-    startPositionMs: number = 0
-  ): Promise<void> {
+  private async loadTrack(uri: string, startPositionMs = 0): Promise<void> {
     if (!this.deviceId) {
       throw new Error('No device ID available');
     }
@@ -307,8 +308,8 @@ export class SpotifyPlaybackServiceImpl implements SpotifyPlaybackService {
  * Mock implementation for testing with audio jingle support
  */
 export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
-  private audioContext: AudioContext | null = null;
-  private currentSource: AudioBufferSourceNode | null = null;
+  private audioContext: AudioContext | undefined = undefined;
+  private currentSource: AudioBufferSourceNode | undefined = undefined;
   private isPlaying = false;
 
   private async getAudioContext(): Promise<AudioContext> {
@@ -366,7 +367,7 @@ export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
     return buffer;
   }
 
-  async play(_uri: string, _startPositionMs: number = 0): Promise<void> {
+  async play(_uri: string, _startPositionMs = 0): Promise<void> {
     // Stop any currently playing audio
     await this.pause();
 
@@ -381,7 +382,7 @@ export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
 
       // Set up cleanup when audio ends
       this.currentSource.addEventListener('ended', () => {
-        this.currentSource = null;
+        this.currentSource = undefined;
         this.isPlaying = false;
       });
 
@@ -401,7 +402,7 @@ export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
     if (this.currentSource && this.isPlaying) {
       try {
         this.currentSource.stop();
-        this.currentSource = null;
+        this.currentSource = undefined;
         this.isPlaying = false;
         console.log('Paused mock audio jingle');
       } catch (error) {

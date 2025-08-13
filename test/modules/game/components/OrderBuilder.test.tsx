@@ -1,21 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
 
 // Mock PlayerCard component
 jest.mock('@/modules/core/components', () => ({
-  PlayerCard: jest.fn(({ player }) => (
-    <div data-testid={`player-card-${player.id}`}>
-      <span>{player.name}</span>
+  PlayerCard: jest.fn((props: { player: { id: string; name: string } }) => (
+    <div data-testid={`player-card-${props.player.id}`}>
+      <span>{props.player.name}</span>
     </div>
   )),
 }));
 
 describe('OrderBuilder', () => {
   let mockMusicService: jest.Mocked<MusicService>;
-  let mockPlayerService: jest.Mocked<PlayerService>;
   let mockOnLineupChange: jest.Mock;
 
   const mockLineupPlayers: Player[] = [
@@ -61,14 +59,6 @@ describe('OrderBuilder', () => {
       isPlaybackReady: jest.fn(),
     } as unknown as jest.Mocked<MusicService>;
 
-    mockPlayerService = {
-      getAllPlayers: jest.fn(),
-      createPlayer: jest.fn(),
-      updatePlayer: jest.fn(),
-      deletePlayer: jest.fn(),
-      getPlayer: jest.fn(),
-    } as unknown as jest.Mocked<PlayerService>;
-
     mockOnLineupChange = jest.fn();
   });
 
@@ -82,7 +72,6 @@ describe('OrderBuilder', () => {
         availablePlayers={available}
         onLineupChange={mockOnLineupChange}
         musicService={mockMusicService}
-        playerService={mockPlayerService}
       />
     );
   };

@@ -19,6 +19,7 @@ type ChromiumCoveragePage = {
 
 const test = base.extend<{ autoCoverage: string }>({
   autoCoverage: [
+    // eslint-disable-next-line destructuring/in-params
     async ({ page, browserName }, use) => {
       const isChromium = browserName === 'chromium';
       const flag = String(

@@ -56,8 +56,8 @@ describe('MockAuthService', () => {
       // When getting access token
       const token = await mockAuthService.getAccessToken();
 
-      // Then it should return null
-      expect(token).toBeNull();
+      // Then it should return undefined
+      expect(token).toBeUndefined();
     });
 
     test('should return mock token when authenticated', async () => {
@@ -81,9 +81,9 @@ describe('MockAuthService', () => {
       // When logging out
       await mockAuthService.logout();
 
-      // Then access token should be null
+      // Then access token should be undefined
       const token = await mockAuthService.getAccessToken();
-      expect(token).toBeNull();
+      expect(token).toBeUndefined();
     });
   });
 
@@ -95,8 +95,8 @@ describe('MockAuthService', () => {
       // When getting user info
       const userInfo = await mockAuthService.getUserInfo();
 
-      // Then it should return null
-      expect(userInfo).toBeNull();
+      // Then it should return undefined
+      expect(userInfo).toBeUndefined();
     });
 
     test('should return mock user info when authenticated', async () => {
@@ -122,9 +122,9 @@ describe('MockAuthService', () => {
       // When logging out
       await mockAuthService.logout();
 
-      // Then user info should be null
+      // Then user info should be undefined
       const userInfo = await mockAuthService.getUserInfo();
-      expect(userInfo).toBeNull();
+      expect(userInfo).toBeUndefined();
     });
   });
 
@@ -142,7 +142,7 @@ describe('MockAuthService', () => {
 
     test('should provide access token after callback', async () => {
       // Given an unauthenticated service
-      expect(await mockAuthService.getAccessToken()).toBeNull();
+      expect(await mockAuthService.getAccessToken()).toBeUndefined();
 
       // When handling callback
       await mockAuthService.handleCallback('mock-code', 'mock-state');

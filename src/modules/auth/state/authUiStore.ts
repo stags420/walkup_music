@@ -11,9 +11,9 @@ export const useAuthUiStore = create<AuthUiStore>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      user: null,
+      user: undefined,
       setAuthenticatedUser: (user) => set({ isAuthenticated: !!user, user }),
-      clear: () => set({ isAuthenticated: false, user: null }),
+      clear: () => set({ isAuthenticated: false, user: undefined }),
     }),
     {
       name: 'auth-ui',

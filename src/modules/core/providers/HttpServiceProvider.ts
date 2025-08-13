@@ -5,7 +5,7 @@ import { FetchHttpService } from '@/modules/core/services/impl/FetchHttpService'
  * Provider for creating a singleton HttpService instance.
  */
 export class HttpServiceProvider {
-  private static instance: HttpService | null = null;
+  private static instance: HttpService | undefined = undefined;
 
   static getOrCreate(): HttpService {
     if (!this.instance) {
@@ -18,6 +18,6 @@ export class HttpServiceProvider {
    * Reset the singleton instance (useful for testing)
    */
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
   }
 }

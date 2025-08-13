@@ -11,8 +11,8 @@ import { AppConfigProvider } from '@/modules/app';
  * Singleton service provider for MusicService instances
  */
 export class MusicServiceProvider {
-  private static instance: MusicService | null = null;
-  private static mockTracks: SpotifyTrack[] | null = null;
+  private static instance: MusicService | undefined = undefined;
+  private static mockTracks: SpotifyTrack[] | undefined = undefined;
 
   /**
    * Get a singleton instance of MusicService
@@ -84,6 +84,6 @@ export class MusicServiceProvider {
    * Reset the singleton instance (useful for testing)
    */
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
   }
 }

@@ -53,7 +53,7 @@ export function setCookie(
 /**
  * Gets a cookie value by name
  */
-export function getCookie(name: string): string | null {
+export function getCookie(name: string): string | undefined {
   const encodedName = encodeURIComponent(name);
   const cookies = document.cookie.split(';');
 
@@ -64,13 +64,13 @@ export function getCookie(name: string): string | null {
     }
   }
 
-  return null;
+  return undefined;
 }
 
 /**
  * Deletes a cookie by setting it to expire in the past
  */
-export function deleteCookie(name: string, path: string = '/'): void {
+export function deleteCookie(name: string, path = '/'): void {
   setCookie(name, '', {
     expires: new Date(0),
     path,

@@ -71,11 +71,13 @@ export const AppConfig = {
     }
 
     if (typeof basePath !== 'string') {
-      throw new Error('Invalid app config data: basePath must be a string');
+      throw new TypeError('Invalid app config data: basePath must be a string');
     }
 
     if (typeof mockAuth !== 'boolean') {
-      throw new Error('Invalid app config data: mockAuth must be a boolean');
+      throw new TypeError(
+        'Invalid app config data: mockAuth must be a boolean'
+      );
     }
 
     return {

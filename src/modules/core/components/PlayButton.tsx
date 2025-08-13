@@ -35,24 +35,27 @@ interface PlayButtonProps {
   'data-testid'?: string;
 }
 
-export function PlayButton({
-  track,
-  musicService,
-  startTime = 0,
-  duration,
-  variant = 'success',
-  size,
-  className = '',
-  disabled = false,
-  playText = '▶ Play',
-  pauseText = '⏸ Pause',
-  loadingText = 'Loading...',
-  onError,
-  'data-testid': testId,
-}: PlayButtonProps) {
+export function PlayButton(props: PlayButtonProps) {
+  const {
+    track,
+    musicService,
+    startTime = 0,
+    duration,
+    variant = 'success',
+    size,
+    className = '',
+    disabled = false,
+    playText = '▶ Play',
+    pauseText = '⏸ Pause',
+    loadingText = 'Loading...',
+    onError,
+    'data-testid': testId,
+  } = props;
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   // Stop playback function
   const stopPlayback = useCallback(async () => {
@@ -67,7 +70,7 @@ export function PlayButton({
     // Clear timeout
     if (playbackTimeoutRef.current) {
       clearTimeout(playbackTimeoutRef.current);
-      playbackTimeoutRef.current = null;
+      playbackTimeoutRef.current = undefined;
     }
 
     setIsPlaying(false);
@@ -101,7 +104,7 @@ export function PlayButton({
         // Clear any existing timeout first
         if (playbackTimeoutRef.current) {
           clearTimeout(playbackTimeoutRef.current);
-          playbackTimeoutRef.current = null;
+          playbackTimeoutRef.current = undefined;
         }
 
         await musicService.playTrack(track.uri, startPositionMs);
@@ -126,7 +129,7 @@ export function PlayButton({
         // Clear timeout if playback fails
         if (playbackTimeoutRef.current) {
           clearTimeout(playbackTimeoutRef.current);
-          playbackTimeoutRef.current = null;
+          playbackTimeoutRef.current = undefined;
         }
       }
     }

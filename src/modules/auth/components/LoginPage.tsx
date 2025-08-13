@@ -7,9 +7,9 @@ interface LoginPageProps {
   auth?: AuthContextType;
 }
 
-export function LoginPage({ auth }: LoginPageProps) {
+export function LoginPage(props: LoginPageProps) {
   const defaultAuth = useAuth();
-  const { login } = auth ?? defaultAuth;
+  const { login } = props.auth ?? defaultAuth;
 
   const handleLogin = async () => {
     await login();

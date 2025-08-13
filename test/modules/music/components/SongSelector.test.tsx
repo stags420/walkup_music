@@ -16,6 +16,11 @@ const mockMusicService: MusicService = {
   isPlaybackReady: jest.fn(),
 };
 
+// Mock the hook that provides the music service
+jest.mock('@/modules/app/hooks/useServices', () => ({
+  useMusicService: () => mockMusicService,
+}));
+
 const mockTrack: SpotifyTrack = {
   id: 'track1',
   name: 'Test Song',
@@ -23,7 +28,7 @@ const mockTrack: SpotifyTrack = {
   album: 'Test Album',
   albumArt: 'https://example.com/album.jpg',
   previewUrl: 'https://example.com/preview.mp3',
-  durationMs: 180000,
+  durationMs: 180_000,
   uri: 'spotify:track:test123',
 };
 
@@ -36,36 +41,24 @@ const mockTracks: SpotifyTrack[] = [
     album: 'Another Album',
     albumArt: 'https://example.com/album2.jpg',
     previewUrl: 'https://example.com/preview2.mp3',
-    durationMs: 200000,
+    durationMs: 200_000,
     uri: 'spotify:track:test456',
   },
 ];
 
 // Mock the TrackCard component to avoid complex rendering
 jest.mock('@/modules/core', () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-    ...props
-  }: {
+  Button: (props: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     [key: string]: unknown;
   }) => (
-    <button onClick={onClick} disabled={disabled} {...props}>
-      {children}
+    <button onClick={props.onClick} disabled={props.disabled} {...props}>
+      {props.children}
     </button>
   ),
-  TrackCard: ({
-    track,
-    onSelect,
-    onPreview: _onPreview,
-    isSelected,
-    isPlaying,
-    variant: _variant,
-  }: {
+  TrackCard: (props: {
     track: {
       id: string;
       name: string;
@@ -84,24 +77,21 @@ jest.mock('@/modules/core', () => ({
     variant?: string;
   }) => (
     <div
-      className={`track-card ${isSelected ? 'selected' : ''} ${isPlaying ? 'playing' : ''}`}
+      className={`track-card ${props.isSelected ? 'selected' : ''} ${props.isPlaying ? 'playing' : ''}`}
       onClick={() => {
-        onSelect?.();
+        props.onSelect?.();
       }}
     >
       <div className="track-info">
-        <div className="track-name">{track.name}</div>
+        <div className="track-name">{props.track.name}</div>
         <div className="track-artists">
-          {track.artists.map((artist) => artist.name).join(', ')}
+          {props.track.artists.map((artist) => artist.name).join(', ')}
         </div>
       </div>
       <button
         className="preview-button"
         onClick={(e) => {
           e.stopPropagation();
-          // The SongSelector calls onPreview with an empty object, which causes issues
-          // So we'll just simulate the preview functionality without calling onPreview
-          // This matches how the real component would behave in a test environment
         }}
         aria-label="Play preview"
       >
@@ -119,11 +109,11 @@ describe('SongSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (mockMusicService.searchTracks as jest.Mock).mockResolvedValue(mockTracks);
-    (mockMusicService.pause as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.playTrack as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.resume as jest.Mock).mockResolvedValue(undefined);
-    (mockMusicService.seek as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.pause as jest.Mock).mockResolvedValue();
+    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue();
+    (mockMusicService.playTrack as jest.Mock).mockResolvedValue();
+    (mockMusicService.resume as jest.Mock).mockResolvedValue();
+    (mockMusicService.seek as jest.Mock).mockResolvedValue();
     (mockMusicService.getCurrentState as jest.Mock).mockResolvedValue({});
     (mockMusicService.isPlaybackConnected as jest.Mock).mockResolvedValue(
       false
@@ -132,38 +122,13 @@ describe('SongSelector', () => {
   });
 
   const renderSongSelector = (props = {}) => {
-    try {
-      return render(
-        <SongSelector
-          musicService={mockMusicService}
-          onSelectTrack={mockOnSelectTrack}
-          onCancel={mockOnCancel}
-          {...props}
-        />
-      );
-    } catch (error) {
-      // Check if it's an AggregateError and print all composing errors
-      if (
-        error instanceof Error &&
-        'errors' in error &&
-        Array.isArray((error as Error & { errors: Error[] }).errors)
-      ) {
-        console.log('AggregateError caught in renderSongSelector:');
-        console.log('Main error:', error.message);
-        console.log('Composing errors:');
-        (error as Error & { errors: Error[] }).errors.forEach(
-          (composingError: Error, index: number) => {
-            console.log(
-              `  ${index + 1}. ${composingError.name}: ${composingError.message}`
-            );
-            if (composingError.stack) {
-              console.log(`     Stack: ${composingError.stack}`);
-            }
-          }
-        );
-      }
-      throw error;
-    }
+    return render(
+      <SongSelector
+        onSelectTrack={mockOnSelectTrack}
+        onCancel={mockOnCancel}
+        {...props}
+      />
+    );
   };
 
   it('should render with initial empty state', () => {

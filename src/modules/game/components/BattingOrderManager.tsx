@@ -1,39 +1,23 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
-import type { MusicService } from '@/modules/music/services/MusicService';
-import type { LineupService } from '@/modules/game/services/LineupService';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { OrderBuilder } from '@/modules/game/components/OrderBuilder';
 import type { SongSegment } from '@/modules/music';
 import { SegmentSelector } from '@/modules/music';
 import { Button } from '@/modules/core/components/Button';
+import { useMusicService } from '@/modules/app/hooks/useServices';
+import { usePlayers } from '@/modules/game/hooks/usePlayers';
 import {
-  useLineupService,
-  useMusicService,
-  usePlayerService,
-} from '@/modules/app/hooks/useServices';
+  useBattingOrder,
+  useLineupActions,
+} from '@/modules/game/hooks/useLineup';
 // Using Bootstrap classes instead of custom CSS
 
-interface BattingOrderManagerProps {
-  playerService?: PlayerService;
-  musicService?: MusicService;
-  lineupService?: LineupService;
-  onStartGame: () => void;
-}
-
-export function BattingOrderManager({
-  playerService: injectedPlayerService,
-  musicService: injectedMusicService,
-  lineupService: injectedLineupService,
-  onStartGame,
-}: BattingOrderManagerProps) {
-  const defaultPlayerService = usePlayerService();
-  const defaultMusicService = useMusicService();
-  const defaultLineupService = useLineupService();
-  const playerService = injectedPlayerService ?? defaultPlayerService;
-  const musicService = injectedMusicService ?? defaultMusicService;
-  const lineupService = injectedLineupService ?? defaultLineupService;
+export function BattingOrderManager() {
+  const musicService = useMusicService();
+  const allPlayersState = usePlayers();
+  const currentBattingOrder = useBattingOrder();
+  const lineupActions = useLineupActions();
   const [showForm, setShowForm] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>();
   const [editingSegmentOnly, setEditingSegmentOnly] = useState(false);
@@ -46,16 +30,15 @@ export function BattingOrderManager({
 
   const loadPlayersAndLineup = useCallback(async () => {
     try {
-      const players = await playerService.getAllPlayers();
-      setAllPlayers(players);
+      setAllPlayers(allPlayersState);
 
       // Check if there's an existing batting order
-      const currentOrder = lineupService.getCurrentBattingOrder();
+      const currentOrder = currentBattingOrder;
       if (currentOrder) {
         const lineupPlayers = currentOrder.playerIds
-          .map((id) => players.find((p) => p.id === id))
+          .map((id) => allPlayersState.find((p) => p.id === id))
           .filter(Boolean) as Player[];
-        const available = players.filter(
+        const available = allPlayersState.filter(
           (p) => !currentOrder.playerIds.includes(p.id)
         );
         setLineup(lineupPlayers);
@@ -63,12 +46,12 @@ export function BattingOrderManager({
       } else {
         // No existing order, all players are available
         setLineup([]);
-        setAvailablePlayers(players);
+        setAvailablePlayers(allPlayersState);
       }
     } catch (error) {
       console.error('Failed to load players and lineup:', error);
     }
-  }, [playerService, lineupService]);
+  }, [allPlayersState, currentBattingOrder]);
 
   // Load players and lineup on component mount
   useEffect(() => {
@@ -116,7 +99,7 @@ export function BattingOrderManager({
     // Update the batting order in the service
     if (newLineup.length > 0) {
       const playerIds = newLineup.map((p) => p.id);
-      await lineupService.createBattingOrder(playerIds);
+      lineupActions.createBattingOrder(playerIds);
     }
   };
 
@@ -125,14 +108,13 @@ export function BattingOrderManager({
       if (lineup.length === 0) {
         // If no lineup, use all players
         const playerIds = allPlayers.map((p) => p.id);
-        await lineupService.createBattingOrder(playerIds);
+        lineupActions.createBattingOrder(playerIds);
       } else {
         // Use current lineup
         const playerIds = lineup.map((p) => p.id);
-        await lineupService.createBattingOrder(playerIds);
+        lineupActions.createBattingOrder(playerIds);
       }
-      lineupService.startGame();
-      onStartGame();
+      lineupActions.setGameActive(true);
     } catch (error) {
       console.error('Failed to start game:', error);
     }
@@ -182,7 +164,6 @@ export function BattingOrderManager({
             availablePlayers={availablePlayers}
             onLineupChange={handleLineupChange}
             musicService={musicService}
-            playerService={playerService}
           />
         </div>
       </div>
@@ -190,7 +171,6 @@ export function BattingOrderManager({
       {showForm && (
         <div data-testid="player-form">
           <PlayerForm
-            playerService={playerService}
             musicService={musicService}
             player={editingPlayer}
             segmentEditOnly={editingSegmentOnly}
@@ -205,15 +185,8 @@ export function BattingOrderManager({
           track={editingPlayer.song.track}
           musicService={musicService}
           initialSegment={editingPlayer.song}
-          onConfirm={async (segment: SongSegment) => {
-            try {
-              await playerService.updatePlayer(editingPlayer.id, {
-                song: segment,
-              });
-              void handleSegmentSaved();
-            } catch (error) {
-              console.error('Failed to update timing:', error);
-            }
+          onConfirm={async (_segment: SongSegment) => {
+            void handleSegmentSaved();
           }}
           onCancel={handleSegmentCancelled}
         />

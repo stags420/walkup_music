@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { Player } from '@/modules/game/models/Player';
-import type { PlayerService } from '@/modules/game/services/PlayerService';
 import type { MusicService } from '@/modules/music/services/MusicService';
 import { PlayerForm } from '@/modules/game/components/PlayerForm';
 import { Button } from '@/modules/core/components/Button';
@@ -14,48 +13,44 @@ export interface PlayerCardProps {
   size?: 'small' | 'medium' | 'large';
   allowPlayMusic?: boolean;
   borderColor?: string;
-  playerService: PlayerService;
   musicService?: MusicService;
   onPlayerUpdated?: () => void;
   className?: string;
 }
 
-const PlayerCard: React.FC<PlayerCardProps> = ({
-  player,
-  header,
-  displayAlbumArt = false,
-  size = 'medium',
-  allowPlayMusic = false,
-  borderColor,
-  playerService,
-  musicService,
-  onPlayerUpdated,
-  className = '',
-}) => {
+const PlayerCard: React.FC<PlayerCardProps> = (props) => {
+  const {
+    player,
+    header,
+    displayAlbumArt = false,
+    size = 'medium',
+    allowPlayMusic = false,
+    borderColor,
+    musicService,
+    onPlayerUpdated,
+    className = '',
+  } = props;
   const [showEditForm, setShowEditForm] = useState(false);
-  const [fullPlayer, setFullPlayer] = useState<Player | null>(null);
+  const [fullPlayer, setFullPlayer] = useState<Player | undefined>();
 
   const hasSong = player.song && player.song.track;
   const canPlayMusic = allowPlayMusic && hasSong;
 
   const handleEdit = async () => {
     // Get the full player object for editing
-    const playerData = await playerService.getPlayer(player.id);
-    if (playerData) {
-      setFullPlayer(playerData);
-      setShowEditForm(true);
-    }
+    setFullPlayer(player);
+    setShowEditForm(true);
   };
 
   const handleSavePlayer = () => {
     setShowEditForm(false);
-    setFullPlayer(null);
+    setFullPlayer(undefined);
     onPlayerUpdated?.();
   };
 
   const handleCancelForm = () => {
     setShowEditForm(false);
-    setFullPlayer(null);
+    setFullPlayer(undefined);
   };
 
   return (
@@ -154,7 +149,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       {/* Edit Player Modal */}
       {showEditForm && musicService && fullPlayer && (
         <PlayerForm
-          playerService={playerService}
           musicService={musicService}
           player={fullPlayer}
           onSave={handleSavePlayer}

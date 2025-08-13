@@ -31,19 +31,20 @@ interface ButtonProps {
   'aria-label'?: string;
 }
 
-export function Button({
-  children,
-  onClick,
-  variant = 'primary',
-  size,
-  disabled = false,
-  type = 'button',
-  className = '',
-  style,
-  'data-testid': dataTestId,
-  'aria-describedby': ariaDescribedBy,
-  'aria-label': ariaLabel,
-}: ButtonProps) {
+export function Button(props: ButtonProps) {
+  const {
+    children,
+    onClick,
+    variant = 'primary',
+    size,
+    disabled = false,
+    type = 'button',
+    className = '',
+    style,
+    'data-testid': dataTestId,
+    'aria-describedby': ariaDescribedBy,
+    'aria-label': ariaLabel,
+  } = props;
   return (
     <BootstrapButton
       variant={variant}

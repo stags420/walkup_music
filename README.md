@@ -376,14 +376,9 @@ Notes:
 - Business/services live outside React and depend on interfaces (constructor injection).
 - UI-related Contexts (like `AuthProvider`) are for view state, not for wiring service singletons.
 
-### Add a New Service to the Container
+### State and Services
 
-1. Define an interface in the appropriate module (e.g., `src/modules/game/services/PlayerService.ts`).
-2. Implement the interface in `services/impl/` using constructor injection for dependencies.
-3. Add the service to `AppContainer` in `src/container.ts` and wire it in `bootstrapServices`.
-4. Expose a tiny helper hook (e.g., `usePlayerService`) that returns the singleton from `getContainer()`.
-5. Consume via props-with-defaults or the helper hook at the top of components.
-6. Add unit tests that pass fakes/mocks via props or replace the container in test setup.
+Prefer colocated Zustand stores for UI/domain state within modules (e.g., `src/modules/game/state/playersStore.ts`, `src/modules/game/state/lineupStore.ts`). Expose selector hooks like `usePlayers`, `usePlayersActions`, `useBattingOrder`, and `useLineupActions` instead of container-backed services for this state. Core cross-cutting services (e.g., HTTP, Auth, Music) still live in the container and are accessed via small hooks from `ApplicationContainerProvider`.
 
 ### Type Safety
 

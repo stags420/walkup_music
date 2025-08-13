@@ -1,7 +1,7 @@
 import type { AppConfig } from '@/modules/app/models/AppConfig';
 
 export class AppConfigProvider {
-  private static instance: AppConfig | null = null;
+  private static instance: AppConfig | undefined = undefined;
   private static isInitialized = false;
 
   static initialize(config: AppConfig): void {
@@ -29,7 +29,7 @@ export class AppConfigProvider {
   }
 
   static reset(): void {
-    this.instance = null;
+    this.instance = undefined;
     this.isInitialized = false;
   }
 

@@ -26,7 +26,8 @@ export interface MusicService {
  * Provides realistic track data for development and testing
  */
 export class MockMusicService implements MusicService {
-  private previewTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private previewTimeoutId: ReturnType<typeof setTimeout> | undefined =
+    undefined;
   private readonly mockTracks: SpotifyTrack[];
 
   private static readonly defaultMockTracks: SpotifyTrack[] = [
@@ -38,7 +39,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b2733f1e2f9a4e3a4e2f9a4e3a4e2f',
       previewUrl: 'https://p.scdn.co/mp3-preview/track1',
-      durationMs: 245000,
+      durationMs: 245_000,
       uri: 'spotify:track:2KH16WveTQWT6KOG9Rg6e2',
     },
     {
@@ -49,7 +50,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273ce4f1737bc8a646c8c4bd25a',
       previewUrl: 'https://p.scdn.co/mp3-preview/track2',
-      durationMs: 122000,
+      durationMs: 122_000,
       uri: 'spotify:track:4fzsfWzRhPawzqhX8Qt9F3',
     },
     {
@@ -60,7 +61,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273b8e6e5b7b3c4e5d6c7d8e9f0',
       previewUrl: 'https://p.scdn.co/mp3-preview/track3',
-      durationMs: 292000,
+      durationMs: 292_000,
       uri: 'spotify:track:57bgtoPSgt236HzfBOd8kj',
     },
     {
@@ -71,7 +72,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273a8b4b9c0d1e2f3g4h5i6j7k8',
       previewUrl: 'https://p.scdn.co/mp3-preview/track4',
-      durationMs: 267000,
+      durationMs: 267_000,
       uri: 'spotify:track:0G3fbTaUlkPz5zUFuJ3UKB',
     },
     {
@@ -82,7 +83,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273c8b5e6f7g8h9i0j1k2l3m4n5',
       previewUrl: 'https://p.scdn.co/mp3-preview/track5',
-      durationMs: 331000,
+      durationMs: 331_000,
       uri: 'spotify:track:5QO79kh1waicV47BqGRL3g',
     },
     {
@@ -93,7 +94,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273d9e8f0g1h2i3j4k5l6m7n8o9',
       previewUrl: 'https://p.scdn.co/mp3-preview/track6',
-      durationMs: 201000,
+      durationMs: 201_000,
       uri: 'spotify:track:1mea3bSkSGXuIRvnydlB5b',
     },
     {
@@ -104,7 +105,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273e1f2g3h4i5j6k7l8m9n0o1p2',
       previewUrl: 'https://p.scdn.co/mp3-preview/track7',
-      durationMs: 251000,
+      durationMs: 251_000,
       uri: 'spotify:track:4bHsxqR3GMrXTxEPLuK5ue',
     },
     {
@@ -115,7 +116,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273f3g4h5i6j7k8l9m0n1o2p3q4',
       previewUrl: 'https://p.scdn.co/mp3-preview/track8',
-      durationMs: 193000,
+      durationMs: 193_000,
       uri: 'spotify:track:6fxVffaTuwjgEk5h9QyRjy',
     },
     {
@@ -126,7 +127,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273g4h5i6j7k8l9m0n1o2p3q4r5',
       previewUrl: 'https://p.scdn.co/mp3-preview/track9',
-      durationMs: 225000,
+      durationMs: 225_000,
       uri: 'spotify:track:4u7EnebtmKWzUH433cf5Qv',
     },
     {
@@ -137,7 +138,7 @@ export class MockMusicService implements MusicService {
       albumArt:
         'https://i.scdn.co/image/ab67616d0000b273h5i6j7k8l9m0n1o2p3q4r5s6',
       previewUrl: 'https://p.scdn.co/mp3-preview/track10',
-      durationMs: 195000,
+      durationMs: 195_000,
       uri: 'spotify:track:1TjOHwQU0b3GRhY5vr8VYe',
     },
   ];
@@ -146,7 +147,7 @@ export class MockMusicService implements MusicService {
 
   constructor(
     playbackService: SpotifyPlaybackService,
-    injectedTracks?: SpotifyTrack[] | null
+    injectedTracks?: SpotifyTrack[] | undefined
   ) {
     this.playbackService = playbackService;
     this.mockTracks = injectedTracks || MockMusicService.defaultMockTracks;
@@ -234,7 +235,7 @@ export class MockMusicService implements MusicService {
         void (async () => {
           try {
             await this.playbackService.pause();
-            this.previewTimeoutId = null;
+            this.previewTimeoutId = undefined;
             onTrackEnd?.();
           } catch (error) {
             console.error('Failed to auto-pause preview:', error);
@@ -253,7 +254,7 @@ export class MockMusicService implements MusicService {
   private clearPreviewTimeout(): void {
     if (this.previewTimeoutId) {
       clearTimeout(this.previewTimeoutId);
-      this.previewTimeoutId = null;
+      this.previewTimeoutId = undefined;
     }
   }
 

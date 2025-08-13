@@ -142,8 +142,8 @@ describe('Cookie Utilities', () => {
       // When I try to get a non-existent cookie
       const value = getCookie('nonExistent');
 
-      // Then it should return null
-      expect(value).toBeNull();
+      // Then it should return undefined (no cookie found)
+      expect(value).toBeUndefined();
     });
 
     it('should handle empty cookie value', () => {

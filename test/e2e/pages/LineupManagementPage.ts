@@ -79,7 +79,7 @@ export class LineupManagementPage extends BasePage {
       .locator(`${this.availablePlayersColumn} ${this.availablePlayer}`)
       .all();
 
-    let sourcePlayer: Locator | null = null;
+    let sourcePlayer: Locator | undefined;
     for (const player of availablePlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
@@ -107,7 +107,7 @@ export class LineupManagementPage extends BasePage {
       .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
       .all();
 
-    let sourcePlayer: Locator | null = null;
+    let sourcePlayer: Locator | undefined;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
@@ -135,7 +135,7 @@ export class LineupManagementPage extends BasePage {
       .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
       .all();
 
-    let sourcePlayer: Locator | null = null;
+    let sourcePlayer: Locator | undefined;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();
@@ -163,7 +163,7 @@ export class LineupManagementPage extends BasePage {
       .locator(`${this.lineupColumn} ${this.lineupPlayer}`)
       .all();
 
-    let sourcePlayer: Locator | null = null;
+    let sourcePlayer: Locator | undefined;
     for (const player of lineupPlayers) {
       const nameElement = player.locator('[data-testid="player-name"]');
       const name = await nameElement.textContent();

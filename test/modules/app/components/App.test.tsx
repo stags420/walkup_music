@@ -28,6 +28,12 @@ jest.mock('@/modules/game/components/PlayerManager', () => ({
   PlayerManager: () => <div data-testid="player-manager">Player Manager</div>,
 }));
 
+jest.mock('@/modules/game/components/BattingOrderManager', () => ({
+  BattingOrderManager: () => (
+    <div data-testid="batting-order-manager">Batting Order Manager</div>
+  ),
+}));
+
 jest.mock('@/modules/game/components/GameMode', () => ({
   GameMode: () => <div data-testid="game-mode">Game Mode</div>,
 }));
@@ -43,7 +49,7 @@ describe('App Component Rendering', () => {
   const mockAuth: AuthContextType = {
     state: {
       isAuthenticated: false,
-      user: null,
+      user: undefined,
     },
     login: jest.fn(),
     logout: jest.fn(),
@@ -180,7 +186,7 @@ describe('App Component Rendering', () => {
         state: {
           ...mockAuth.state,
           isAuthenticated: true,
-          user: null, // No user object
+          user: undefined, // No user object
         },
       };
 

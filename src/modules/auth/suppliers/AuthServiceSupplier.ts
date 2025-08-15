@@ -9,12 +9,8 @@ export function supplyAuthService(): AuthService {
   if (!singleton) {
     const config = AppConfigSupplier.get();
     singleton = config.mockAuth
-      ? new MockAuthService()
+      ? new MockAuthService(config)
       : new SpotifyAuthService(config);
   }
   return singleton;
-}
-
-export function resetAuthServiceForTests(): void {
-  singleton = undefined;
 }

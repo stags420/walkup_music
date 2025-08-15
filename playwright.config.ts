@@ -134,8 +134,6 @@ export default defineConfig({
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
-
-    /* Test against mobile viewports. */
     {
       name: 'Mobile Chrome',
       use: { ...devices['iPhone 15 Pro'] },
@@ -146,7 +144,7 @@ export default defineConfig({
     },
   ],
 
-  /* Always run Vite dev server; invoker can set env (e.g., VITE_MOCK_AUTH, VITE_ENABLE_COVERAGE) */
+  /* Always run Vite dev server for e2e */
   webServer: {
     command: 'vite --host=127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173/walkup_music/',

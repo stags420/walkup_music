@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import { LoginPage, CallbackPage } from '@/modules/auth';
 import { BattingOrderManager, GameMode } from '@/modules/game';
-import { AppConfigProvider } from '@/modules/app';
+import { AppConfigSupplier } from '@/modules/app';
 import { useState, useEffect } from 'react';
 import { useSettingsTheme } from '@/modules/app/hooks/useSettingsTheme';
 import { useGameActive } from '@/modules/game/hooks/useLineup';
@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ThemeMode } from '@/modules/app/state/settingsStore';
 import './App.css';
 import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
+import { useAuthSessionGuard } from '@/modules/auth/hooks/useAuthSessionGuard';
 
 function AppContent() {
   const authUser = useAuthUser();
@@ -31,6 +32,9 @@ function AuthenticatedApp() {
   const authUser = useAuthUser();
   const isGameMode = useGameActive();
   const [isLoading, setIsLoading] = useState(true);
+
+  // Validate session when app regains focus/visibility
+  useAuthSessionGuard();
 
   useEffect(() => {
     // With Zustand lineup store, assume not in game on initial load
@@ -77,8 +81,8 @@ function AuthenticatedApp() {
 }
 
 export function App() {
-  const config = AppConfigProvider.get();
-  const basename = config.basePath || '/';
+  const config = AppConfigSupplier.get();
+  const basename = config.basePath || undefined;
   const theme = useSettingsTheme();
 
   useEffect(() => {

@@ -14,8 +14,7 @@ test/reports/**
 !test/reports/index.html
 
 # Build output
-dist/
-dist-mocked/
+dist*/
 build/
 
 # Environment variables

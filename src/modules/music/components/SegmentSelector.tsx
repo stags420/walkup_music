@@ -6,29 +6,20 @@ import type { ChangeEvent } from 'react';
 import type { SpotifyTrack } from '@/modules/music/models/SpotifyTrack';
 import type { SongSegment } from '@/modules/music/models/SongSegment';
 import { PlayButton } from '@/modules/core';
-import type { MusicService } from '@/modules/music/services/MusicService';
 import { supplyMusicService } from '@/modules/music/suppliers/MusicServiceSupplier';
+import { useMaxSegmentSeconds } from '@/modules/app';
 
 interface SegmentSelectorProps {
   track: SpotifyTrack;
-  musicService?: MusicService;
   initialSegment?: SongSegment;
   onConfirm: (segment: SongSegment) => void;
   onCancel: () => void;
-  maxDuration?: number; // seconds, default 10
 }
 
 export function SegmentSelector(props: SegmentSelectorProps) {
-  const {
-    track,
-    musicService,
-    initialSegment,
-    onConfirm,
-    onCancel,
-    maxDuration = 10,
-  } = props;
-  const defaultMusicService = supplyMusicService();
-  const resolvedMusicService = musicService ?? defaultMusicService;
+  const { track, initialSegment, onConfirm, onCancel } = props;
+  const musicService = supplyMusicService();
+  const maxDuration = useMaxSegmentSeconds();
   const [startTime, setStartTime] = useState(initialSegment?.startTime || 0);
   const [duration, setDuration] = useState(
     initialSegment?.duration || Math.min(maxDuration, 10)
@@ -321,7 +312,7 @@ export function SegmentSelector(props: SegmentSelectorProps) {
 
                 <PlayButton
                   track={track}
-                  musicService={resolvedMusicService}
+                  musicService={musicService}
                   startTime={startTime}
                   duration={duration}
                   variant="success"

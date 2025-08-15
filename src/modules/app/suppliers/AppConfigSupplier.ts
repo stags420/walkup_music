@@ -23,17 +23,4 @@ export class AppConfigSupplier {
     }
     return this.instance;
   }
-
-  static createForTesting(testConfig: AppConfig): AppConfig {
-    return testConfig;
-  }
-
-  static reset(): void {
-    this.instance = undefined;
-    this.isInitialized = false;
-  }
-
-  static isConfigInitialized(): boolean {
-    return this.isInitialized;
-  }
 }

@@ -82,7 +82,7 @@ export function supplyPlayerService(config: AppConfig): PlayerService {
 
 ```ts
 // suppliers
-import { AppConfigProvider } from '@/modules/app';
+import { AppConfigSupplier } from '@/modules/app';
 import { supplyPlayerService } from '@/modules/game/suppliers/PlayerServiceSupplier';
 
 export const supplyPlayerServiceSingleton = () =>

@@ -1,7 +1,7 @@
 export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/test/setupTests.ts'],
+  setupFilesAfterEnv: ['<rootDir>/test/unit/setupTests.ts'],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -23,13 +23,10 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: [
-    '<rootDir>/test/**/*.test.(ts|tsx|js)',
-    '<rootDir>/test/**/*.spec.(ts|tsx|js)',
+    '<rootDir>/test/unit/**/*.test.(ts|tsx|js)',
+    '<rootDir>/test/unit/**/*.spec.(ts|tsx|js)',
   ],
-  testPathIgnorePatterns: [
-    '<rootDir>/test/setupTests.ts',
-    '<rootDir>/test/e2e/',
-  ],
+  testPathIgnorePatterns: ['<rootDir>/test/e2e/'],
   collectCoverageFrom: [
     'src/**/*.(ts|tsx)',
     '!src/**/*.d.ts',

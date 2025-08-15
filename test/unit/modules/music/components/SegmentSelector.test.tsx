@@ -33,6 +33,16 @@ const mockMusicService: MusicService = {
   isPlaybackReady: jest.fn().mockReturnValue(true),
 };
 
+// Mock the music service supplier
+jest.mock('@/modules/music/suppliers/MusicServiceSupplier', () => ({
+  supplyMusicService: () => mockMusicService,
+}));
+
+// Mock the useMaxSegmentSeconds hook
+jest.mock('@/modules/app', () => ({
+  useMaxSegmentSeconds: () => 10,
+}));
+
 describe('SegmentSelector', () => {
   const mockOnConfirm = jest.fn();
   const mockOnCancel = jest.fn();
@@ -40,11 +50,11 @@ describe('SegmentSelector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Set up default mock implementations that return Promises
-    (mockMusicService.playTrack as jest.Mock).mockResolvedValue();
-    (mockMusicService.pause as jest.Mock).mockResolvedValue();
-    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue();
-    (mockMusicService.resume as jest.Mock).mockResolvedValue();
-    (mockMusicService.seek as jest.Mock).mockResolvedValue();
+    (mockMusicService.playTrack as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.pause as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.previewTrack as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.resume as jest.Mock).mockResolvedValue(undefined);
+    (mockMusicService.seek as jest.Mock).mockResolvedValue(undefined);
     (mockMusicService.getCurrentState as jest.Mock).mockResolvedValue({});
   });
 
@@ -61,7 +71,6 @@ describe('SegmentSelector', () => {
     return render(
       <SegmentSelector
         track={mockTrack}
-        musicService={mockMusicService}
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}
         {...props}
@@ -173,12 +182,15 @@ describe('SegmentSelector', () => {
   });
 
   it('should respect custom maxDuration prop', () => {
-    renderSegmentSelector({ maxDuration: 20 });
+    // This test verifies that the component respects the maxDuration from useMaxSegmentSeconds
+    // Since we mocked it to return 10, trying to set 15 should be clamped to 10
+    renderSegmentSelector();
 
     const durationInput = screen.getByLabelText('Duration') as HTMLInputElement;
     fireEvent.change(durationInput, { target: { value: '15' } });
 
-    expect(durationInput.value).toBe('15');
+    // Should be clamped to the max duration of 10
+    expect(durationInput.value).toBe('10');
   });
 
   it('should display selected segment info', () => {
@@ -401,7 +413,6 @@ describe('SegmentSelector', () => {
     render(
       <SegmentSelector
         track={mockTrack}
-        musicService={mockMusicService}
         initialSegment={mockSegment}
         onConfirm={mockOnConfirm}
         onCancel={mockOnCancel}

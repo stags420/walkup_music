@@ -9,7 +9,32 @@ if (globalThis.TextEncoder === undefined) {
   });
 }
 
-import { AppConfigProvider } from '@/modules/app';
+// Mock location for tests if it doesn't exist
+if (!globalThis.location) {
+  Object.defineProperty(globalThis, 'location', {
+    value: {
+      origin: 'http://127.0.0.1:3000',
+      pathname: '/',
+    },
+  });
+}
+
+// Initialize AppConfig for all tests
+import { AppConfigSupplier } from '@/modules/app/suppliers/AppConfigSupplier';
+import type { AppConfig } from '@/modules/app/models/AppConfig';
+
+const testAppConfig: AppConfig = {
+  maxSegmentSeconds: 10,
+  spotifyClientId: 'test-spotify-client-id',
+  redirectUri: 'http://127.0.0.1:3000/callback',
+  tokenRefreshBufferMinutes: 15,
+  basePath: '',
+  mockAuth: true,
+  maxTokenTtlSeconds: undefined,
+  logLevel: undefined,
+};
+
+AppConfigSupplier.initialize(testAppConfig);
 
 // Mock crypto.randomUUID for Node.js test environment
 Object.defineProperty(globalThis, 'crypto', {
@@ -43,14 +68,3 @@ console.debug = (...args) => {
   // Allow all other console.debug messages through
   originalConsoleDebug.apply(console, args);
 };
-
-// Initialize config and container for tests
-AppConfigProvider.initialize({
-  maxSegmentDuration: 10,
-  spotifyClientId: 'test-client-id',
-  redirectUri: 'http://127.0.0.1/callback',
-  tokenRefreshBufferMinutes: 15,
-  basePath: '',
-  mockAuth: true,
-});
-// No app container; services are supplied on demand

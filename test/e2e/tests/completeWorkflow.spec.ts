@@ -34,7 +34,7 @@ test.describe('Complete E2E Workflow', () => {
     await loginPage.goto();
     await loginPage.waitForLoad();
     await loginPage.loginInMockMode();
-    await expect(page).toHaveURL('/walkup_music/');
+    await expect(page).toHaveURL('/walkup_music');
 
     // 2. Test detailed song selection workflow
     const testPlayer = testPlayers[0]; // Mike Trout with Thunderstruck
@@ -66,7 +66,7 @@ test.describe('Complete E2E Workflow', () => {
     await loginPage.goto();
     await loginPage.waitForLoad();
     await loginPage.loginInMockMode();
-    await expect(page).toHaveURL('/walkup_music/');
+    await expect(page).toHaveURL('/walkup_music');
 
     // 2. Create a player with a song first
     const testPlayer = testPlayers[0]; // Mike Trout
@@ -99,7 +99,7 @@ test.describe('Complete E2E Workflow', () => {
     expect(await loginPage.isOnLoginPage()).toBe(true);
 
     await loginPage.loginInMockMode();
-    await expect(page).toHaveURL('/walkup_music/');
+    await expect(page).toHaveURL('/walkup_music');
     expect(await playerPage.isOnPlayerManagementPage()).toBe(true);
 
     // 2. Add first player with song selection and segment selection

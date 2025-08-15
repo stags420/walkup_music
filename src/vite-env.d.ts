@@ -10,10 +10,7 @@ interface ViteTypeOptions {
 
 interface ImportMetaEnv {
   readonly VITE_SPOTIFY_CLIENT_ID?: string;
-  readonly VITE_BASE_PATH?: string;
-  readonly VITE_MOCK_AUTH?: 'true' | 'false';
-  readonly VITE_LOG_LEVEL?: 'debug' | 'info' | 'warn' | 'error' | 'silent';
-  readonly VITE_ENABLE_COVERAGE?: 'true' | 'false';
+  readonly VITE_APP_CONFIG_KEY?: string;
 }
 
 interface ImportMeta {

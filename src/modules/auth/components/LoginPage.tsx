@@ -1,8 +1,16 @@
 import { useAuthActions } from '@/modules/auth/hooks/useAuthActions';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/modules/core/components/Button';
 
 export function LoginPage() {
   const { login } = useAuthActions();
+  const location = useLocation();
+  const errorMessage = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const e = params.get('error');
+    return e ? decodeURIComponent(e) : undefined;
+  }, [location.search]);
 
   const handleLogin = async () => {
     await login();
@@ -14,6 +22,11 @@ export function LoginPage() {
         <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
           <div className="card shadow-lg border-0">
             <div className="card-body p-4 p-md-5">
+              {errorMessage && (
+                <div className="alert alert-danger" role="alert">
+                  {errorMessage}
+                </div>
+              )}
               <div className="text-center mb-4">
                 <h1 className="card-title h2 mb-3">Walk-Up Music Manager</h1>
                 <p className="card-text text-muted">

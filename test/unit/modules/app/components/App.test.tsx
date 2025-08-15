@@ -12,6 +12,10 @@ jest.mock('@/modules/auth/components/LoginPage', () => ({
   ),
 }));
 
+jest.mock('@/modules/auth/hooks/useAuthSessionGuard', () => ({
+  useAuthSessionGuard: jest.fn(),
+}));
+
 jest.mock('@/modules/auth/components/CallbackPage', () => ({
   CallbackPage: () => (
     <div data-testid="callback-page">
@@ -43,7 +47,7 @@ const mockUseAuthUser = useAuthUser as jest.MockedFunction<typeof useAuthUser>;
 describe('App Component Rendering', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuthUser.mockReturnValue();
+    mockUseAuthUser.mockReturnValue(undefined);
   });
 
   describe('AppContent (simplified)', () => {
@@ -124,7 +128,11 @@ describe('App Component Rendering', () => {
         email: 'john@example.com',
         displayName: 'John Doe',
       });
-      render(<AuthenticatedApp />);
+      render(
+        <MemoryRouter>
+          <AuthenticatedApp />
+        </MemoryRouter>
+      );
 
       // Then it should display the app header and user welcome
       expect(screen.getByText('Walk Up Music')).toBeInTheDocument();
@@ -143,8 +151,12 @@ describe('App Component Rendering', () => {
 
     test('should handle missing user display name gracefully', async () => {
       // Given I have an authenticated user without display name
-      mockUseAuthUser.mockReturnValue();
-      render(<AuthenticatedApp />);
+      mockUseAuthUser.mockReturnValue(undefined);
+      render(
+        <MemoryRouter>
+          <AuthenticatedApp />
+        </MemoryRouter>
+      );
 
       // Then it should still render without crashing
       expect(screen.getByText('Walk Up Music')).toBeInTheDocument();

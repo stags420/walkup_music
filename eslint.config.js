@@ -96,6 +96,7 @@ export default [
       ],
       // General rules continue...
       'unicorn/no-nested-ternary': 'off', // Allow nested ternary (conflicts with Prettier)
+      'unicorn/no-useless-undefined': 'off',
       'no-redeclare': 'off', // TypeScript handles this better
     },
   },
@@ -128,8 +129,7 @@ export default [
 
   {
     ignores: [
-      'dist/**',
-      'dist-mocked/**',
+      'dist*/**',
       'node_modules/**',
       '.eslintrc.cjs',
       'test/reports/**',

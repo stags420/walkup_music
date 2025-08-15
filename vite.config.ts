@@ -11,8 +11,12 @@ export default defineConfig(() => {
 
   return {
     plugins: [react()],
-  // Allow override from env; default stays GH Pages path
-    base: process.env.VITE_BASE_PATH ?? '/walkup_music/',
+    // Base path configuration:
+    // - Vite requires trailing slash for proper asset resolution
+    // - React Router basename should NOT have trailing slash (handled in detectBasePath)
+    // - For local dev at root: VITE_BASE_PATH=/ 
+    // - For GitHub Pages: /walkup_music/ (default)
+    base: process.env.VITE_BASE_PATH ?? '/walkup_music',
     build: {
       outDir: 'dist',
       sourcemap: sourcemapSetting,
@@ -25,6 +29,12 @@ export default defineConfig(() => {
         process.env.VITE_LOG_LEVEL ?? ''
       ),
       'import.meta.env.VITE_ENABLE_COVERAGE': JSON.stringify(''),
+      'import.meta.env.VITE_MAX_SESSION_SECONDS': JSON.stringify(
+        process.env.VITE_MAX_SESSION_SECONDS ?? ''
+      ),
+      'import.meta.env.VITE_APP_CONFIG_MODULE': JSON.stringify(
+        process.env.VITE_APP_CONFIG_MODULE ?? ''
+      ),
     },
     server: {
       port: 8000,

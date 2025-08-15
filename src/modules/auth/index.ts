@@ -9,3 +9,4 @@ export {
 } from '@/modules/auth/models/SpotifyAuth';
 export { useAuthActions } from '@/modules/auth/hooks/useAuthActions';
 export { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
+export { useAuthSessionGuard } from '@/modules/auth/hooks/useAuthSessionGuard';

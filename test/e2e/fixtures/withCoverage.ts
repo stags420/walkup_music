@@ -28,6 +28,7 @@ const test = base.extend<{ autoCoverage: string }>({
       const isCoverageEnabled =
         flag === '1' || flag === 'true' || flag === 'yes';
       const shouldCollect = isChromium && isCoverageEnabled;
+
       if (shouldCollect) {
         const cPage = page as unknown as ChromiumCoveragePage;
         await Promise.all([

@@ -219,10 +219,15 @@ export class SpotifyAuthService implements AuthService {
     const tokenResponse = SpotifyTokenResponse.fromExternalData(tokenData);
 
     // Update tokens (refresh token might not be included in refresh response)
+    const capSeconds = this.config.maxTokenTtlSeconds;
+    const effectiveExpiresIn =
+      typeof capSeconds === 'number' && capSeconds > 0
+        ? Math.min(tokenResponse.expires_in, capSeconds)
+        : tokenResponse.expires_in;
     const updatedTokens: SpotifyTokens = {
       accessToken: tokenResponse.access_token,
       refreshToken: tokenResponse.refresh_token || this.tokens.refreshToken,
-      expiresAt: Date.now() + tokenResponse.expires_in * 1000,
+      expiresAt: Date.now() + effectiveExpiresIn * 1000,
       scope: tokenResponse.scope,
     };
 
@@ -257,7 +262,12 @@ export class SpotifyAuthService implements AuthService {
    * Stores tokens in memory and cookies
    */
   private storeTokens(tokenResponse: SpotifyTokenResponse): void {
-    const expiresAt = Date.now() + tokenResponse.expires_in * 1000;
+    const capSeconds = this.config.maxTokenTtlSeconds;
+    const effectiveExpiresIn =
+      typeof capSeconds === 'number' && capSeconds > 0
+        ? Math.min(tokenResponse.expires_in, capSeconds)
+        : tokenResponse.expires_in;
+    const expiresAt = Date.now() + effectiveExpiresIn * 1000;
 
     this.tokens = {
       accessToken: tokenResponse.access_token,

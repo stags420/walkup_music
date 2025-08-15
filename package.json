@@ -7,28 +7,42 @@
   "scripts": {
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --report-unused-disable-directives --max-warnings 0 --fix",
+
     "format": "prettier --write \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "fixup": "npm run lint:fix && npm run format",
-    "build": "tsc -p tsconfig.build.json && vite build",
-    "build:mock": "tsc -p tsconfig.build.json && VITE_MOCK_AUTH=true vite build --outDir dist-mocked",
-    "preview": "npm run build && vite preview --port 4173 --host 127.0.0.1",
-    "preview:mock": "npm run build:mock && vite preview --port 4173 --host 127.0.0.1 --outDir dist-mocked",
-    "dev": "vite --host=127.0.0.1",
-    "dev:mock": "VITE_MOCK_AUTH=true vite --host=127.0.0.1",
+    
+    "build:prod": "tsc -p tsconfig.build.json && VITE_APP_CONFIG_KEY=prod vite build",
+    "build:dev": "tsc -p tsconfig.build.json && VITE_APP_CONFIG_KEY=dev vite build --outDir dist-dev",
+    "build:devMock": "tsc -p tsconfig.build.json && VITE_APP_CONFIG_KEY=devMock vite build --outDir dist-devMock",
+    
+    "preview": "npm run build:prod && vite preview --port 4173 --host 127.0.0.1",
+    "preview:devMock": "npm run build:devMock && vite preview --port 4173 --host 127.0.0.1 --outDir dist-devMock",
+    
+    "dev": "VITE_APP_CONFIG_KEY=dev vite --host=127.0.0.1",
+    "dev:mock": "VITE_APP_CONFIG_KEY=devMock vite --host=127.0.0.1",
+    "dev:root": "VITE_APP_CONFIG_KEY=dev vite --host=127.0.0.1",
+    
     "test:unit": "jest --passWithNoTests --silent --runInBand",
-    "test:e2e": "VITE_MOCK_AUTH=true playwright test",
+    "test:e2e": "VITE_APP_CONFIG_KEY=devMock playwright test",
+    "test:all": "concurrently \"npm run test:unit\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",
+    
     "test:unit:cover": "VITE_ENABLE_COVERAGE=true npm run test:unit",
     "test:e2e:cover": "VITE_ENABLE_COVERAGE=true npm run test:e2e",
     "test:all:cover": "concurrently \"npm run test:unit:cover\" \"npm run test:e2e:cover\" --names \"unit,e2e\" --prefix-colors \"blue,green\" && npm run report:serve",
+    
     "report:serve": "monocart show-report test/reports/index.html",
-    "test:all": "concurrently \"npm run test:unit\" \"npm run test:e2e\" --names \"unit,e2e\" --prefix-colors \"blue,green\"",
-    "predeploy": "npm run fixup && npm run build && npm run test:all",
+    
+    "predeploy": "npm run fixup && npm run build:prod && npm run test:all",
     "precommit": "npm run predeploy",
+    
     "deploy": "npm run predeploy && gh-pages -d dist",
-    "deploy:raw": "echo 'AGENTS SHOULD NEVER USE THIS' && npm run build && gh-pages -d dist",
+    "deploy:raw": "echo 'AGENTS SHOULD NEVER USE THIS' && npm run build:prod && gh-pages -d dist",
+    
     "test:watch": "jest --watch",
+    
     "clean": "./scripts/clean-builds.sh",
+    
     "sync:steering": "node ./scripts/sync-steering.js"
   },
   "dependencies": {

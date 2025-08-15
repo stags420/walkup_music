@@ -190,7 +190,7 @@ We do not use a global application container or custom React providers for servi
 
 ```ts
 // suppliers
-import { AppConfigProvider } from '@/modules/app';
+import { AppConfigSupplier } from '@/modules/app';
 import { supplyPlayerService } from '@/modules/game/suppliers/PlayerServiceSupplier';
 
 export const supplyPlayerServiceSingleton = () =>

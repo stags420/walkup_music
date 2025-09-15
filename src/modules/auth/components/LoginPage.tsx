@@ -29,32 +29,18 @@ export function LoginPage() {
               )}
               <div className="text-center mb-4">
                 <h1 className="card-title h2 mb-3">Walk-Up Music Manager</h1>
-                <p className="card-text text-muted">
-                  Connect your Spotify Premium account to manage walk-up music
-                  for your team
+                <p className="card-text text-muted mb-2">
+                  Connect your Spotify account to manage walk-up music for your
+                  team.
                 </p>
-              </div>
-
-              <div className="mb-4">
-                <h2 className="h5 mb-3">Why Spotify Premium?</h2>
-                <ul className="list-unstyled">
-                  <li className="mb-2">
-                    <i className="text-success me-2">✓</i>
-                    Full track playback during games
-                  </li>
-                  <li className="mb-2">
-                    <i className="text-success me-2">✓</i>
-                    High-quality audio streaming
-                  </li>
-                  <li className="mb-2">
-                    <i className="text-success me-2">✓</i>
-                    Access to complete music library
-                  </li>
-                  <li className="mb-2">
-                    <i className="text-success me-2">✓</i>
-                    Precise playback control
-                  </li>
-                </ul>
+                <p className="card-text text-muted small mb-1">
+                  You must have an active Spotify Premium subscription to log
+                  in and use the app.
+                </p>
+                <p className="card-text text-muted small mb-0">
+                  Walk-Up Music Manager is currently in Spotify development
+                  mode—only allowlisted Spotify accounts can access it.
+                </p>
               </div>
 
               <div className="d-grid gap-2 mb-4">

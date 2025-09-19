@@ -11,7 +11,7 @@ export const detectBasePath = (): string => {
   const hostname = globalThis.location.hostname;
 
   // For GitHub Pages deployment, always use /walkup_music (no trailing slash for React Router)
-  if (hostname === 'stags420.github.io') {
+  if (hostname === 'stagswtf.github.io') {
     return '/walkup_music';
   }
 

@@ -101,7 +101,7 @@ To use real Spotify authentication and playback:
 1. Create a Spotify application in the Spotify Developer Dashboard.
 2. Add Redirect URIs:
    - Local dev: `http://127.0.0.1:8000/callback`
-   - GitHub Pages: `https://stags420.github.io/walkup_music/callback`
+   - GitHub Pages: `https://stagswtf.github.io/walkup_music/callback`
 3. Copy `.env.local.example` to `.env.local` and set:
    - `VITE_SPOTIFY_CLIENT_ID=<your-client-id>`
    - Optionally, `VITE_BASE_PATH` and `VITE_MOCK_AUTH`
@@ -246,7 +246,7 @@ Deployment uses the `gh-pages` package and the `deploy` script:
 npm run deploy
 ```
 
-This builds the app, runs tests, and publishes `dist/` to the `gh-pages` branch. The site is served at `https://stags420.github.io/walkup_music/`.
+This builds the app, runs tests, and publishes `dist/` to the `gh-pages` branch. The site is served at `https://stagswtf.github.io/walkup_music/`.
 
 If you fork this repo, update `homepage` in `package.json` and `base` in `vite.config.ts` to match your GitHub Pages path.
 

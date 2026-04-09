@@ -208,7 +208,7 @@ function getInstructionCommentForState(stateName: string): string | undefined {
       return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links - if two tasks may merge conflict, you must choose one to block the other, and prerequisites should be linked as blocking/blocked by as appropriate. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';
     }
     case 'Ready': {
-      return '@Charlie, wait for all tasks in the Linear "blocked by" relationship to reach MERGED or later in the workflow. Once all blocked by tasks are MERGED or later, move this task to IN PROGRESS.';
+      return '@Charlie, check this task’s Linear "blocked by" relationships only. Wait until every task in this task’s "blocked by" list is in MERGED or later. Then move only this task to IN PROGRESS. Do not change the state of any other task.';
     }
     case 'In Progress': {
       return '@Charlie, implement and make sure you link this Linear issue in your PR/final commit.';
@@ -668,12 +668,13 @@ async function handleLinearWebhook(
 
   const action: unknown = payloadUnknown.action;
   const type: unknown = payloadUnknown.type ?? getHeader(req, 'linear-event');
-  if (type !== 'Issue' || action !== 'update') {
+  const isSupportedIssueAction: boolean = action === 'create' || action === 'update';
+  if (type !== 'Issue' || !isSupportedIssueAction) {
     recordHookRun(history, {
       source: 'linear',
       eventName: typeof action === 'string' ? action : undefined,
       statusCode: 200,
-      summary: 'Skipped non-Issue update event',
+      summary: 'Skipped non-Issue or unsupported Linear event',
       issues: [],
     }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
@@ -682,10 +683,10 @@ async function handleLinearWebhook(
 
   const data: unknown = payloadUnknown.data;
   const updatedFrom: unknown = payloadUnknown.updatedFrom;
-  if (!isRecord(data) || !isRecord(updatedFrom)) {
+  if (!isRecord(data) || (action === 'update' && !isRecord(updatedFrom))) {
     recordHookRun(history, {
       source: 'linear',
-      eventName: 'update',
+      eventName: typeof action === 'string' ? action : undefined,
       statusCode: 200,
       summary: 'Skipped Linear event without state change payload',
       issues: [],
@@ -694,18 +695,20 @@ async function handleLinearWebhook(
     return;
   }
 
-  const oldStateId: unknown = updatedFrom.stateId;
+  const oldStateId: unknown = isRecord(updatedFrom) ? updatedFrom.stateId : undefined;
   const newStateId: unknown = data.stateId;
-  if (
-    typeof oldStateId !== 'string' ||
-    typeof newStateId !== 'string' ||
-    oldStateId.length === 0 ||
-    newStateId.length === 0 ||
-    oldStateId === newStateId
-  ) {
+  const invalidNewStateId: boolean = typeof newStateId !== 'string' || newStateId.length === 0;
+  const invalidUpdatedStateChange: boolean =
+    action === 'update' &&
+    (
+      typeof oldStateId !== 'string' ||
+      oldStateId.length === 0 ||
+      oldStateId === newStateId
+    );
+  if (invalidNewStateId || invalidUpdatedStateChange) {
     recordHookRun(history, {
       source: 'linear',
-      eventName: 'update',
+      eventName: typeof action === 'string' ? action : undefined,
       statusCode: 200,
       summary: 'Skipped Linear event without a new state',
       issues: [],
@@ -714,6 +717,8 @@ async function handleLinearWebhook(
     return;
   }
 
+  const nextStateId: string = newStateId as string;
+  const previousStateId: string | undefined = typeof oldStateId === 'string' ? oldStateId : undefined;
   const issueIdentifier: string | undefined =
     typeof data.identifier === 'string' ? data.identifier : undefined;
   const issueId: string | undefined = typeof data.id === 'string' ? data.id : undefined;
@@ -723,7 +728,7 @@ async function handleLinearWebhook(
     if (seenDeliveryIds.has(deliveryId)) {
       recordHookRun(history, {
         source: 'linear',
-        eventName: 'update',
+        eventName: typeof action === 'string' ? action : undefined,
         statusCode: 200,
         summary: 'Skipped duplicate Linear delivery',
         issues: issueIdentifier ? [issueIdentifier] : [],
@@ -752,9 +757,9 @@ async function handleLinearWebhook(
 
   const queuedRun: HookRunEntry | undefined = recordHookRun(history, {
     source: 'linear',
-    eventName: 'update',
+    eventName: typeof action === 'string' ? action : undefined,
     statusCode: 200,
-    summary: 'Queued Linear issue transition handling',
+    summary: `Queued Linear issue ${String(action)} handling`,
     issues: issueIdentifier ? [issueIdentifier] : [],
   });
   jsonResponse(res, 200, responseBody);
@@ -777,10 +782,14 @@ async function handleLinearWebhook(
     let oldStateName: string | undefined;
     let newStateName: string | undefined;
     try {
-      [oldStateName, newStateName] = await Promise.all([
-        getWorkflowStateNameById(client, oldStateId),
-        getWorkflowStateNameById(client, newStateId),
-      ]);
+      if (previousStateId) {
+        [oldStateName, newStateName] = await Promise.all([
+          getWorkflowStateNameById(client, previousStateId),
+          getWorkflowStateNameById(client, nextStateId),
+        ]);
+      } else {
+        newStateName = await getWorkflowStateNameById(client, nextStateId);
+      }
     } catch (error: unknown) {
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }

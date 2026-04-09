@@ -224,13 +224,60 @@ function getInstructionCommentForState(stateName: string): string | undefined {
   }
 }
 
+let cachedLinearFlowInstructions: string | undefined;
+let loadedLinearFlowInstructions = false;
+
+function loadLinearFlowInstructions(): string | undefined {
+  if (loadedLinearFlowInstructions) {
+    return cachedLinearFlowInstructions;
+  }
+
+  loadedLinearFlowInstructions = true;
+
+  const filePath: string = path.join(
+    process.cwd(),
+    '.charlie',
+    'instructions',
+    'LINEAR_FLOW.md',
+  );
+
+  try {
+    const contents: string = readFileSync(filePath, 'utf8').trim();
+    cachedLinearFlowInstructions = contents.length > 0 ? contents : undefined;
+    return cachedLinearFlowInstructions;
+  } catch {
+    cachedLinearFlowInstructions = undefined;
+    return cachedLinearFlowInstructions;
+  }
+}
+
+function appendLinearFlowInstructions(comment: string): string {
+  if (!comment.includes('@Charlie')) {
+    return comment;
+  }
+
+  const linearFlow: string | undefined = loadLinearFlowInstructions();
+  if (!linearFlow) {
+    return comment;
+  }
+
+  return (
+    `${comment}\n\n` +
+    '+++ Linear workflow reference\n' +
+    '_Source: `.charlie/instructions/LINEAR_FLOW.md`_\n\n' +
+    `${linearFlow}\n` +
+    '+++'
+  );
+}
+
 async function buildInstructionCommentForState(options: {
   client: LinearClient;
   issueId: string;
   stateName: string;
 }): Promise<string | undefined> {
   if (options.stateName !== 'Ready') {
-    return getInstructionCommentForState(options.stateName);
+    const comment: string | undefined = getInstructionCommentForState(options.stateName);
+    return comment ? appendLinearFlowInstructions(comment) : undefined;
   }
 
   const blockedByIssues: LinearRelatedIssue[] = await getBlockedByIssuesForIssueId(
@@ -239,14 +286,16 @@ async function buildInstructionCommentForState(options: {
   );
 
   if (blockedByIssues.length === 0) {
-    return '@Charlie, this task has no Linear relations of type "blockedBy". Move only this task to IN PROGRESS. Do not change the state of any other task.';
+    return appendLinearFlowInstructions(
+      '@Charlie, this task has no Linear relations of type "blockedBy". Move only this task to IN PROGRESS. Do not change the state of any other task.',
+    );
   }
 
   const blockedByList: string = blockedByIssues
     .map((issue) => `${issue.identifier} (${issue.stateName})`)
     .join(', ');
 
-  return (
+  return appendLinearFlowInstructions(
     `@Charlie, this task has Linear relations of type "blockedBy" for: ${blockedByList}. ` +
     'Wait until every one of those tasks is in MERGED or later in the workflow. ' +
     'Then move only this task to IN PROGRESS. Do not change the state of any other task.'

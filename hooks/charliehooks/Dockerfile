@@ -30,6 +30,8 @@ ENV PORT=8787
 
 COPY --from=build /out ./dist
 
+COPY .charlie/instructions ./.charlie/instructions
+
 EXPOSE 8787
 
 CMD ["node", "dist/server.js"]

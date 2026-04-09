@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ['Deploy to GitHub Pages']
     types: [completed]
+    branches: [v2.1]
 
 permissions:
   contents: read
@@ -13,8 +14,7 @@ jobs:
   deliver:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
-      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') &&
-      github.event.workflow_run.head_branch == 'v2.1'
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     steps:
@@ -60,7 +60,7 @@ jobs:
               if (pr.head?.ref) texts.push(pr.head.ref);
             }
 
-            const issueIdRegex = /[A-Z][A-Z0-9]+-\d+/gi;
+            const issueIdRegex = /\bCHA-\d+\b/gi;
             const identifiers = new Set();
 
             for (const text of texts) {
@@ -131,6 +131,7 @@ jobs:
               }
             `;
 
+            let hadErrors = false;
             for (const identifier of identifiers) {
               core.info(`Updating ${identifier}...`);
               const data = await linearFetch(issueQuery, { identifier });
@@ -146,10 +147,11 @@ jobs:
               );
 
               if (!deliveredState) {
-                core.setFailed(
+                core.error(
                   `Linear team for ${identifier} does not have a workflow state named "Delivered".`
                 );
-                return;
+                hadErrors = true;
+                continue;
               }
 
               const update = await linearFetch(updateMutation, {
@@ -158,11 +160,16 @@ jobs:
               });
 
               if (!update.issueUpdate?.success) {
-                core.setFailed(`Linear issueUpdate failed for ${identifier}.`);
-                return;
+                core.error(`Linear issueUpdate failed for ${identifier}.`);
+                hadErrors = true;
+                continue;
               }
 
               core.info(
                 `Moved ${identifier} to ${update.issueUpdate.issue.state.name}.`
               );
+            }
+
+            if (hadErrors) {
+              core.setFailed('One or more Linear updates failed; see logs above.');
             }

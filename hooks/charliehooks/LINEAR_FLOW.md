@@ -69,10 +69,15 @@ In practice, that means the issue identifier needs to appear somewhere in the PR
 
 State transitions are monotonic for these GitHub-driven updates:
 
-- `Merged` (10) → `Delivered` (20) → `Accepted` (30)
+- `Merged` → `Delivered` → `Accepted`
 
 If the current state is already at-or-after the target (by this ordering),
 `charliehooks` will not re-transition it.
+
+Note: because `charliehooks` can also post state-entry instruction comments via the
+`/linear` webhook handler, a GitHub-driven transition to `Merged`/`Delivered` may result
+in both the GitHub handler and the Linear handler posting similar comments, depending on
+your Linear webhook delivery configuration.
 
 ## How `Accepted` happens
 

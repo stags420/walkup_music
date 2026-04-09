@@ -139,8 +139,10 @@ export async function githubRest(params) {
   if (text.length) {
     try {
       json = JSON.parse(text);
-    } catch {
-      json = null;
+    } catch (error) {
+      throw new Error(
+        `Failed to parse GitHub API response as JSON (${res.status} ${res.statusText}): ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
   return { ok: res.ok, status: res.status, statusText: res.statusText, json };

@@ -33,7 +33,30 @@ import {
 } from './acceptance.js';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+type HookRunSource = 'github' | 'linear' | 'verify-and-accept';
+type HookRunEntry = {
+  id: number;
+  occurredAt: string;
+  source: HookRunSource;
+  eventName?: string;
+  statusCode: number;
+  summary: string;
+  issues: string[];
+  pullRequestNumber?: number;
+};
+type HookHistoryState = {
+  startedAt: string;
+  skippedCount: number;
+  nextId: number;
+  runs: HookRunEntry[];
+};
+type HookRuntimeContext = {
+  client: LinearClient;
+  history: HookHistoryState;
+};
+
 const SECRET_DIR = '/run/app-secrets';
+const MAX_HOOK_HISTORY = 100;
 const SECRET_FILE_NAMES: Record<string, string[]> = {
   CHARLIEHOOKS_INTERNAL_SECRET: ['charliehooks_internal_secret'],
   GITHUB_PR_PAT: ['github_pr_pat'],
@@ -73,6 +96,13 @@ function jsonResponse(res: ServerResponse, status: number, body: JsonValue): voi
 function textResponse(res: ServerResponse, status: number, body: string): void {
   res.statusCode = status;
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Content-Length', Buffer.byteLength(body));
+  res.end(body);
+}
+
+function htmlResponse(res: ServerResponse, status: number, body: string): void {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Content-Length', Buffer.byteLength(body));
   res.end(body);
 }
@@ -190,6 +220,75 @@ function getInstructionCommentForState(stateName: string): string | undefined {
   }
 }
 
+function createHookHistoryState(): HookHistoryState {
+  return {
+    startedAt: new Date().toISOString(),
+    skippedCount: 0,
+    nextId: 1,
+    runs: [],
+  };
+}
+
+function recordHookRun(
+  history: HookHistoryState,
+  entry: Omit<HookRunEntry, 'id' | 'occurredAt'>,
+  skipped = false,
+): void {
+  if (skipped) {
+    history.skippedCount += 1;
+    return;
+  }
+
+  history.runs.unshift({
+    id: history.nextId,
+    occurredAt: new Date().toISOString(),
+    ...entry,
+  });
+  history.nextId += 1;
+
+  if (history.runs.length > MAX_HOOK_HISTORY) {
+    history.runs.length = MAX_HOOK_HISTORY;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderHookHistoryPage(history: HookHistoryState): string {
+  const rows: string = history.runs.length > 0
+    ? history.runs.map((run) => {
+      const issues: string = run.issues.length > 0 ? run.issues.join(', ') : '-';
+      return `<tr><td>${escapeHtml(run.occurredAt)}</td><td>${escapeHtml(run.source)}</td><td>${escapeHtml(run.eventName ?? '-')}</td><td>${run.statusCode}</td><td>${escapeHtml(run.summary)}</td><td>${escapeHtml(issues)}</td><td>${run.pullRequestNumber ?? '-'}</td></tr>`;
+    }).join('')
+    : '<tr><td colspan="7">No non-skipped hook runs yet.</td></tr>';
+
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="utf-8">',
+    '<title>charliehooks history</title>',
+    '</head>',
+    '<body>',
+    '<h1>charliehooks history</h1>',
+    `<p>Server started: ${escapeHtml(history.startedAt)}</p>`,
+    `<p>Skipped runs since startup: ${history.skippedCount}</p>`,
+    `<p>Showing latest ${history.runs.length} non-skipped runs.</p>`,
+    '<table border="1" cellpadding="6" cellspacing="0">',
+    '<thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Status</th><th>Summary</th><th>Issues</th><th>PR</th></tr></thead>',
+    `<tbody>${rows}</tbody>`,
+    '</table>',
+    '</body>',
+    '</html>',
+  ].join('');
+}
+
 async function applyGithubDerivedTransition(
   client: LinearClient,
   transition: GithubDerivedTransition,
@@ -256,10 +355,11 @@ async function verifyAndAcceptIssue(options: {
 async function handleGithubWebhook(
   req: IncomingMessage,
   res: ServerResponse,
-  client: LinearClient,
+  context: HookRuntimeContext,
   mainBranch: string,
   githubToken: string | undefined,
 ): Promise<void> {
+  const { client, history } = context;
   const body: Buffer = await readRequestBody(req);
   const eventName: string | undefined = getHeader(req, 'x-github-event');
   const signature256: string | undefined = getHeader(req, 'x-hub-signature-256');
@@ -270,6 +370,13 @@ async function handleGithubWebhook(
   });
 
   if (!okSignature) {
+    recordHookRun(history, {
+      source: 'github',
+      eventName,
+      statusCode: 401,
+      summary: 'Invalid GitHub signature',
+      issues: [],
+    });
     jsonResponse(res, 401, { ok: false, error: 'Invalid GitHub signature' });
     return;
   }
@@ -278,6 +385,13 @@ async function handleGithubWebhook(
   try {
     payload = parseJsonBody(body);
   } catch (error: unknown) {
+    recordHookRun(history, {
+      source: 'github',
+      eventName,
+      statusCode: 400,
+      summary: 'Invalid GitHub JSON payload',
+      issues: [],
+    });
     jsonResponse(res, 400, { ok: false, error: `Invalid JSON: ${String(error)}` });
     return;
   }
@@ -318,6 +432,13 @@ async function handleGithubWebhook(
   }
 
   if (!transition && !autoMergeRequest) {
+    recordHookRun(history, {
+      source: 'github',
+      eventName,
+      statusCode: 200,
+      summary: 'Skipped GitHub event',
+      issues: [],
+    }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
@@ -350,16 +471,38 @@ async function handleGithubWebhook(
     responseBody.issues = responseBody.issues ?? autoMergeRequest.issueIdentifiers;
   }
 
+  const summaryParts: string[] = [];
+  if (transition) {
+    summaryParts.push(`Moved issue to ${transition.targetStateName}`);
+  }
+  if (autoMergeStatus) {
+    summaryParts.push(`PR ${autoMergeStatus}`);
+  }
+  recordHookRun(history, {
+    source: 'github',
+    eventName,
+    statusCode: 200,
+    summary: summaryParts.join('; '),
+    issues: responseBody.issues ?? [],
+    pullRequestNumber: responseBody.pullRequestNumber,
+  });
   jsonResponse(res, 200, responseBody);
 }
 
 async function handleVerifyAndAccept(
   req: IncomingMessage,
   res: ServerResponse,
-  client: LinearClient,
+  context: HookRuntimeContext,
   defaultProdUrl: string,
 ): Promise<void> {
+  const { client, history } = context;
   if (!hasInternalSecret(req)) {
+    recordHookRun(history, {
+      source: 'verify-and-accept',
+      statusCode: 401,
+      summary: 'Invalid internal secret',
+      issues: [],
+    });
     jsonResponse(res, 401, { ok: false, error: 'Invalid internal secret' });
     return;
   }
@@ -369,6 +512,12 @@ async function handleVerifyAndAccept(
   try {
     payloadUnknown = parseJsonBody(body);
   } catch (error: unknown) {
+    recordHookRun(history, {
+      source: 'verify-and-accept',
+      statusCode: 400,
+      summary: 'Invalid verify-and-accept JSON payload',
+      issues: [],
+    });
     jsonResponse(res, 400, { ok: false, error: `Invalid JSON: ${String(error)}` });
     return;
   }
@@ -383,6 +532,12 @@ async function handleVerifyAndAccept(
       : [];
 
   if (identifiers.length === 0) {
+    recordHookRun(history, {
+      source: 'verify-and-accept',
+      statusCode: 400,
+      summary: 'Missing issueIdentifiers[]',
+      issues: [],
+    });
     jsonResponse(res, 400, { ok: false, error: 'Missing issueIdentifiers[]' });
     return;
   }
@@ -397,16 +552,23 @@ async function handleVerifyAndAccept(
     results[issueIdentifier] = { ok: output.ok, results: output.results };
   }
 
+  recordHookRun(history, {
+    source: 'verify-and-accept',
+    statusCode: 200,
+    summary: `Ran verification for ${identifiers.length} issue(s)`,
+    issues: identifiers,
+  });
   jsonResponse(res, 200, { ok: true, results });
 }
 
 async function handleLinearWebhook(
   req: IncomingMessage,
   res: ServerResponse,
-  client: LinearClient,
+  context: HookRuntimeContext,
   seenDeliveryIds: Set<string>,
   maxAgeMs: number,
 ): Promise<void> {
+  const { client, history } = context;
   const body: Buffer = await readRequestBody(req);
 
   const okSignature: boolean = verifyLinearSignature({
@@ -416,6 +578,13 @@ async function handleLinearWebhook(
   });
 
   if (!okSignature) {
+    recordHookRun(history, {
+      source: 'linear',
+      eventName: 'Issue',
+      statusCode: 401,
+      summary: 'Invalid Linear signature',
+      issues: [],
+    });
     jsonResponse(res, 401, { ok: false, error: 'Invalid Linear signature' });
     return;
   }
@@ -424,11 +593,24 @@ async function handleLinearWebhook(
   try {
     payloadUnknown = parseJsonBody(body);
   } catch (error: unknown) {
+    recordHookRun(history, {
+      source: 'linear',
+      eventName: 'Issue',
+      statusCode: 400,
+      summary: 'Invalid Linear JSON payload',
+      issues: [],
+    });
     jsonResponse(res, 400, { ok: false, error: `Invalid JSON: ${String(error)}` });
     return;
   }
 
   if (!isRecord(payloadUnknown)) {
+    recordHookRun(history, {
+      source: 'linear',
+      statusCode: 200,
+      summary: 'Skipped non-object Linear payload',
+      issues: [],
+    }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
@@ -447,11 +629,25 @@ async function handleLinearWebhook(
     }
 
     if (tsMs === undefined) {
+      recordHookRun(history, {
+        source: 'linear',
+        eventName: 'Issue',
+        statusCode: 401,
+        summary: 'Missing or invalid webhookTimestamp',
+        issues: [],
+      });
       jsonResponse(res, 401, { ok: false, error: 'Missing or invalid webhookTimestamp' });
       return;
     }
 
     if (Math.abs(Date.now() - tsMs) > maxAgeMs) {
+      recordHookRun(history, {
+        source: 'linear',
+        eventName: 'Issue',
+        statusCode: 401,
+        summary: 'Stale webhookTimestamp',
+        issues: [],
+      });
       jsonResponse(res, 401, { ok: false, error: 'Stale webhookTimestamp' });
       return;
     }
@@ -460,6 +656,13 @@ async function handleLinearWebhook(
   const action: unknown = payloadUnknown.action;
   const type: unknown = payloadUnknown.type ?? getHeader(req, 'linear-event');
   if (type !== 'Issue' || action !== 'update') {
+    recordHookRun(history, {
+      source: 'linear',
+      eventName: typeof action === 'string' ? action : undefined,
+      statusCode: 200,
+      summary: 'Skipped non-Issue update event',
+      issues: [],
+    }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
@@ -467,6 +670,13 @@ async function handleLinearWebhook(
   const data: unknown = payloadUnknown.data;
   const updatedFrom: unknown = payloadUnknown.updatedFrom;
   if (!isRecord(data) || !isRecord(updatedFrom)) {
+    recordHookRun(history, {
+      source: 'linear',
+      eventName: 'update',
+      statusCode: 200,
+      summary: 'Skipped Linear event without state change payload',
+      issues: [],
+    }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
@@ -480,6 +690,13 @@ async function handleLinearWebhook(
     newStateId.length === 0 ||
     oldStateId === newStateId
   ) {
+    recordHookRun(history, {
+      source: 'linear',
+      eventName: 'update',
+      statusCode: 200,
+      summary: 'Skipped Linear event without a new state',
+      issues: [],
+    }, true);
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
@@ -491,6 +708,13 @@ async function handleLinearWebhook(
   const deliveryId: string | undefined = getHeader(req, 'linear-delivery');
   if (deliveryId) {
     if (seenDeliveryIds.has(deliveryId)) {
+      recordHookRun(history, {
+        source: 'linear',
+        eventName: 'update',
+        statusCode: 200,
+        summary: 'Skipped duplicate Linear delivery',
+        issues: issueIdentifier ? [issueIdentifier] : [],
+      }, true);
       jsonResponse(res, 200, { ok: true, action: 'duplicate' });
       return;
     }
@@ -513,6 +737,13 @@ async function handleLinearWebhook(
     responseBody.issueIdentifier = issueIdentifier;
   }
 
+  recordHookRun(history, {
+    source: 'linear',
+    eventName: 'update',
+    statusCode: 200,
+    summary: 'Queued Linear issue transition handling',
+    issues: issueIdentifier ? [issueIdentifier] : [],
+  });
   jsonResponse(res, 200, responseBody);
 
   void (async () => {
@@ -578,6 +809,8 @@ export function startServer(): void {
 
   const dryRun: boolean = getEnv('CHARLIEHOOKS_DRY_RUN') === '1';
   const client: LinearClient = createLinearClient({ apiKey: linearApiKey, teamKey, dryRun });
+  const history: HookHistoryState = createHookHistoryState();
+  const context: HookRuntimeContext = { client, history };
 
   const seenLinearDeliveryIds: Set<string> = new Set();
 
@@ -598,18 +831,23 @@ export function startServer(): void {
       return;
     }
 
+    if (method === 'GET' && url.pathname === '/') {
+      htmlResponse(res, 200, renderHookHistoryPage(history));
+      return;
+    }
+
     if (method === 'POST' && url.pathname === '/github') {
-      await handleGithubWebhook(req, res, client, mainBranch, githubToken);
+      await handleGithubWebhook(req, res, context, mainBranch, githubToken);
       return;
     }
 
     if (method === 'POST' && url.pathname === '/verify-and-accept') {
-      await handleVerifyAndAccept(req, res, client, defaultProdUrl);
+      await handleVerifyAndAccept(req, res, context, defaultProdUrl);
       return;
     }
 
     if (method === 'POST' && url.pathname === '/linear') {
-      await handleLinearWebhook(req, res, client, seenLinearDeliveryIds, linearWebhookMaxAgeMs);
+      await handleLinearWebhook(req, res, context, seenLinearDeliveryIds, linearWebhookMaxAgeMs);
       return;
     }
 

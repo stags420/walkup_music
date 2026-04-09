@@ -91,17 +91,26 @@ export async function linearGraphql(params) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${params.apiKey}`,
+      authorization: params.apiKey,
     },
     body: JSON.stringify({ query: params.query, variables: params.variables }),
   });
 
-  const json = await res.json();
   if (!res.ok) {
+    const body = await res.text();
     throw new Error(
-      `Linear API request failed: ${res.status} ${res.statusText} ${JSON.stringify(json)}`
+      `Linear API request failed: ${res.status} ${res.statusText} ${body}`
     );
   }
+
+  const body = await res.text();
+  let json;
+  try {
+    json = JSON.parse(body);
+  } catch {
+    throw new Error(`Linear API returned non-JSON response: ${body}`);
+  }
+
   if (json.errors?.length) {
     throw new Error(`Linear API returned errors: ${JSON.stringify(json.errors)}`);
   }

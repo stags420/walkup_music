@@ -1,0 +1,48 @@
+name: Merge Charlie PRs after CI
+
+on:
+  workflow_run:
+    workflows: ['Deploy to GitHub Pages']
+    types: [completed]
+    branches: [v2.1]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.pull_requests[0]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Merge eligible PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          prs=$(jq -r '.workflow_run.pull_requests[].number' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+          if [ -z "$prs" ]; then
+            echo "No pull requests attached to this workflow run."
+            exit 0
+          fi
+
+          for pr in $prs; do
+            pr_json=$(gh api "repos/$REPO/pulls/$pr")
+            author=$(echo "$pr_json" | jq -r '.user.login')
+            base=$(echo "$pr_json" | jq -r '.base.ref')
+            state=$(echo "$pr_json" | jq -r '.state')
+
+            if [ "$author" != 'charliecreates[bot]' ] || [ "$base" != 'v2.1' ] || [ "$state" != 'open' ]; then
+              echo "Skipping PR #$pr (author=$author base=$base state=$state)."
+              continue
+            fi
+
+            gh pr \
+              merge "$pr" \
+              --repo "$REPO" \
+              --merge \
+              --delete-branch \
+              || echo "Could not merge PR #$pr."
+          done

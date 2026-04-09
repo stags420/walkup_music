@@ -20,7 +20,7 @@ Entrypoint: `hooks/charliehooks/src/server.ts`.
 - `LINEAR_WEBHOOK_SECRET` (optional, enables `Linear-Signature` verification for `/linear`)
 - `LINEAR_WEBHOOK_MAX_AGE_MS` (optional, default `60000` when `LINEAR_WEBHOOK_SECRET` is set)
 - `CHARLIEHOOKS_LINEAR_MENTION` (optional, default `@Charlie`)
-- `CHARLIEHOOKS_LINEAR_FLOW_PATH` (optional, default `.charlie/instructions/LINEAR_FLOW.md`)
+- `CHARLIEHOOKS_LINEAR_FLOW_PATH` (optional; if unset, searches for `.charlie/instructions/LINEAR_FLOW.md` in the working dir and up to 2 parent dirs)
 - `CHARLIEHOOKS_DEFAULT_PROD_URL` (optional, default `https://stagswtf.github.io/walkup_music/`)
 - `CHARLIEHOOKS_MAIN_BRANCH` (optional, default `v2.1`)
 - `CHARLIEHOOKS_DRY_RUN=1` (optional, no Linear writes)

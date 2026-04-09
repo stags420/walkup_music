@@ -61,18 +61,6 @@ const SECRET_DIR = '/run/app-secrets';
 const MAX_HOOK_HISTORY = 100;
 const DEFAULT_CHARLIE_MENTION = '@Charlie';
 const CHARLIE_MENTION_PLACEHOLDER = '{{CHARLIE_MENTION}}';
-
-const DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE: Record<string, string> = {
-  Intake:
-    `${CHARLIE_MENTION_PLACEHOLDER}, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now:\n\n1. Plan and break down this request into appropriately sized tasks in BACKLOG Linear status.\n2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links. If two tasks may merge conflict, choose one to block the other. Prerequisites should be linked as blocking/blocked by as appropriate.\n3. Once blockers are set, move all of the tasks to READY.\n4. Do NOT move anything to IN PROGRESS as part of working on this task.\n5. Stop.`,
-  Ready:
-    `${CHARLIE_MENTION_PLACEHOLDER}, wait for all tasks in the Linear "blocked by" relationship to reach MERGED or later in the workflow. Once all blocked by tasks are MERGED or later, move this task to IN PROGRESS.`,
-  'In Progress':
-    `${CHARLIE_MENTION_PLACEHOLDER}, implement and make sure you link this Linear issue in your PR/final commit.`,
-  Merged: 'CR Merged, awaiting deployment',
-  Delivered:
-    `${CHARLIE_MENTION_PLACEHOLDER}, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.`,
-};
 const SECRET_FILE_NAMES: Record<string, string[]> = {
   CHARLIEHOOKS_INTERNAL_SECRET: ['charliehooks_internal_secret'],
   GITHUB_PR_PAT: ['github_pr_pat'],
@@ -290,16 +278,12 @@ function loadInstructionTemplatesByState(filePaths: string[]): Record<string, st
       continue;
     }
 
-    return {
-      ...DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE,
-      ...parsed,
-    };
+    return parsed;
   }
 
-  console.warn(
-    `Linear flow instructions file not found in any expected location; falling back to built-in defaults. Tried: ${filePaths.join(', ')}`,
+  throw new Error(
+    `Linear flow instructions file not found in any expected location. Tried: ${filePaths.join(', ')}`,
   );
-  return DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE;
 }
 
 function resolveInstructionCommentForState(options: {

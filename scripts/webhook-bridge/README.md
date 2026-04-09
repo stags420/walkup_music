@@ -16,7 +16,7 @@ npm run webhook:bridge
 All endpoints are `POST` and accept JSON `{ issues: ["CHA-123", ...] }`.
 
 - `/hooks/github/pr-merged` → moves issues to `Merged`
-- `/hooks/github/deploy` → moves issues to `Delivered` and (by default) runs post-deploy verification, moving to `Accepted` when checks pass
+- `/hooks/github/deploy` → moves issues to `Delivered` and (by default) runs post-deploy verification, moving to `Accepted` when checks pass (requires a `charlie-acceptance` block on the issue)
 - `/hooks/verify` → run post-deploy verification and (if successful) move to `Accepted`
 
 If `CHARLIEHOOKS_SHARED_SECRET` is set, requests must include `Authorization: Bearer <secret>`.

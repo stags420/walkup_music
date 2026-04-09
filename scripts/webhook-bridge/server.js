@@ -10,9 +10,6 @@ const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const LINEAR_API_KEY = process.env.LINEAR_API_KEY;
 const LINEAR_TEAM_KEY = process.env.LINEAR_TEAM_KEY ?? 'CHA';
 
-const PROD_URL =
-  process.env.PROD_URL ?? 'https://stagswtf.github.io/walkup_music/';
-
 const SHARED_SECRET = process.env.CHARLIEHOOKS_SHARED_SECRET ?? '';
 
 if (!LINEAR_API_KEY) {
@@ -121,7 +118,11 @@ function normalizePayload(payload) {
   }
 
   // @ts-expect-error: runtime validated
-  const issues = Array.isArray(payload.issues) ? payload.issues : [];
+  const rawIssues = Array.isArray(payload.issues) ? payload.issues : [];
+  const issues = rawIssues
+    .filter((id) => typeof id === 'string')
+    .map((id) => id.trim())
+    .filter(Boolean);
   // @ts-expect-error: runtime validated
   const pr = payload.pr && typeof payload.pr === 'object' ? payload.pr : undefined;
 
@@ -180,16 +181,14 @@ async function verifyAndAccept(identifier) {
   /** @type {ReturnType<typeof parseAcceptanceChecks> | null} */
   let checks;
   try {
-    checks =
-      parseAcceptanceChecks(issue.description) ??
-      [
-        {
-          type: 'http',
-          url: PROD_URL,
-          status: 200,
-          bodyIncludes: 'Walk-Up Music Manager',
-        },
-      ];
+    checks = parseAcceptanceChecks(issue.description);
+    if (!checks) {
+      await linear.createComment(
+        issue.id,
+        `No charlie-acceptance block found for ${identifier}; leaving this issue in Delivered until acceptance criteria are defined.`,
+      );
+      return { ok: false, error: 'Missing charlie-acceptance block' };
+    }
   } catch (error) {
     await linear.createComment(
       issue.id,
@@ -198,7 +197,6 @@ async function verifyAndAccept(identifier) {
     return { ok: false, error: 'Invalid charlie-acceptance block' };
   }
 
-  // @ts-expect-error: runtime validated
   const result = await runAcceptanceChecks(checks);
   if (!result.ok) {
     await linear.createComment(

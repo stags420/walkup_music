@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROD_BRANCH: v2.1
+      LINEAR_TEAM_KEY: ${{ vars.LINEAR_TEAM_KEY || 'CHA' }}
 
     steps:
       - name: Checkout
@@ -85,7 +86,7 @@ jobs:
           fi
 
           TEXT="$(jq -r '[.head_commit.message, (.commits[].message)] | join("\n")' "$GITHUB_EVENT_PATH")"
-          printf '%s\n' "$TEXT" | grep -Eo 'CHA-[0-9]+' | sort -u > /tmp/linear_issues.txt || true
+          printf '%s\n' "$TEXT" | grep -Eo "${LINEAR_TEAM_KEY}-[0-9]+" | sort -u > /tmp/linear_issues.txt || true
           ISSUES_JSON="$(jq -Rsc 'split("\n") | map(select(length>0))' /tmp/linear_issues.txt)"
 
           if [ "$ISSUES_JSON" = "[]" ]; then

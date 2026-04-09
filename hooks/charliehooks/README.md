@@ -2,7 +2,7 @@
 
 This directory contains a small webhook receiver that:
 
-- moves Linear issues forward (`Merged` → `Delivered`), based on GitHub events
+- moves Linear issues forward based on GitHub events (PR merge → `Merged`; deploy success → `Delivered`)
 - posts state-entry instructions to Linear when issues transition between states
 - can optionally run post-deploy acceptance checks and move issues to `Accepted`
 
@@ -37,6 +37,8 @@ team key: `CHA`). The only states that currently generate instruction comments a
   to `Accepted`, otherwise move back to `Ready`
 
 `Backlog` (and any other states) are ignored by the instruction-comment logic.
+
+Instruction comments currently hardcode `@Charlie` (not configurable via env var).
 
 Separately, `POST /github` can move issues forward based on GitHub events:
 

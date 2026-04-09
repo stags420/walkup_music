@@ -32,21 +32,16 @@ const mockUseSettingsActions = useSettingsActions as jest.MockedFunction<
   typeof useSettingsActions
 >;
 
+mockUseAuthUser.mockReturnValue(undefined);
+mockUseAuthActions.mockReturnValue({
+  logout: jest.fn().mockResolvedValue(undefined),
+});
+mockUseSettingsTheme.mockReturnValue('dark');
+mockUseSettingsActions.mockReturnValue({
+  setTheme: jest.fn(),
+});
+
 describe('NavBar', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    mockUseAuthUser.mockReturnValue(undefined);
-    mockUseAuthActions.mockReturnValue({
-      logout: jest.fn().mockResolvedValue(undefined),
-    });
-
-    mockUseSettingsTheme.mockReturnValue('dark');
-    mockUseSettingsActions.mockReturnValue({
-      setTheme: jest.fn(),
-    });
-  });
-
   test('renders the ROBO-KITTY tagline', () => {
     render(<NavBar />);
 

@@ -37,8 +37,9 @@ below, `charliehooks` posts an instruction comment based on the *new* state name
     `relation.type === "blocks"`.
 
 - Entering `In Progress`
-  - Posts instructions to implement work and link the Linear issue in the PR/commit.
-    For GitHub-driven automation to work, the issue identifier (e.g. `CHA-50`) needs to
+  - Posts instructions to implement work and link the Linear issue in the PR (and
+    optionally in commits for traceability).
+    For GitHub-driven automation to work, the issue identifier (e.g. `CHA-50`) must
     appear in PR metadata (title/body/branch name) so it can be extracted from GitHub
     webhook payloads.
 
@@ -74,6 +75,8 @@ State ordering used for GitHub-driven monotonicity checks (earliest to latest):
 
 - `Merged` < `Delivered` < `Accepted`
 
+Any other state name is treated as earlier than `Merged` for this ordering.
+
 For GitHub-driven updates, `charliehooks` only ever targets `Merged` or `Delivered`.
 
 If the current state is already at-or-after the target (by this ordering),
@@ -81,7 +84,7 @@ If the current state is already at-or-after the target (by this ordering),
 
 Note: because `charliehooks` can also post state-entry instruction comments via the
 `/linear` webhook handler, a GitHub-driven transition to `Merged`/`Delivered` may result
-in both the GitHub handler and the Linear handler posting similar comments, depending on
+in duplicate state-entry comments (there is no cross-handler deduplication), depending on
 your Linear webhook delivery configuration.
 
 ## How `Accepted` happens

@@ -37,23 +37,28 @@ describe('NavBar', () => {
     jest.clearAllMocks();
 
     mockUseAuthActions.mockReturnValue({
-      logout: jest.fn(),
-    } as unknown as ReturnType<typeof useAuthActions>);
+      setAuthenticatedUser: jest.fn(),
+      clear: jest.fn(),
+      login: jest.fn(async () => {}),
+      logout: jest.fn(async () => {}),
+      handleCallback: jest.fn(async () => {}),
+    });
 
     mockUseAuthUser.mockReturnValue(undefined);
 
     mockUseSettingsTheme.mockReturnValue('dark');
     mockUseSettingsActions.mockReturnValue({
       setTheme: jest.fn(),
-    } as unknown as ReturnType<typeof useSettingsActions>);
+    });
   });
 
   test('should include the appended ROBO-KITTY tagline phrase', () => {
     render(<NavBar />);
 
-    const tagline = screen.getByText(
-      /This website was built using ROBO-KITTY/i
-    );
-    expect(tagline).toHaveTextContent('ALL HAIL THE ROBOTIC KITTEN');
+    expect(
+      screen.getByText(
+        'This website was built using ROBO-KITTY. ALL HAIL THE ROBOTIC KITTEN'
+      )
+    ).toBeInTheDocument();
   });
 });

@@ -21,6 +21,12 @@ if (!githubWebhookSecret && !allowInsecureWebhooks) {
   );
 }
 
+if (!githubToken) {
+  console.warn(
+    'GITHUB_TOKEN is not set; workflow_run-based Linear updates may rely on in-memory caches and display titles.',
+  );
+}
+
 const host = process.env.HOST ?? '127.0.0.1';
 const port = Number.parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
 
@@ -153,7 +159,9 @@ async function handlePullRequestEvent(options, payload) {
     ),
   );
 
-  options.mergeShaToLinearIdentifiers.set(mergeCommitSha, identifiers);
+  if (pullRequest.base?.ref === deployBranch) {
+    options.mergeShaToLinearIdentifiers.set(mergeCommitSha, identifiers);
+  }
 
   return {
     ok: true,

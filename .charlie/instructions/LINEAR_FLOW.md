@@ -28,11 +28,14 @@ Follow the instructions for the current state exactly.
 ## In Progress
 
 - Implement.
-- Make sure you link this Linear issue in your GitHub PR and final commit.
+- Link the Linear issue by including its URL in the GitHub PR description.
+- In the final commit message, include a footer line like: `Refs <Linear issue URL>`.
 
 ## Merged
 
-CR merged, awaiting deployment.
+- The code for this task is merged and is awaiting deployment.
+- Do not take any further action in this state.
+- Wait for the task to move to `Delivered` before acting again.
 
 ## Delivered
 

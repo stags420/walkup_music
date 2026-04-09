@@ -4,6 +4,7 @@ import { Buffer } from 'node:buffer';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   deriveAutoMergeRequestFromGithubWebhook,
@@ -202,7 +203,76 @@ function verifyLinearSignature(options: {
   return timingSafeEqual(expected, actual);
 }
 
+let cachedLinearFlowComments: Record<string, string> | undefined;
+let attemptedLinearFlowLoad = false;
+
+function parseLinearFlowComments(markdown: string): Record<string, string> {
+  const sections: Record<string, string[]> = {};
+  let current: string | undefined;
+
+  const lines: string[] = markdown.split(/\r?\n/);
+  for (const line of lines) {
+    const match: RegExpMatchArray | null = line.match(/^##\s+(.+?)\s*$/);
+    if (match) {
+      current = match[1].trim();
+      sections[current] = sections[current] ?? [];
+      continue;
+    }
+
+    if (!current) {
+      continue;
+    }
+
+    sections[current].push(line);
+  }
+
+  const out: Record<string, string> = {};
+  for (const key of Object.keys(sections)) {
+    out[key] = sections[key].join('\n').trim();
+  }
+  return out;
+}
+
+function tryLoadLinearFlowComments(): Record<string, string> | undefined {
+  if (attemptedLinearFlowLoad) {
+    return cachedLinearFlowComments;
+  }
+
+  attemptedLinearFlowLoad = true;
+
+  const cwd: string = process.cwd();
+  const distDir: string = path.dirname(fileURLToPath(import.meta.url));
+
+  const candidatePaths: string[] = [
+    path.join(cwd, '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+    path.join(cwd, '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+    path.join(cwd, '..', '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+    path.join(distDir, '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+  ];
+
+  for (const candidatePath of candidatePaths) {
+    try {
+      const content: string = readFileSync(candidatePath, 'utf8');
+      cachedLinearFlowComments = parseLinearFlowComments(content);
+      return cachedLinearFlowComments;
+    } catch (error: unknown) {
+      const code: string | undefined =
+        isRecord(error) && typeof error.code === 'string' ? error.code : undefined;
+      if (code !== 'ENOENT' && code !== 'ENOTDIR') {
+        console.warn(`Failed to read LINEAR_FLOW.md at ${candidatePath}: ${String(error)}`);
+      }
+    }
+  }
+
+  return;
+}
+
 function getInstructionCommentForState(stateName: string): string | undefined {
+  const fromLinearFlow: string | undefined = tryLoadLinearFlowComments()?.[stateName];
+  if (fromLinearFlow && fromLinearFlow.length > 0) {
+    return fromLinearFlow;
+  }
+
   switch (stateName) {
     case 'Intake': {
       return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links - if two tasks may merge conflict, you must choose one to block the other, and prerequisites should be linked as blocking/blocked by as appropriate. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';

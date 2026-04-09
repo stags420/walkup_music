@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY hooks/charliehooks/src ./hooks/charliehooks/src
+COPY .charlie/instructions/LINEAR_FLOW.md ./.charlie/instructions/LINEAR_FLOW.md
 
 RUN mkdir -p /out && \
   npx tsc hooks/charliehooks/src/*.ts \
@@ -29,6 +30,7 @@ ENV HOST=0.0.0.0
 ENV PORT=8787
 
 COPY --from=build /out ./dist
+COPY --from=build /app/.charlie ./.charlie
 
 EXPOSE 8787
 

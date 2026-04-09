@@ -132,6 +132,7 @@ export default [
       'dist*/**',
       'node_modules/**',
       '.eslintrc.cjs',
+      'hooks/charliehooks/**',
       'test/reports/**',
       'steering/**',
       'scripts/**',

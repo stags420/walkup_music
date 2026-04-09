@@ -1,0 +1,487 @@
+import { timingSafeEqual, createHmac } from 'node:crypto';
+import { createServer } from 'node:http';
+
+const LINEAR_GRAPHQL_URL = 'https://api.linear.app/graphql';
+const LINEAR_ID_REGEX = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
+const DEFAULT_PORT = 8787;
+
+const linearApiKey = process.env.LINEAR_API_KEY;
+if (!linearApiKey) {
+  throw new Error('Missing LINEAR_API_KEY');
+}
+
+const linearTeamKey = process.env.LINEAR_TEAM_KEY ?? 'CHA';
+const githubWebhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+
+const host = process.env.HOST ?? '127.0.0.1';
+const port = Number.parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
+
+const walkupMusicProdUrl =
+  process.env.WALKUP_MUSIC_PROD_URL ?? 'https://stagswtf.github.io/walkup_music/';
+
+const mergeShaToLinearIdentifiers = new Map();
+
+const stateIdsByName = await loadLinearStateIds({
+  linearApiKey,
+  teamKey: linearTeamKey,
+});
+
+createServer(async (request, response) => {
+  try {
+    if (request.method === 'GET' && request.url === '/healthz') {
+      response.writeHead(200, { 'content-type': 'text/plain' });
+      response.end('ok');
+      return;
+    }
+
+    if (request.method === 'POST' && request.url === '/github') {
+      const rawBody = await readBody(request);
+
+      if (githubWebhookSecret) {
+        const signatureHeader = request.headers['x-hub-signature-256'];
+        if (typeof signatureHeader !== 'string') {
+          throw new Error('Missing X-Hub-Signature-256 header');
+        }
+
+        verifyGitHubSignature({
+          signatureHeader,
+          secret: githubWebhookSecret,
+          rawBody,
+        });
+      }
+
+      const eventName = request.headers['x-github-event'];
+      if (typeof eventName !== 'string') {
+        throw new Error('Missing X-GitHub-Event header');
+      }
+
+      const payload = JSON.parse(rawBody.toString('utf8'));
+
+      const result = await handleGitHubEvent({
+        eventName,
+        payload,
+        linearApiKey,
+        linearTeamKey,
+        stateIdsByName,
+        mergeShaToLinearIdentifiers,
+        walkupMusicProdUrl,
+      });
+
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify(result));
+      return;
+    }
+
+    response.writeHead(404, { 'content-type': 'text/plain' });
+    response.end('not found');
+  } catch (error) {
+    response.writeHead(500, { 'content-type': 'application/json' });
+    response.end(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
+  }
+}).listen(port, host, () => {
+  // eslint-disable-next-line no-console
+  console.log(`charliehooks listening on http://${host}:${port}`);
+});
+
+async function handleGitHubEvent(options) {
+  const eventName = options.eventName;
+  const payload = options.payload;
+
+  if (eventName === 'pull_request') {
+    return await handlePullRequestEvent(options, payload);
+  }
+
+  if (eventName === 'workflow_run') {
+    return await handleWorkflowRunEvent(options, payload);
+  }
+
+  return { ok: true, ignored: true, eventName };
+}
+
+async function handlePullRequestEvent(options, payload) {
+  const action = payload.action;
+  const pullRequest = payload.pull_request;
+
+  if (action !== 'closed' || !pullRequest || pullRequest.merged !== true) {
+    return { ok: true, ignored: true, eventName: 'pull_request', action };
+  }
+
+  const mergeCommitSha = pullRequest.merge_commit_sha;
+  if (typeof mergeCommitSha !== 'string' || mergeCommitSha.length === 0) {
+    return {
+      ok: false,
+      error: 'Missing pull_request.merge_commit_sha',
+    };
+  }
+
+  const identifiers = extractLinearIdentifiers({
+    teamKey: options.linearTeamKey,
+    values: [pullRequest.title, pullRequest.body, pullRequest.head?.ref],
+  });
+
+  if (identifiers.length === 0) {
+    return { ok: true, ignored: true, reason: 'no-linear-identifiers' };
+  }
+
+  await Promise.all(
+    identifiers.map(async (identifier) =>
+      setLinearIssueState({
+        linearApiKey: options.linearApiKey,
+        stateIdsByName: options.stateIdsByName,
+        issueIdentifier: identifier,
+        stateName: 'Merged',
+      }),
+    ),
+  );
+
+  options.mergeShaToLinearIdentifiers.set(mergeCommitSha, identifiers);
+
+  return {
+    ok: true,
+    updated: identifiers,
+    state: 'Merged',
+    mergeCommitSha,
+  };
+}
+
+async function handleWorkflowRunEvent(options, payload) {
+  const action = payload.action;
+  const workflowRun = payload.workflow_run;
+
+  if (action !== 'completed' || !workflowRun) {
+    return { ok: true, ignored: true, eventName: 'workflow_run', action };
+  }
+
+  const conclusion = workflowRun.conclusion;
+  if (conclusion !== 'success') {
+    return {
+      ok: true,
+      ignored: true,
+      eventName: 'workflow_run',
+      conclusion,
+    };
+  }
+
+  const headBranch = workflowRun.head_branch;
+  if (headBranch !== 'v2.1') {
+    return {
+      ok: true,
+      ignored: true,
+      eventName: 'workflow_run',
+      headBranch,
+    };
+  }
+
+  const isDeployWorkflow =
+    workflowRun.path === '.github/workflows/deploy.yml' ||
+    workflowRun.name === 'Deploy to GitHub Pages';
+
+  if (!isDeployWorkflow) {
+    return {
+      ok: true,
+      ignored: true,
+      eventName: 'workflow_run',
+      workflowName: workflowRun.name,
+      workflowPath: workflowRun.path,
+    };
+  }
+
+  const headSha = workflowRun.head_sha;
+  if (typeof headSha !== 'string' || headSha.length === 0) {
+    return {
+      ok: false,
+      error: 'Missing workflow_run.head_sha',
+    };
+  }
+
+  const cachedIdentifiers = options.mergeShaToLinearIdentifiers.get(headSha);
+  const parsedIdentifiers = extractLinearIdentifiers({
+    teamKey: options.linearTeamKey,
+    values: [workflowRun.display_title],
+  });
+
+  const identifiers = uniqueStrings([
+    ...(cachedIdentifiers ?? []),
+    ...parsedIdentifiers,
+  ]);
+
+  if (identifiers.length === 0) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: 'no-linear-identifiers',
+      headSha,
+    };
+  }
+
+  await Promise.all(
+    identifiers.map(async (identifier) =>
+      setLinearIssueState({
+        linearApiKey: options.linearApiKey,
+        stateIdsByName: options.stateIdsByName,
+        issueIdentifier: identifier,
+        stateName: 'Delivered',
+      }),
+    ),
+  );
+
+  const smokeCheck = await verifyWalkupMusicProd({
+    prodUrl: options.walkupMusicProdUrl,
+  });
+
+  if (!smokeCheck.ok) {
+    return {
+      ok: true,
+      updated: identifiers,
+      state: 'Delivered',
+      smokeCheck,
+    };
+  }
+
+  await Promise.all(
+    identifiers.map(async (identifier) =>
+      setLinearIssueState({
+        linearApiKey: options.linearApiKey,
+        stateIdsByName: options.stateIdsByName,
+        issueIdentifier: identifier,
+        stateName: 'Accepted',
+      }),
+    ),
+  );
+
+  return {
+    ok: true,
+    updated: identifiers,
+    state: 'Accepted',
+    smokeCheck,
+  };
+}
+
+async function verifyWalkupMusicProd(options) {
+  const prodUrl = options.prodUrl;
+  const homepageResponse = await fetch(prodUrl, {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!homepageResponse.ok) {
+    return {
+      ok: false,
+      checks: [
+        {
+          name: 'homepage-status',
+          ok: false,
+          details: `${homepageResponse.status} ${homepageResponse.statusText}`,
+        },
+      ],
+    };
+  }
+
+  const homepageHtml = await homepageResponse.text();
+  const hasTitle = homepageHtml.includes('<title>Walk-Up Music Manager</title>');
+  if (!hasTitle) {
+    return {
+      ok: false,
+      checks: [
+        {
+          name: 'homepage-title',
+          ok: false,
+          details: 'missing expected <title>Walk-Up Music Manager</title>',
+        },
+      ],
+    };
+  }
+
+  const faviconResponse = await fetch(new URL('favicon.ico', prodUrl), {
+    method: 'GET',
+    redirect: 'follow',
+  });
+
+  if (!faviconResponse.ok) {
+    return {
+      ok: false,
+      checks: [
+        {
+          name: 'favicon-status',
+          ok: false,
+          details: `${faviconResponse.status} ${faviconResponse.statusText}`,
+        },
+      ],
+    };
+  }
+
+  return {
+    ok: true,
+    checks: [
+      { name: 'homepage-status', ok: true },
+      { name: 'homepage-title', ok: true },
+      { name: 'favicon-status', ok: true },
+    ],
+  };
+}
+
+function extractLinearIdentifiers(options) {
+  const values = options.values;
+  const teamKey = options.teamKey;
+
+  const results = [];
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    for (const match of value.matchAll(LINEAR_ID_REGEX)) {
+      const identifier = match[1];
+      if (identifier.startsWith(`${teamKey}-`)) {
+        results.push(identifier);
+      }
+    }
+  }
+
+  return uniqueStrings(results);
+}
+
+function uniqueStrings(values) {
+  return [...new Set(values)];
+}
+
+function verifyGitHubSignature(options) {
+  const expected = createHmac('sha256', options.secret)
+    .update(options.rawBody)
+    .digest('hex');
+  const expectedHeader = `sha256=${expected}`;
+
+  const actual = Buffer.from(options.signatureHeader);
+  const expectedBuffer = Buffer.from(expectedHeader);
+
+  if (actual.length !== expectedBuffer.length) {
+    throw new Error('Invalid X-Hub-Signature-256 header');
+  }
+
+  if (!timingSafeEqual(actual, expectedBuffer)) {
+    throw new Error('Invalid X-Hub-Signature-256 signature');
+  }
+}
+
+async function readBody(request) {
+  const maxBytes = 1024 * 1024;
+  const chunks = [];
+  let totalBytes = 0;
+
+  for await (const chunk of request) {
+    const bufferChunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    totalBytes += bufferChunk.length;
+    if (totalBytes > maxBytes) {
+      throw new Error('Request body too large');
+    }
+    chunks.push(bufferChunk);
+  }
+
+  return Buffer.concat(chunks);
+}
+
+async function loadLinearStateIds(options) {
+  const teamKey = options.teamKey;
+
+  const result = await linearGraphql({
+    linearApiKey: options.linearApiKey,
+    query: `
+      query StateLookup($teamKey: String!) {
+        teams(filter: { key: { eq: $teamKey } }) {
+          nodes {
+            key
+            states {
+              nodes {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    `,
+    variables: { teamKey },
+  });
+
+  const teams = result.teams?.nodes;
+  if (!Array.isArray(teams) || teams.length !== 1) {
+    throw new Error(`Could not resolve Linear team key: ${teamKey}`);
+  }
+
+  const states = teams[0]?.states?.nodes;
+  if (!Array.isArray(states)) {
+    throw new Error(`Could not load workflow states for team: ${teamKey}`);
+  }
+
+  const entries = states
+    .filter((state) => typeof state?.id === 'string' && typeof state?.name === 'string')
+    .map((state) => [state.name, state.id]);
+
+  return new Map(entries);
+}
+
+async function setLinearIssueState(options) {
+  const stateId = options.stateIdsByName.get(options.stateName);
+  if (!stateId) {
+    throw new Error(`Unknown Linear workflow state: ${options.stateName}`);
+  }
+
+  const lookup = await linearGraphql({
+    linearApiKey: options.linearApiKey,
+    query: `
+      query IssueLookup($id: String!) {
+        issue(id: $id) {
+          id
+          identifier
+        }
+      }
+    `,
+    variables: { id: options.issueIdentifier },
+  });
+
+  const issueId = lookup.issue?.id;
+  if (typeof issueId !== 'string') {
+    throw new Error(`Could not resolve Linear issue: ${options.issueIdentifier}`);
+  }
+
+  await linearGraphql({
+    linearApiKey: options.linearApiKey,
+    query: `
+      mutation IssueStateUpdate($issueId: String!, $stateId: String!) {
+        issueUpdate(id: $issueId, input: { stateId: $stateId }) {
+          success
+        }
+      }
+    `,
+    variables: { issueId, stateId },
+  });
+}
+
+async function linearGraphql(options) {
+  const response = await fetch(LINEAR_GRAPHQL_URL, {
+    method: 'POST',
+    headers: {
+      authorization: options.linearApiKey,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: options.query,
+      variables: options.variables,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Linear GraphQL HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+    throw new Error(`Linear GraphQL error: ${JSON.stringify(result.errors[0])}`);
+  }
+
+  return result.data;
+}

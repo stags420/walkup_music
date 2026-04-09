@@ -343,7 +343,7 @@ export function deriveTransitionFromGithubWebhook(options: {
       issueIdentifiers: identifiers,
       targetStateName: 'Delivered',
       comment:
-        'Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.',
+        '@Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.',
     };
   }
 

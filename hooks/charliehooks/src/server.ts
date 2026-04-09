@@ -203,7 +203,7 @@ function verifyLinearSignature(options: {
 function getInstructionCommentForState(stateName: string): string | undefined {
   switch (stateName) {
     case 'Intake': {
-      return '@Charlie, proceed with plan and breakdown of this requeset into appropriately sized tasks with blockers linked. Put those tasks in the backlog. Once you have finished creating all tasks, move them all to ready.';
+      return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in Backlog linear status. 2. After all tasks are created, update the blocking relationships - any tasks that may merge conflict should block, prerequisites should also be blockers. 3. Once blockers are set, move all of the tasks to Ready. 4. Stop.';
     }
     case 'Ready': {
       return '@Charlie, wait for the blocking tasks to finish. Once they do, move this task to in progress.';

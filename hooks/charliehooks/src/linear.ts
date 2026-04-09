@@ -150,11 +150,11 @@ export async function getBlockedByIssuesForIssueId(
   id: string,
 ): Promise<LinearRelatedIssue[]> {
   const query =
-    'query($id:String!){ issue(id:$id){ relations { nodes { type relatedIssue { id identifier title state { name } } } } } }';
+    'query($id:String!){ issue(id:$id){ inverseRelations { nodes { type relatedIssue { id identifier title state { name } } } } } }';
 
   const data: {
     issue: {
-      relations: {
+      inverseRelations: {
         nodes: {
           type: string;
           relatedIssue: {
@@ -172,8 +172,8 @@ export async function getBlockedByIssuesForIssueId(
     throw new Error(`Linear issue not found: ${id}`);
   }
 
-  return data.issue.relations.nodes.flatMap((node) => {
-    if (node.type !== 'blockedBy' || !node.relatedIssue) {
+  return data.issue.inverseRelations.nodes.flatMap((node) => {
+    if (node.type !== 'blocks' || !node.relatedIssue) {
       return [];
     }
 

@@ -243,11 +243,19 @@ function tryLoadLinearFlowComments(): Record<string, string> | undefined {
   const cwd: string = process.cwd();
   const distDir: string = path.dirname(fileURLToPath(import.meta.url));
 
+  const roots: string[] = [
+    cwd,
+    path.dirname(cwd),
+    path.dirname(path.dirname(cwd)),
+    path.join(distDir, '..'),
+  ];
+
   const candidatePaths: string[] = [
-    path.join(cwd, '.charlie', 'instructions', 'LINEAR_FLOW.md'),
-    path.join(cwd, '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
-    path.join(cwd, '..', '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
-    path.join(distDir, '..', '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+    ...new Set(
+      roots.map((root) =>
+        path.join(root, '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+      ),
+    ),
   ];
 
   for (const candidatePath of candidatePaths) {

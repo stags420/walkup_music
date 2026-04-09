@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Buffer } from 'node:buffer';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import {
   deriveTransitionFromGithubWebhook,
@@ -9,8 +10,11 @@ import {
 } from './github.js';
 import {
   addIssueComment,
+  addIssueCommentById,
   createLinearClient,
+  getIssueById,
   getIssueByIdentifier,
+  getWorkflowStateNameById,
   setIssueState,
   type LinearClient,
   type LinearIssue,
@@ -23,6 +27,10 @@ import {
 } from './acceptance.js';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 function readRequestBody(req: IncomingMessage): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -91,6 +99,36 @@ function hasInternalSecret(req: IncomingMessage): boolean {
 
   const provided: string | undefined = getHeader(req, 'x-charliehooks-secret');
   return provided === configured;
+}
+
+function verifyLinearSignature(options: {
+  secret: string | undefined;
+  signature: string | undefined;
+  body: Buffer;
+}): boolean {
+  const secret: string | undefined = options.secret;
+  if (!secret) {
+    return true;
+  }
+
+  const signature: string | undefined = options.signature;
+  if (!signature) {
+    return false;
+  }
+
+  let expected: Buffer;
+  try {
+    expected = Buffer.from(signature, 'hex');
+  } catch {
+    return false;
+  }
+
+  const actual: Buffer = createHmac('sha256', secret).update(options.body).digest();
+  if (expected.length !== actual.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expected, actual);
 }
 
 async function applyGithubDerivedTransition(
@@ -265,6 +303,170 @@ async function handleVerifyAndAccept(
   jsonResponse(res, 200, { ok: true, results });
 }
 
+async function handleLinearWebhook(
+  req: IncomingMessage,
+  res: ServerResponse,
+  client: LinearClient,
+  seenDeliveryIds: Set<string>,
+  maxAgeMs: number,
+): Promise<void> {
+  const body: Buffer = await readRequestBody(req);
+
+  const okSignature: boolean = verifyLinearSignature({
+    secret: getEnv('LINEAR_WEBHOOK_SECRET'),
+    signature: getHeader(req, 'linear-signature'),
+    body,
+  });
+
+  if (!okSignature) {
+    jsonResponse(res, 401, { ok: false, error: 'Invalid Linear signature' });
+    return;
+  }
+
+  let payloadUnknown: unknown;
+  try {
+    payloadUnknown = parseJsonBody(body);
+  } catch (error: unknown) {
+    jsonResponse(res, 400, { ok: false, error: `Invalid JSON: ${String(error)}` });
+    return;
+  }
+
+  if (!isRecord(payloadUnknown)) {
+    jsonResponse(res, 200, { ok: true, action: 'noop' });
+    return;
+  }
+
+  if (maxAgeMs > 0 && getEnv('LINEAR_WEBHOOK_SECRET')) {
+    const tsRaw: unknown = payloadUnknown.webhookTimestamp;
+    let tsMs: number | undefined;
+
+    if (typeof tsRaw === 'number') {
+      tsMs = tsRaw < 1_000_000_000_000 ? tsRaw * 1000 : tsRaw;
+    } else if (typeof tsRaw === 'string') {
+      const parsed: number = Date.parse(tsRaw);
+      if (Number.isFinite(parsed)) {
+        tsMs = parsed;
+      }
+    }
+
+    if (tsMs === undefined) {
+      jsonResponse(res, 401, { ok: false, error: 'Missing or invalid webhookTimestamp' });
+      return;
+    }
+
+    if (Math.abs(Date.now() - tsMs) > maxAgeMs) {
+      jsonResponse(res, 401, { ok: false, error: 'Stale webhookTimestamp' });
+      return;
+    }
+  }
+
+  const action: unknown = payloadUnknown.action;
+  const type: unknown = payloadUnknown.type ?? getHeader(req, 'linear-event');
+  if (type !== 'Issue' || action !== 'update') {
+    jsonResponse(res, 200, { ok: true, action: 'noop' });
+    return;
+  }
+
+  const data: unknown = payloadUnknown.data;
+  const updatedFrom: unknown = payloadUnknown.updatedFrom;
+  if (!isRecord(data) || !isRecord(updatedFrom)) {
+    jsonResponse(res, 200, { ok: true, action: 'noop' });
+    return;
+  }
+
+  const oldStateId: unknown = updatedFrom.stateId;
+  const newStateId: unknown = data.stateId;
+  if (
+    typeof oldStateId !== 'string' ||
+    typeof newStateId !== 'string' ||
+    oldStateId.length === 0 ||
+    newStateId.length === 0 ||
+    oldStateId === newStateId
+  ) {
+    jsonResponse(res, 200, { ok: true, action: 'noop' });
+    return;
+  }
+
+  const actorName: string | undefined =
+    isRecord(payloadUnknown.actor) && typeof payloadUnknown.actor.name === 'string'
+      ? payloadUnknown.actor.name
+      : undefined;
+
+  const issueUrl: string | undefined =
+    typeof payloadUnknown.url === 'string' ? payloadUnknown.url : undefined;
+  const issueIdentifier: string | undefined =
+    typeof data.identifier === 'string' ? data.identifier : undefined;
+  const issueId: string | undefined = typeof data.id === 'string' ? data.id : undefined;
+
+  const deliveryId: string | undefined = getHeader(req, 'linear-delivery');
+  if (deliveryId) {
+    if (seenDeliveryIds.has(deliveryId)) {
+      jsonResponse(res, 200, { ok: true, action: 'duplicate' });
+      return;
+    }
+
+    seenDeliveryIds.add(deliveryId);
+    if (seenDeliveryIds.size > 1000) {
+      seenDeliveryIds.clear();
+      seenDeliveryIds.add(deliveryId);
+    }
+  }
+
+  jsonResponse(res, 200, {
+    ok: true,
+    action: 'queued',
+    issueId,
+    issueIdentifier,
+  });
+
+  void (async () => {
+    if (!issueId) {
+      return;
+    }
+
+    let resolvedIdentifier: string | undefined = issueIdentifier;
+    if (!resolvedIdentifier) {
+      const issue: LinearIssue = await getIssueById(client, issueId);
+      resolvedIdentifier = issue.identifier;
+    }
+
+    if (!resolvedIdentifier.startsWith(`${client.teamKey}-`)) {
+      return;
+    }
+
+    let oldStateName: string | undefined;
+    let newStateName: string | undefined;
+    try {
+      [oldStateName, newStateName] = await Promise.all([
+        getWorkflowStateNameById(client, oldStateId),
+        getWorkflowStateNameById(client, newStateId),
+      ]);
+    } catch (error: unknown) {
+      console.warn(`Could not resolve workflow state names: ${String(error)}`);
+    }
+
+    const mention: string = getEnv('CHARLIEHOOKS_LINEAR_MENTION') ?? '@charlie';
+    const byText: string = actorName ? ` by ${actorName}` : '';
+    const fromText: string = oldStateName ?? oldStateId;
+    const toText: string = newStateName ?? newStateId;
+    const urlText: string = issueUrl ? `\n\n${issueUrl}` : '';
+
+    await addIssueCommentById(
+      client,
+      issueId,
+      `${mention} ${resolvedIdentifier}: State transition${byText}: ${fromText} -> ${toText}.${urlText}`,
+    );
+  })().catch((error: unknown) => {
+    console.error(
+      `handleLinearWebhook async processing failed: ${String(error)}; ` +
+        `deliveryId=${deliveryId ?? '<none>'}, ` +
+        `issueId=${issueId ?? '<none>'}, ` +
+        `issueIdentifier=${issueIdentifier ?? '<none>'}, ` +
+        `oldStateId=${oldStateId}, newStateId=${newStateId}`,
+    );
+  });
+}
+
 export function startServer(): void {
   const linearApiKey: string = getRequiredEnv('LINEAR_API_KEY');
   const teamKey: string = getEnv('LINEAR_TEAM_KEY') ?? 'CHA';
@@ -272,8 +474,18 @@ export function startServer(): void {
     'https://stagswtf.github.io/walkup_music/';
   const mainBranch: string = getEnv('CHARLIEHOOKS_MAIN_BRANCH') ?? 'v2.1';
 
+  const linearWebhookMaxAgeMsRaw: string | undefined = getEnv('LINEAR_WEBHOOK_MAX_AGE_MS');
+  const linearWebhookMaxAgeMs: number = linearWebhookMaxAgeMsRaw
+    ? Number(linearWebhookMaxAgeMsRaw)
+    : 60_000;
+  if (!Number.isFinite(linearWebhookMaxAgeMs) || linearWebhookMaxAgeMs < 0) {
+    throw new Error(`Invalid LINEAR_WEBHOOK_MAX_AGE_MS: ${linearWebhookMaxAgeMsRaw}`);
+  }
+
   const dryRun: boolean = getEnv('CHARLIEHOOKS_DRY_RUN') === '1';
   const client: LinearClient = createLinearClient({ apiKey: linearApiKey, teamKey, dryRun });
+
+  const seenLinearDeliveryIds: Set<string> = new Set();
 
   const portRaw: string = getEnv('PORT') ?? '8787';
   const port = Number(portRaw);
@@ -299,6 +511,11 @@ export function startServer(): void {
 
     if (method === 'POST' && url.pathname === '/verify-and-accept') {
       await handleVerifyAndAccept(req, res, client, defaultProdUrl);
+      return;
+    }
+
+    if (method === 'POST' && url.pathname === '/linear') {
+      await handleLinearWebhook(req, res, client, seenLinearDeliveryIds, linearWebhookMaxAgeMs);
       return;
     }
 

@@ -1,6 +1,11 @@
 import crypto from 'node:crypto';
 
 const DEFAULT_LINEAR_API_URL = 'https://api.linear.app/graphql';
+const DEFAULT_GITHUB_API_URL = 'https://api.github.com';
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
 * @param {{ signature256Header: string | undefined; secret: string; body: Buffer }} params
@@ -107,6 +112,111 @@ export async function linearGraphql(params) {
   }
 
   return json.data;
+}
+
+/**
+* @param {{
+*   token: string;
+*   method: string;
+*   url: string;
+*   body?: unknown;
+* }} params
+*/
+export async function githubRest(params) {
+  const res = await fetch(`${DEFAULT_GITHUB_API_URL}${params.url}`, {
+    method: params.method,
+    headers: {
+      authorization: `Bearer ${params.token}`,
+      accept: 'application/vnd.github+json',
+      'content-type': 'application/json',
+      'x-github-api-version': '2022-11-28',
+    },
+    body: params.body === undefined ? undefined : JSON.stringify(params.body),
+  });
+
+  const text = await res.text();
+  const json = text.length ? JSON.parse(text) : null;
+  return { ok: res.ok, status: res.status, statusText: res.statusText, json };
+}
+
+/**
+* @param {{ token: string; owner: string; repo: string; prNumber: number }} params
+*/
+export async function fetchPullRequest(params) {
+  const res = await githubRest({
+    token: params.token,
+    method: 'GET',
+    url: `/repos/${params.owner}/${params.repo}/pulls/${params.prNumber}`,
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `GitHub pull request fetch failed: ${res.status} ${res.statusText} ${JSON.stringify(res.json)}`
+    );
+  }
+
+  return res.json;
+}
+
+/**
+* @param {{
+*   token: string;
+*   owner: string;
+*   repo: string;
+*   prNumber: number;
+*   mergeMethod: 'merge' | 'squash' | 'rebase';
+*   sha: string;
+* }} params
+*/
+export async function mergePullRequest(params) {
+  const res = await githubRest({
+    token: params.token,
+    method: 'PUT',
+    url: `/repos/${params.owner}/${params.repo}/pulls/${params.prNumber}/merge`,
+    body: {
+      merge_method: params.mergeMethod,
+      sha: params.sha,
+    },
+  });
+
+  if (!res.ok) {
+    return {
+      merged: false,
+      error: {
+        status: res.status,
+        statusText: res.statusText,
+        body: res.json,
+      },
+    };
+  }
+
+  return { merged: Boolean(res.json?.merged), sha: res.json?.sha };
+}
+
+/**
+* @param {{ token: string; owner: string; repo: string; branch: string }} params
+*/
+export async function deleteBranchRef(params) {
+  const encoded = encodeURIComponent(params.branch);
+  const res = await githubRest({
+    token: params.token,
+    method: 'DELETE',
+    url: `/repos/${params.owner}/${params.repo}/git/refs/heads/${encoded}`,
+  });
+
+  if (res.status === 404) return { deleted: false, skipped: 'not_found' };
+  if (!res.ok) {
+    return {
+      deleted: false,
+      error: {
+        status: res.status,
+        statusText: res.statusText,
+        body: res.json,
+      },
+    };
+  }
+
+  return { deleted: true };
 }
 
 /**
@@ -241,6 +351,11 @@ export async function moveLinearIssueToMerged(params) {
 *   deployBranch: string;
 *   linearApiKey: string;
 *   mergedStateName: string;
+*   githubApiToken?: string;
+*   autoMergeWorkflowName?: string;
+*   autoMergeScope: 'charliecreates' | 'all';
+*   autoMergeMethod: 'merge' | 'squash' | 'rebase';
+*   autoMergeDeleteBranch: boolean;
 * }} params
 */
 export async function handleGitHubWebhookEvent(params) {
@@ -251,6 +366,234 @@ export async function handleGitHubWebhookEvent(params) {
 
   /** @type {any} */
   const payload = params.payload;
+
+  if (eventName === 'workflow_run' && payload?.action === 'completed') {
+    const githubApiToken = params.githubApiToken;
+    if (!githubApiToken) {
+      return {
+        ok: false,
+        httpStatus: 500,
+        error: 'missing_github_api_token',
+      };
+    }
+
+    const workflowRun = payload?.workflow_run;
+    const conclusion = workflowRun?.conclusion;
+    if (conclusion !== 'success') {
+      return {
+        ok: true,
+        skipped: 'workflow_run_not_success',
+        details: { conclusion },
+      };
+    }
+
+    const workflowName =
+      typeof workflowRun?.name === 'string' ? workflowRun.name : undefined;
+    const expectedWorkflowName = params.autoMergeWorkflowName;
+    if (expectedWorkflowName && workflowName !== expectedWorkflowName) {
+      return {
+        ok: true,
+        skipped: 'not_target_workflow',
+        details: { workflowName, expectedWorkflowName },
+      };
+    }
+
+    const runEvent = workflowRun?.event;
+    if (runEvent !== 'pull_request') {
+      return {
+        ok: true,
+        skipped: 'workflow_run_not_pull_request',
+        details: { runEvent },
+      };
+    }
+
+    const prs = Array.isArray(workflowRun?.pull_requests)
+      ? workflowRun.pull_requests
+      : [];
+    if (prs.length !== 1 || typeof prs[0]?.number !== 'number') {
+      return {
+        ok: true,
+        skipped: 'workflow_run_pr_ambiguous',
+        details: {
+          pullRequestCount: prs.length,
+          pullRequestNumbers: prs.map((pr) => pr?.number).filter(Boolean),
+        },
+      };
+    }
+
+    const prNumber = prs[0].number;
+    const owner = payload?.repository?.owner?.login;
+    const repo = payload?.repository?.name;
+    if (typeof owner !== 'string' || typeof repo !== 'string') {
+      return {
+        ok: false,
+        httpStatus: 400,
+        error: 'invalid_repository',
+      };
+    }
+
+    /** @type {any} */
+    let pr = null;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      pr = await fetchPullRequest({ token: githubApiToken, owner, repo, prNumber });
+
+      if (pr?.mergeable !== null && pr?.mergeable_state !== 'unknown') {
+        break;
+      }
+
+      await sleep(500);
+    }
+
+    const baseRef = pr?.base?.ref;
+    if (baseRef !== params.deployBranch) {
+      return {
+        ok: true,
+        skipped: 'not_deploy_branch',
+        details: { baseRef, deployBranch: params.deployBranch },
+      };
+    }
+
+    if (pr?.merged === true) {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'already_merged',
+      };
+    }
+
+    if (pr?.state !== 'open') {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'pr_not_open',
+        details: { state: pr?.state },
+      };
+    }
+
+    if (pr?.draft === true) {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'pr_is_draft',
+      };
+    }
+
+    const allowedScope = params.autoMergeScope;
+    const authorLogin = pr?.user?.login;
+    if (allowedScope === 'charliecreates' && authorLogin !== 'charliecreates[bot]') {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'pr_author_not_allowed',
+        details: { authorLogin, allowedScope },
+      };
+    }
+
+    const headRepoFullName = pr?.head?.repo?.full_name;
+    const baseRepoFullName = pr?.base?.repo?.full_name;
+    if (
+      typeof headRepoFullName === 'string' &&
+      typeof baseRepoFullName === 'string' &&
+      headRepoFullName !== baseRepoFullName
+    ) {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'untrusted_fork_pr',
+        details: { headRepoFullName, baseRepoFullName },
+      };
+    }
+
+    if (pr?.mergeable === false) {
+      return {
+        ok: true,
+        httpStatus: 409,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'pr_not_mergeable',
+        details: {
+          mergeable: pr?.mergeable,
+          mergeableState: pr?.mergeable_state,
+        },
+      };
+    }
+
+    if (!['clean', 'unstable'].includes(pr?.mergeable_state)) {
+      return {
+        ok: true,
+        httpStatus: 409,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'required_checks_not_green',
+        details: { mergeableState: pr?.mergeable_state },
+      };
+    }
+
+    const mergeMethod = params.autoMergeMethod;
+    const sha = pr?.head?.sha;
+    if (typeof sha !== 'string') {
+      return {
+        ok: false,
+        httpStatus: 400,
+        error: 'missing_head_sha',
+        event: 'workflow_run.completed',
+        prNumber,
+      };
+    }
+
+    const mergeResult = await mergePullRequest({
+      token: githubApiToken,
+      owner,
+      repo,
+      prNumber,
+      mergeMethod,
+      sha,
+    });
+
+    if (!mergeResult.merged) {
+      return {
+        ok: true,
+        httpStatus: 409,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'merge_failed',
+        details: mergeResult.error,
+      };
+    }
+
+    let deleteResult = null;
+    if (params.autoMergeDeleteBranch === true) {
+      const headRef = pr?.head?.ref;
+      const defaultBranch = pr?.base?.repo?.default_branch;
+      if (
+        typeof headRef === 'string' &&
+        headRef !== params.deployBranch &&
+        headRef !== defaultBranch
+      ) {
+        deleteResult = await deleteBranchRef({
+          token: githubApiToken,
+          owner,
+          repo,
+          branch: headRef,
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      event: 'workflow_run.completed',
+      prNumber,
+      merged: true,
+      mergeMethod,
+      deletedBranch: deleteResult?.deleted ?? false,
+      deleteBranchSkipped: deleteResult?.skipped,
+    };
+  }
 
   if (
     eventName === 'pull_request' &&

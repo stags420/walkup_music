@@ -20,6 +20,18 @@ const port = process.env.PORT ? Number(process.env.PORT) : 8787;
 const deployBranch = process.env.DEPLOY_BRANCH ?? 'v2.1';
 const mergedStateName = process.env.LINEAR_MERGED_STATE_NAME ?? 'Merged';
 
+const githubApiToken = process.env.GITHUB_API_TOKEN;
+const autoMergeWorkflowName =
+  process.env.AUTO_MERGE_WORKFLOW_NAME ?? 'Deploy to GitHub Pages';
+const autoMergeScope = process.env.AUTO_MERGE_SCOPE === 'all' ? 'all' : 'charliecreates';
+const autoMergeMethod =
+  process.env.AUTO_MERGE_METHOD === 'squash'
+    ? 'squash'
+    : process.env.AUTO_MERGE_METHOD === 'rebase'
+      ? 'rebase'
+      : 'merge';
+const autoMergeDeleteBranch = process.env.AUTO_MERGE_DELETE_BRANCH === 'true';
+
 const githubWebhookSecret = readRequiredEnv('GITHUB_WEBHOOK_SECRET');
 const linearApiKey = readRequiredEnv('LINEAR_API_KEY');
 
@@ -37,6 +49,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    const deliveryId = req.headers['x-github-delivery'];
     const chunks = [];
     for await (const chunk of req) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -61,6 +74,10 @@ const server = http.createServer(async (req, res) => {
     const eventName =
       typeof eventNameHeader === 'string' ? eventNameHeader : undefined;
 
+    console.log(
+      `[githubToLinearMergedServer] delivery=${typeof deliveryId === 'string' ? deliveryId : 'unknown'} event=${eventName ?? 'unknown'}`
+    );
+
     const payload = body.length ? JSON.parse(body.toString('utf8')) : null;
     const result = await handleGitHubWebhookEvent({
       eventName,
@@ -68,9 +85,16 @@ const server = http.createServer(async (req, res) => {
       deployBranch,
       linearApiKey,
       mergedStateName,
+      githubApiToken,
+      autoMergeWorkflowName,
+      autoMergeScope,
+      autoMergeMethod,
+      autoMergeDeleteBranch,
     });
 
-    res.writeHead(200, { 'content-type': 'application/json' });
+    const httpStatus =
+      typeof result?.httpStatus === 'number' ? result.httpStatus : 200;
+    res.writeHead(httpStatus, { 'content-type': 'application/json' });
     res.end(JSON.stringify(result));
   } catch (error) {
     res.writeHead(500, { 'content-type': 'application/json' });

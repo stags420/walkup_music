@@ -206,7 +206,10 @@ function getInstructionCommentForState(stateName: string): string | undefined {
       return '@Charlie, proceed with plan and breakdown of this requeset into appropriately sized tasks with blockers linked. Put those tasks in the backlog. Once you have finished creating all tasks, move them all to ready.';
     }
     case 'Ready': {
-      return '@Charlie, proceed with implementation. First move the task to in progress.';
+      return '@Charlie, wait for the blocking tasks to finish. Once they do, move this task to in progress.';
+    }
+    case 'In Progress': {
+      return '@Charlie, implement!';
     }
     case 'Merged': {
       return 'CR Merged, awaiting deployment';
@@ -303,13 +306,13 @@ async function applyGithubDerivedTransition(
     const issue: LinearIssue = await getIssueByIdentifier(client, identifier);
     const current: number = stateOrder[issue.stateName] ?? 0;
     const target: number = stateOrder[transition.targetStateName] ?? 0;
+    const enteringTargetState: boolean = current < target;
 
-    if (current < target) {
+    if (enteringTargetState) {
       await setIssueState(client, identifier, transition.targetStateName);
-    }
-
-    if (transition.comment.length > 0) {
-      await addIssueComment(client, identifier, transition.comment);
+      if (transition.comment.length > 0) {
+        await addIssueComment(client, identifier, transition.comment);
+      }
     }
   }
 }
@@ -761,16 +764,22 @@ async function handleLinearWebhook(
       return;
     }
 
+    let oldStateName: string | undefined;
     let newStateName: string | undefined;
     try {
-      newStateName = await getWorkflowStateNameById(client, newStateId);
+      [oldStateName, newStateName] = await Promise.all([
+        getWorkflowStateNameById(client, oldStateId),
+        getWorkflowStateNameById(client, newStateId),
+      ]);
     } catch (error: unknown) {
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }
 
-    const comment: string | undefined = newStateName
-      ? getInstructionCommentForState(newStateName)
-      : undefined;
+    if (!newStateName || newStateName === oldStateName) {
+      return;
+    }
+
+    const comment: string | undefined = getInstructionCommentForState(newStateName);
     if (!comment) {
       return;
     }

@@ -205,10 +205,10 @@ function verifyLinearSignature(options: {
 function getInstructionCommentForState(stateName: string): string | undefined {
   switch (stateName) {
     case 'Intake': {
-      return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships - any tasks that may merge conflict should block, prerequisites should also be blockers. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';
+      return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links - if two tasks may merge conflict, you must choose one to block the other, and prerequisites should be linked as blocking/blocked by as appropriate. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';
     }
     case 'Ready': {
-      return '@Charlie, wait for the blocking tasks to finish. Once they do, move this task to in progress.';
+      return '@Charlie, wait for all tasks in the Linear "blocked by" relationship to reach MERGED or later in the workflow. Once all blocked by tasks are MERGED or later, move this task to IN PROGRESS.';
     }
     case 'In Progress': {
       return '@Charlie, implement and make sure you link this Linear issue in your PR/final commit.';
@@ -373,6 +373,7 @@ async function handleGithubWebhook(
   const body: Buffer = await readRequestBody(req);
   const eventName: string | undefined = getHeader(req, 'x-github-event');
   const signature256: string | undefined = getHeader(req, 'x-hub-signature-256');
+  const contentType: string = getHeader(req, 'content-type') ?? '<missing>';
   const okSignature: boolean = verifyGithubSignature({
     secret: getEnv('GITHUB_WEBHOOK_SECRET'),
     signature256,
@@ -399,7 +400,7 @@ async function handleGithubWebhook(
       source: 'github',
       eventName,
       statusCode: 400,
-      summary: 'Invalid GitHub JSON payload',
+      summary: `Invalid GitHub JSON payload (Content-Type: ${contentType})`,
       issues: [],
     });
     jsonResponse(res, 400, { ok: false, error: `Invalid JSON: ${String(error)}` });

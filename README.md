@@ -76,6 +76,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the app.
 Optional/internal:
 
 - `npm run deploy:raw` - Build and publish without running checks (not recommended)
+- `npm run webhook:github-linear` - Start a local GitHub webhook receiver that moves linked Linear issues to `Merged` on PR merge
 
 ### Git Hooks
 
@@ -93,6 +94,26 @@ git commit --no-verify
 ```
 
 The hooks are stored in the `hooks/` directory and are automatically configured by the setup script.
+
+### GitHub → Linear webhook bridge (PR merged → Linear `Merged`)
+
+This repo includes a minimal Node webhook receiver for GitHub events (verifies
+`X-Hub-Signature-256`) that will move the linked Linear issue to `Merged` when a
+PR is merged into the deploy branch.
+
+```bash
+export GITHUB_WEBHOOK_SECRET='...'
+export LINEAR_API_KEY='...'
+
+# Optional
+export DEPLOY_BRANCH='v2.1'
+export LINEAR_MERGED_STATE_NAME='Merged'
+
+npm run webhook:github-linear
+```
+
+Configure your GitHub webhook to send `pull_request` events (at minimum) to the
+`/github` path.
 
 ### Spotify Setup (Real Auth)
 

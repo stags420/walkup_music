@@ -4,7 +4,6 @@ import { Buffer } from 'node:buffer';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   deriveAutoMergeRequestFromGithubWebhook,
@@ -60,6 +59,20 @@ type HookRuntimeContext = {
 
 const SECRET_DIR = '/run/app-secrets';
 const MAX_HOOK_HISTORY = 100;
+const DEFAULT_CHARLIE_MENTION = '@Charlie';
+const CHARLIE_MENTION_PLACEHOLDER = '{{CHARLIE_MENTION}}';
+
+const DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE: Record<string, string> = {
+  Intake:
+    `${CHARLIE_MENTION_PLACEHOLDER}, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now:\n\n1. Plan and break down this request into appropriately sized tasks in BACKLOG Linear status.\n2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links. If two tasks may merge conflict, choose one to block the other. Prerequisites should be linked as blocking/blocked by as appropriate.\n3. Once blockers are set, move all of the tasks to READY.\n4. Do NOT move anything to IN PROGRESS as part of working on this task.\n5. Stop.`,
+  Ready:
+    `${CHARLIE_MENTION_PLACEHOLDER}, wait for all tasks in the Linear "blocked by" relationship to reach MERGED or later in the workflow. Once all blocked by tasks are MERGED or later, move this task to IN PROGRESS.`,
+  'In Progress':
+    `${CHARLIE_MENTION_PLACEHOLDER}, implement and make sure you link this Linear issue in your PR/final commit.`,
+  Merged: 'CR Merged, awaiting deployment',
+  Delivered:
+    `${CHARLIE_MENTION_PLACEHOLDER}, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.`,
+};
 const SECRET_FILE_NAMES: Record<string, string[]> = {
   CHARLIEHOOKS_INTERNAL_SECRET: ['charliehooks_internal_secret'],
   GITHUB_PR_PAT: ['github_pr_pat'],
@@ -203,104 +216,103 @@ function verifyLinearSignature(options: {
   return timingSafeEqual(expected, actual);
 }
 
-let cachedLinearFlowComments: Record<string, string> | undefined;
-let attemptedLinearFlowLoad = false;
+function readOptionalFile(filePath: string): string | undefined {
+  try {
+    return readFileSync(filePath, 'utf8');
+  } catch (error: unknown) {
+    const code: string | undefined =
+      isRecord(error) && typeof error.code === 'string' ? error.code : undefined;
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
+      return;
+    }
 
-function parseLinearFlowComments(markdown: string): Record<string, string> {
-  const sections: Record<string, string[]> = {};
-  let current: string | undefined;
+    throw error;
+  }
+}
 
+function parseInstructionTemplatesFromMarkdown(markdown: string): Record<string, string> {
   const lines: string[] = markdown.split(/\r?\n/);
+
+  const byState: Record<string, string> = {};
+  let currentState: string | undefined;
+  let buffer: string[] = [];
+
+  function flush(): void {
+    if (!currentState) {
+      return;
+    }
+
+    let start = 0;
+    let end = buffer.length;
+    while (start < end && buffer[start]?.trim().length === 0) {
+      start += 1;
+    }
+    while (end > start && buffer[end - 1]?.trim().length === 0) {
+      end -= 1;
+    }
+
+    const value: string = buffer.slice(start, end).join('\n').trim();
+    if (value.length > 0) {
+      byState[currentState] = value;
+    }
+  }
+
   for (const line of lines) {
     const match: RegExpMatchArray | null = line.match(/^##\s+(.+?)\s*$/);
     if (match) {
-      current = match[1].trim();
-      sections[current] = sections[current] ?? [];
+      flush();
+      currentState = match[1]?.trim();
+      buffer = [];
       continue;
     }
 
-    if (!current) {
+    if (!currentState) {
       continue;
     }
 
-    sections[current].push(line);
+    buffer.push(line);
   }
 
-  const out: Record<string, string> = {};
-  for (const key of Object.keys(sections)) {
-    out[key] = sections[key].join('\n').trim();
-  }
-  return out;
+  flush();
+  return byState;
 }
 
-function tryLoadLinearFlowComments(): Record<string, string> | undefined {
-  if (attemptedLinearFlowLoad) {
-    return cachedLinearFlowComments;
-  }
-
-  attemptedLinearFlowLoad = true;
-
-  const cwd: string = process.cwd();
-  const distDir: string = path.dirname(fileURLToPath(import.meta.url));
-
-  const roots: string[] = [
-    cwd,
-    path.dirname(cwd),
-    path.dirname(path.dirname(cwd)),
-    path.join(distDir, '..'),
-  ];
-
-  const candidatePaths: string[] = [
-    ...new Set(
-      roots.map((root) =>
-        path.join(root, '.charlie', 'instructions', 'LINEAR_FLOW.md'),
-      ),
-    ),
-  ];
-
-  for (const candidatePath of candidatePaths) {
-    try {
-      const content: string = readFileSync(candidatePath, 'utf8');
-      cachedLinearFlowComments = parseLinearFlowComments(content);
-      return cachedLinearFlowComments;
-    } catch (error: unknown) {
-      const code: string | undefined =
-        isRecord(error) && typeof error.code === 'string' ? error.code : undefined;
-      if (code !== 'ENOENT' && code !== 'ENOTDIR') {
-        console.warn(`Failed to read LINEAR_FLOW.md at ${candidatePath}: ${String(error)}`);
-      }
+function loadInstructionTemplatesByState(filePaths: string[]): Record<string, string> {
+  for (const filePath of filePaths) {
+    const raw: string | undefined = readOptionalFile(filePath);
+    if (!raw) {
+      continue;
     }
+
+    const parsed: Record<string, string> = parseInstructionTemplatesFromMarkdown(raw);
+    if (Object.keys(parsed).length === 0) {
+      console.warn(`No state templates found in ${filePath}; ignoring.`);
+      continue;
+    }
+
+    return {
+      ...DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE,
+      ...parsed,
+    };
   }
 
-  return;
+  console.warn(
+    `Linear flow instructions file not found in any expected location; falling back to built-in defaults. Tried: ${filePaths.join(', ')}`,
+  );
+  return DEFAULT_INSTRUCTION_TEMPLATES_BY_STATE;
 }
 
-function getInstructionCommentForState(stateName: string): string | undefined {
-  const fromLinearFlow: string | undefined = tryLoadLinearFlowComments()?.[stateName];
-  if (fromLinearFlow && fromLinearFlow.length > 0) {
-    return fromLinearFlow;
+function resolveInstructionCommentForState(options: {
+  stateName: string;
+  mention: string;
+  templatesByState: Record<string, string>;
+}): string | undefined {
+  const template: string | undefined = options.templatesByState[options.stateName];
+  if (!template) {
+    return;
   }
 
-  switch (stateName) {
-    case 'Intake': {
-      return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links - if two tasks may merge conflict, you must choose one to block the other, and prerequisites should be linked as blocking/blocked by as appropriate. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';
-    }
-    case 'Ready': {
-      return '@Charlie, wait for all tasks in the Linear "blocked by" relationship to reach MERGED or later in the workflow. Once all blocked by tasks are MERGED or later, move this task to IN PROGRESS.';
-    }
-    case 'In Progress': {
-      return '@Charlie, implement and make sure you link this Linear issue in your PR/final commit.';
-    }
-    case 'Merged': {
-      return 'CR Merged, awaiting deployment';
-    }
-    case 'Delivered': {
-      return '@Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.';
-    }
-    default: {
-      return;
-    }
-  }
+  return template.replaceAll(CHARLIE_MENTION_PLACEHOLDER, options.mention);
 }
 
 function createHookHistoryState(): HookHistoryState {
@@ -656,8 +668,12 @@ async function handleLinearWebhook(
   req: IncomingMessage,
   res: ServerResponse,
   context: HookRuntimeContext,
-  seenDeliveryIds: Set<string>,
-  maxAgeMs: number,
+  options: {
+    seenDeliveryIds: Set<string>;
+    maxAgeMs: number;
+    templatesByState: Record<string, string>;
+    mention: string;
+  },
 ): Promise<void> {
   const { client, history } = context;
   const body: Buffer = await readRequestBody(req);
@@ -706,7 +722,7 @@ async function handleLinearWebhook(
     return;
   }
 
-  if (maxAgeMs > 0 && getEnv('LINEAR_WEBHOOK_SECRET')) {
+  if (options.maxAgeMs > 0 && getEnv('LINEAR_WEBHOOK_SECRET')) {
     const tsRaw: unknown = payloadUnknown.webhookTimestamp;
     let tsMs: number | undefined;
 
@@ -731,7 +747,7 @@ async function handleLinearWebhook(
       return;
     }
 
-    if (Math.abs(Date.now() - tsMs) > maxAgeMs) {
+    if (Math.abs(Date.now() - tsMs) > options.maxAgeMs) {
       recordHookRun(history, {
         source: 'linear',
         eventName: 'Issue',
@@ -798,7 +814,7 @@ async function handleLinearWebhook(
 
   const deliveryId: string | undefined = getHeader(req, 'linear-delivery');
   if (deliveryId) {
-    if (seenDeliveryIds.has(deliveryId)) {
+    if (options.seenDeliveryIds.has(deliveryId)) {
       recordHookRun(history, {
         source: 'linear',
         eventName: 'update',
@@ -810,10 +826,10 @@ async function handleLinearWebhook(
       return;
     }
 
-    seenDeliveryIds.add(deliveryId);
-    if (seenDeliveryIds.size > 1000) {
-      seenDeliveryIds.clear();
-      seenDeliveryIds.add(deliveryId);
+    options.seenDeliveryIds.add(deliveryId);
+    if (options.seenDeliveryIds.size > 1000) {
+      options.seenDeliveryIds.clear();
+      options.seenDeliveryIds.add(deliveryId);
     }
   }
 
@@ -871,7 +887,11 @@ async function handleLinearWebhook(
       queuedRun.linearStateName = newStateName;
     }
 
-    const comment: string | undefined = getInstructionCommentForState(newStateName);
+    const comment: string | undefined = resolveInstructionCommentForState({
+      stateName: newStateName,
+      templatesByState: options.templatesByState,
+      mention: options.mention,
+    });
     if (!comment) {
       return;
     }
@@ -900,6 +920,22 @@ export function startServer(): void {
   const linearApiKey: string = getRequiredEnv('LINEAR_API_KEY');
   const githubToken: string | undefined = getEnv('GITHUB_TOKEN') ?? getEnv('GITHUB_PR_PAT');
   const teamKey: string = getEnv('LINEAR_TEAM_KEY') ?? 'CHA';
+  const mention: string = getEnv('CHARLIEHOOKS_LINEAR_MENTION') ?? DEFAULT_CHARLIE_MENTION;
+  const configuredLinearFlowPath: string | undefined = getEnv('CHARLIEHOOKS_LINEAR_FLOW_PATH');
+  const cwd: string = process.cwd();
+  const parent: string = path.dirname(cwd);
+  const grandparent: string = path.dirname(parent);
+
+  const candidates: string[] = [
+    ...(configuredLinearFlowPath ? [configuredLinearFlowPath] : []),
+    ...[cwd, parent, grandparent].map((root) =>
+      path.join(root, '.charlie', 'instructions', 'LINEAR_FLOW.md'),
+    ),
+  ];
+
+  const templatesByState: Record<string, string> = loadInstructionTemplatesByState(
+    [...new Set(candidates)],
+  );
   const defaultProdUrl: string = getEnv('CHARLIEHOOKS_DEFAULT_PROD_URL') ??
     'https://stagswtf.github.io/walkup_music/';
   const mainBranch: string = getEnv('CHARLIEHOOKS_MAIN_BRANCH') ?? 'v2.1';
@@ -952,7 +988,17 @@ export function startServer(): void {
     }
 
     if (method === 'POST' && url.pathname === '/linear') {
-      await handleLinearWebhook(req, res, context, seenLinearDeliveryIds, linearWebhookMaxAgeMs);
+      await handleLinearWebhook(
+        req,
+        res,
+        context,
+        {
+          seenDeliveryIds: seenLinearDeliveryIds,
+          maxAgeMs: linearWebhookMaxAgeMs,
+          templatesByState,
+          mention,
+        },
+      );
       return;
     }
 

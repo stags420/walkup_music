@@ -41,6 +41,8 @@ type HookRunEntry = {
   eventName?: string;
   statusCode: number;
   summary: string;
+  linearStateName?: string;
+  comment?: string;
   issues: string[];
   pullRequestNumber?: number;
 };
@@ -236,22 +238,25 @@ function recordHookRun(
   history: HookHistoryState,
   entry: Omit<HookRunEntry, 'id' | 'occurredAt'>,
   skipped = false,
-): void {
+): HookRunEntry | undefined {
   if (skipped) {
     history.skippedCount += 1;
     return;
   }
 
-  history.runs.unshift({
+  const createdEntry: HookRunEntry = {
     id: history.nextId,
     occurredAt: new Date().toISOString(),
     ...entry,
-  });
+  };
+  history.runs.unshift(createdEntry);
   history.nextId += 1;
 
   if (history.runs.length > MAX_HOOK_HISTORY) {
     history.runs.length = MAX_HOOK_HISTORY;
   }
+
+  return createdEntry;
 }
 
 function escapeHtml(value: string): string {
@@ -267,9 +272,11 @@ function renderHookHistoryPage(history: HookHistoryState): string {
   const rows: string = history.runs.length > 0
     ? history.runs.map((run) => {
       const issues: string = run.issues.length > 0 ? run.issues.join(', ') : '-';
-      return `<tr><td>${escapeHtml(run.occurredAt)}</td><td>${escapeHtml(run.source)}</td><td>${escapeHtml(run.eventName ?? '-')}</td><td>${run.statusCode}</td><td>${escapeHtml(run.summary)}</td><td>${escapeHtml(issues)}</td><td>${run.pullRequestNumber ?? '-'}</td></tr>`;
+      const linearStateName: string = run.linearStateName ?? '-';
+      const comment: string = run.comment ?? '-';
+      return `<tr><td>${escapeHtml(run.occurredAt)}</td><td>${escapeHtml(run.source)}</td><td>${escapeHtml(run.eventName ?? '-')}</td><td>${run.statusCode}</td><td>${escapeHtml(linearStateName)}</td><td style="white-space: pre-wrap;">${escapeHtml(comment)}</td><td>${escapeHtml(issues)}</td><td>${run.pullRequestNumber ?? '-'}</td></tr>`;
     }).join('')
-    : '<tr><td colspan="7">No non-skipped hook runs yet.</td></tr>';
+    : '<tr><td colspan="8">No non-skipped hook runs yet.</td></tr>';
 
   return [
     '<!doctype html>',
@@ -284,7 +291,7 @@ function renderHookHistoryPage(history: HookHistoryState): string {
     `<p>Skipped runs since startup: ${history.skippedCount}</p>`,
     `<p>Showing latest ${history.runs.length} non-skipped runs.</p>`,
     '<table border="1" cellpadding="6" cellspacing="0">',
-    '<thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Status</th><th>Summary</th><th>Issues</th><th>PR</th></tr></thead>',
+    '<thead><tr><th>Time</th><th>Source</th><th>Event</th><th>Status</th><th>Linear State</th><th>Comment</th><th>Issues</th><th>PR</th></tr></thead>',
     `<tbody>${rows}</tbody>`,
     '</table>',
     '</body>',
@@ -486,6 +493,8 @@ async function handleGithubWebhook(
     eventName,
     statusCode: 200,
     summary: summaryParts.join('; '),
+    linearStateName: transition?.targetStateName,
+    comment: transition?.comment,
     issues: responseBody.issues ?? [],
     pullRequestNumber: responseBody.pullRequestNumber,
   });
@@ -740,7 +749,7 @@ async function handleLinearWebhook(
     responseBody.issueIdentifier = issueIdentifier;
   }
 
-  recordHookRun(history, {
+  const queuedRun: HookRunEntry | undefined = recordHookRun(history, {
     source: 'linear',
     eventName: 'update',
     statusCode: 200,
@@ -779,9 +788,17 @@ async function handleLinearWebhook(
       return;
     }
 
+    if (queuedRun) {
+      queuedRun.linearStateName = newStateName;
+    }
+
     const comment: string | undefined = getInstructionCommentForState(newStateName);
     if (!comment) {
       return;
+    }
+
+    if (queuedRun) {
+      queuedRun.comment = comment;
     }
 
     await addIssueCommentById(

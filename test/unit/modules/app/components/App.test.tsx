@@ -1,6 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { App, AppContent, AuthenticatedApp } from '@/modules/app/components/App';
+import {
+  App,
+  AppContent,
+  AuthenticatedApp,
+} from '@/modules/app/components/App';
 import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
 // Mock the components
@@ -95,9 +99,10 @@ describe('App Component Rendering', () => {
 
       // Then it should show the navbar disclaimer
       expect(
-        screen.getByText(
-          'This website was built using ROBO-KITTY. ALL HAIL THE ROBOTIC KITTEN.'
-        )
+        screen.getByText(/This website was built using ROBO-KITTY/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/ALL HAIL THE ROBOTIC KITTEN/i)
       ).toBeInTheDocument();
     });
 

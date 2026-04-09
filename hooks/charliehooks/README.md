@@ -4,14 +4,14 @@ This directory contains a small webhook receiver that:
 
 - moves Linear issues forward based on GitHub events (PR merge → `Merged`; deploy success → `Delivered`)
 - posts state-entry instructions to Linear when issues transition between states
-- can optionally run post-deploy acceptance checks and move issues to `Accepted`
+- can optionally run post-deploy acceptance checks via `POST /verify-and-accept` and move issues to `Accepted`
 
 ## Endpoints
 
 - `GET /healthz` → `ok`
 - `POST /github` → GitHub webhooks (`pull_request`, `workflow_run`)
 - `POST /linear` → Linear webhooks (`Issue` updates)
-- `POST /verify-and-accept` → force post-deploy verification + accept (JSON body: `{ "issueIdentifiers": ["CHA-123"] }`)
+- `POST /verify-and-accept` → run acceptance checks for the referenced issues; on success move them to `Accepted` and comment results; on failure only comment results (JSON body: `{ "issueIdentifiers": ["CHA-123"] }`)
 
 Entrypoint: `hooks/charliehooks/src/server.ts`.
 

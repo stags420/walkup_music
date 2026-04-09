@@ -34,8 +34,8 @@ export function LoginPage() {
                   team.
                 </p>
                 <p className="card-text text-muted small mb-1">
-                  You must have an active Spotify Premium subscription to log
-                  in and use the app.
+                  You must have an active Spotify Premium subscription to log in
+                  and use the app.
                 </p>
                 <p className="card-text text-muted small mb-0">
                   Walk-Up Music Manager is currently in Spotify development

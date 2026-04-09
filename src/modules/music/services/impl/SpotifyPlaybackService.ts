@@ -314,9 +314,11 @@ export class MockSpotifyPlaybackService implements SpotifyPlaybackService {
 
   private async getAudioContext(): Promise<AudioContext> {
     if (!this.audioContext) {
-      this.audioContext = new (globalThis.AudioContext ||
+      this.audioContext = new (
+        globalThis.AudioContext ||
         globalThis.webkitAudioContext ||
-        AudioContext)();
+        AudioContext
+      )();
     }
 
     // Resume context if it's suspended (required by some browsers)

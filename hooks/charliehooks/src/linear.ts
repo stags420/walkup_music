@@ -21,6 +21,13 @@ export type LinearIssue = {
   stateName: string;
 };
 
+export type LinearRelatedIssue = {
+  id: string;
+  identifier: string;
+  title: string;
+  stateName: string;
+};
+
 export function createLinearClient(options: {
   apiKey: string;
   teamKey: string;
@@ -136,6 +143,49 @@ export async function getIssueById(client: LinearClient, id: string): Promise<Li
     description: data.issue.description ?? '',
     stateName: data.issue.state.name,
   };
+}
+
+export async function getBlockedByIssuesForIssueId(
+  client: LinearClient,
+  id: string,
+): Promise<LinearRelatedIssue[]> {
+  const query =
+    'query($id:String!){ issue(id:$id){ relations { nodes { type relatedIssue { id identifier title state { name } } } } } }';
+
+  const data: {
+    issue: {
+      relations: {
+        nodes: {
+          type: string;
+          relatedIssue: {
+            id: string;
+            identifier: string;
+            title: string;
+            state: { name: string };
+          } | null;
+        }[];
+      };
+    } | null;
+  } = await linearGraphql(client, query, { id });
+
+  if (!data.issue) {
+    throw new Error(`Linear issue not found: ${id}`);
+  }
+
+  return data.issue.relations.nodes.flatMap((node) => {
+    if (node.type !== 'blockedBy' || !node.relatedIssue) {
+      return [];
+    }
+
+    return [
+      {
+        id: node.relatedIssue.id,
+        identifier: node.relatedIssue.identifier,
+        title: node.relatedIssue.title,
+        stateName: node.relatedIssue.state.name,
+      },
+    ];
+  });
 }
 
 export async function getWorkflowStateNameById(client: LinearClient, id: string): Promise<string> {

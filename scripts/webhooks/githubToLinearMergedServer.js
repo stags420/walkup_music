@@ -23,7 +23,11 @@ const mergedStateName = process.env.LINEAR_MERGED_STATE_NAME ?? 'Merged';
 const githubApiToken = process.env.GITHUB_API_TOKEN;
 const autoMergeWorkflowName =
   process.env.AUTO_MERGE_WORKFLOW_NAME ?? 'Deploy to GitHub Pages';
-const autoMergeScope = process.env.AUTO_MERGE_SCOPE === 'all' ? 'all' : 'charliecreates';
+const rawAutoMergeScope = process.env.AUTO_MERGE_SCOPE ?? 'charliecreates';
+if (rawAutoMergeScope !== 'charliecreates' && rawAutoMergeScope !== 'all') {
+  throw new Error(`Invalid AUTO_MERGE_SCOPE: ${rawAutoMergeScope}`);
+}
+const autoMergeScope = rawAutoMergeScope;
 const autoMergeMethod =
   process.env.AUTO_MERGE_METHOD === 'squash'
     ? 'squash'

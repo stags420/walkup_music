@@ -437,10 +437,15 @@ export async function handleGitHubWebhookEvent(params) {
       };
     }
 
-    const prNumber = prs[0].number;
-    const workflowHeadSha =
-      typeof workflowRun?.head_sha === 'string' ? workflowRun.head_sha : undefined;
-    if (!workflowHeadSha) {
+    const prInfo = prs[0];
+    const prNumber = prInfo.number;
+    const workflowPrHeadSha =
+      typeof prInfo?.head?.sha === 'string'
+        ? prInfo.head.sha
+        : typeof workflowRun?.head_sha === 'string'
+          ? workflowRun.head_sha
+          : undefined;
+    if (!workflowPrHeadSha) {
       return {
         ok: false,
         httpStatus: 400,
@@ -522,14 +527,14 @@ export async function handleGitHubWebhookEvent(params) {
       };
     }
 
-    if (prHeadSha !== workflowHeadSha) {
+    if (prHeadSha !== workflowPrHeadSha) {
       return {
         ok: true,
         event: 'workflow_run.completed',
         prNumber,
         skipped: 'head_sha_mismatch',
         details: {
-          workflowHeadSha,
+          workflowPrHeadSha,
           prHeadSha,
         },
       };
@@ -617,7 +622,7 @@ export async function handleGitHubWebhookEvent(params) {
     }
 
     const mergeMethod = params.autoMergeMethod;
-    const sha = workflowHeadSha;
+    const sha = prHeadSha;
 
     let mergeResult;
     try {

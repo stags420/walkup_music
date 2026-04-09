@@ -11,7 +11,8 @@ Local webhook receiver meant to run on Joey's laptop (or inside Docker) and rece
 
 - `LINEAR_API_KEY` (required)
 - `LINEAR_TEAM_KEY` (optional; default: `CHA`)
-- `GITHUB_WEBHOOK_SECRET` (optional; if set, requests must include `X-Hub-Signature-256`)
+- `GITHUB_WEBHOOK_SECRET` (required unless `ALLOW_INSECURE_WEBHOOKS=1`; requests must include `X-Hub-Signature-256`)
+- `ALLOW_INSECURE_WEBHOOKS` (optional; set to `1` to run without signature verification)
 - `GITHUB_TOKEN` (optional; used to resolve PR metadata from a deploy commit SHA)
 - `PORT` (optional; default: `8787`)
 - `HOST` (optional; default: `127.0.0.1`)
@@ -21,6 +22,8 @@ Local webhook receiver meant to run on Joey's laptop (or inside Docker) and rece
 - `DEPLOY_WORKFLOW_NAME` (optional; default: `Deploy to GitHub Pages`)
 
 ## Run
+
+Requires Node.js 18+ (for global `fetch`).
 
 ```bash
 node hooks/charliehooks/server.js

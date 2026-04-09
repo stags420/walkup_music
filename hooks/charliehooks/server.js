@@ -13,6 +13,13 @@ if (!linearApiKey) {
 const linearTeamKey = process.env.LINEAR_TEAM_KEY ?? 'CHA';
 const githubWebhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
 const githubToken = process.env.GITHUB_TOKEN;
+const allowInsecureWebhooks = process.env.ALLOW_INSECURE_WEBHOOKS === '1';
+
+if (!githubWebhookSecret && !allowInsecureWebhooks) {
+  throw new Error(
+    'Missing GITHUB_WEBHOOK_SECRET. Set ALLOW_INSECURE_WEBHOOKS=1 to run without signature verification.',
+  );
+}
 
 const host = process.env.HOST ?? '127.0.0.1';
 const port = Number.parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
@@ -449,20 +456,35 @@ async function setLinearIssueState(options) {
     throw new TypeError(`Unknown Linear workflow state: ${options.stateName}`);
   }
 
+  const match = /^([A-Z][A-Z0-9]+)-(\d+)$/.exec(options.issueIdentifier);
+  if (!match) {
+    throw new TypeError(`Invalid Linear issue identifier: ${options.issueIdentifier}`);
+  }
+
+  const teamKey = match[1];
+  const issueNumber = Number.parseInt(match[2], 10);
+
   const lookup = await linearGraphql({
     linearApiKey: options.linearApiKey,
     query: `
-      query IssueLookup($id: String!) {
-        issue(id: $id) {
-          id
-          identifier
+      query IssueLookup($teamKey: String!, $issueNumber: Int!) {
+        issues(
+          filter: {
+            team: { key: { eq: $teamKey } }
+            number: { eq: $issueNumber }
+          }
+        ) {
+          nodes {
+            id
+            identifier
+          }
         }
       }
     `,
-    variables: { id: options.issueIdentifier },
+    variables: { teamKey, issueNumber },
   });
 
-  const issueId = lookup.issue?.id;
+  const issueId = lookup.issues?.nodes?.[0]?.id;
   if (typeof issueId !== 'string') {
     throw new TypeError(`Could not resolve Linear issue: ${options.issueIdentifier}`);
   }

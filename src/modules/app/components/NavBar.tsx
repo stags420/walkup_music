@@ -31,7 +31,10 @@ export function NavBar() {
       className="navbar navbar-dark bg-dark px-3"
       style={{ borderBottom: '1px solid #2a2a2a' }}
     >
-      <span className="navbar-brand mb-0 h1">Walk Up Music</span>
+      <div className="d-flex flex-column">
+        <span className="navbar-brand mb-0 h1">Walk Up Music</span>
+        <span className="text-secondary small">Built using ROBO-KITTY</span>
+      </div>
       <div id="user-menu" className="ms-auto position-relative">
         <button
           type="button"

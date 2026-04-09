@@ -99,19 +99,25 @@ export async function runAcceptanceChecks(checks) {
   for (const check of checks) {
     if (check.type === 'http') {
       let response;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10_000);
       try {
         response = await fetch(check.url, {
           redirect: 'follow',
+          signal: controller.signal,
           headers: {
             'User-Agent': 'charliehooks/linear-bridge',
           },
         });
       } catch (error) {
+        clearTimeout(timeoutId);
         return {
           ok: false,
           error: `Fetch failed for ${check.url}: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
+
+      clearTimeout(timeoutId);
 
       const expectedStatus = check.status ?? 200;
       if (response.status !== expectedStatus) {

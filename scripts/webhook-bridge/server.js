@@ -169,7 +169,7 @@ async function moveAndComment(identifier, stateName, reason) {
 
 /**
 * @param {string} identifier
-* @returns {Promise<void>}
+* @returns {Promise<{ ok: true } | { ok: false, error: string }>}
 */
 async function verifyAndAccept(identifier) {
   const issue = await linear.findIssueByIdentifier(identifier);

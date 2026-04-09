@@ -43,7 +43,8 @@
     
     "clean": "./scripts/clean-builds.sh",
     
-    "sync:steering": "node ./scripts/sync-steering.js"
+    "sync:steering": "node ./scripts/sync-steering.js",
+    "webhook:github-linear": "node ./scripts/webhooks/githubToLinearMergedServer.js"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

@@ -8,14 +8,30 @@ import {
 const mockGetRandomValues = jest.fn();
 const mockDigest = jest.fn();
 
-Object.defineProperty(globalThis, 'crypto', {
-  value: {
-    getRandomValues: mockGetRandomValues,
-    subtle: {
-      digest: mockDigest,
-    },
-  },
-});
+const originalGetRandomValues = globalThis.crypto?.getRandomValues;
+const originalSubtle = globalThis.crypto?.subtle;
+
+// In this codebase, `setupTests.ts` defines a minimal `crypto` object for Jest.
+// Overriding the whole `globalThis.crypto` property is brittle across environments,
+// so we patch the methods on the existing object instead.
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: {},
+  });
+}
+
+(
+  globalThis.crypto as unknown as {
+    getRandomValues?: typeof mockGetRandomValues;
+    subtle?: { digest?: typeof mockDigest };
+  }
+).getRandomValues = mockGetRandomValues;
+
+(
+  globalThis.crypto as unknown as {
+    subtle?: { digest?: typeof mockDigest };
+  }
+).subtle = { digest: mockDigest };
 
 // Mock TextEncoder
 Object.defineProperty(globalThis, 'TextEncoder', {
@@ -34,6 +50,21 @@ Object.defineProperty(globalThis, 'btoa', {
 });
 
 describe('PKCE Utilities', () => {
+  afterAll(() => {
+    (
+      globalThis.crypto as unknown as {
+        getRandomValues?: typeof originalGetRandomValues;
+        subtle?: typeof originalSubtle;
+      }
+    ).getRandomValues = originalGetRandomValues;
+
+    (
+      globalThis.crypto as unknown as {
+        subtle?: typeof originalSubtle;
+      }
+    ).subtle = originalSubtle;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });

@@ -34,7 +34,7 @@ export function NavBar() {
       <div className="d-flex align-items-baseline gap-2 flex-wrap">
         <span className="navbar-brand mb-0 h1">Walk Up Music</span>
         <span className="text-secondary small">
-          This website was built using ROBO-KITTY
+          This website was built using ROBO-KITTY ALL HAIL THE ROBOTIC KITTEN
         </span>
       </div>
       <div id="user-menu" className="ms-auto position-relative">

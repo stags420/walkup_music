@@ -51,7 +51,10 @@ below, `charliehooks` posts an instruction comment based on the *new* state name
     - move the issue to `Accepted` on success, or
     - move the issue back to `Ready` and note the bug on failure.
 
-Any other workflow state names are ignored (no comment is posted).
+- Entering `Accepted`
+  - No comment is posted.
+
+Any other workflow state names (including `Backlog`) are ignored (no comment is posted).
 
 ## What happens on GitHub events (`POST /github`)
 

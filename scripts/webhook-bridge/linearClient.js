@@ -160,7 +160,7 @@ export class LinearClient {
       throw new Error(`Linear workflow state not found: ${stateName}`);
     }
 
-    await this.graphql(
+    const data = await this.graphql(
       `mutation UpdateIssueState($id: String!, $stateId: String!) {
         issueUpdate(id: $id, input: { stateId: $stateId }) {
           success
@@ -168,6 +168,11 @@ export class LinearClient {
       }`,
       { id: issue.id, stateId },
     );
+
+    // @ts-expect-error: runtime validated
+    if (!data.issueUpdate || data.issueUpdate.success !== true) {
+      throw new Error(`Linear issueUpdate failed for ${identifier}`);
+    }
 
     return { issueId: issue.id, stateId };
   }
@@ -177,7 +182,7 @@ export class LinearClient {
    * @param {string} body
    */
   async createComment(issueId, body) {
-    await this.graphql(
+    const data = await this.graphql(
       `mutation CommentCreate($issueId: String!, $body: String!) {
         commentCreate(input: { issueId: $issueId, body: $body }) {
           success
@@ -185,5 +190,10 @@ export class LinearClient {
       }`,
       { issueId, body },
     );
+
+    // @ts-expect-error: runtime validated
+    if (!data.commentCreate || data.commentCreate.success !== true) {
+      throw new Error(`Linear commentCreate failed for issue ${issueId}`);
+    }
   }
 }

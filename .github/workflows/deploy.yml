@@ -105,4 +105,5 @@ jobs:
             -H "Authorization: Bearer $CHARLIEHOOKS_SHARED_SECRET" \
             -H 'Content-Type: application/json' \
             -d "$PAYLOAD" \
-            "$CHARLIEHOOKS_BASE_URL/hooks/github/deploy"
+            "$CHARLIEHOOKS_BASE_URL/hooks/github/deploy" \
+            || echo "Warning: charliehooks deploy notification failed (deploy already succeeded)"

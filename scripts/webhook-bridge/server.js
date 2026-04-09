@@ -19,6 +19,10 @@ if (!LINEAR_API_KEY) {
   throw new Error('Missing env var: LINEAR_API_KEY');
 }
 
+if (typeof fetch !== 'function') {
+  throw new Error('webhook-bridge requires Node.js 18+ (global fetch)');
+}
+
 /** @param {string} value */
 function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
@@ -130,6 +134,10 @@ function normalizePayload(payload) {
   const textSources = [];
   if (pr) {
     // @ts-expect-error: runtime validated
+    if (typeof pr.title === 'string') textSources.push(pr.title);
+    // @ts-expect-error: runtime validated
+    if (typeof pr.body === 'string') textSources.push(pr.body);
+    // @ts-expect-error: runtime validated
     if (typeof pr.baseRef === 'string') textSources.push(pr.baseRef);
     // @ts-expect-error: runtime validated
     if (typeof pr.headRef === 'string') textSources.push(pr.headRef);
@@ -166,31 +174,44 @@ async function moveAndComment(identifier, stateName, reason) {
 async function verifyAndAccept(identifier) {
   const issue = await linear.findIssueByIdentifier(identifier);
   if (!issue) {
-    throw new Error(`Linear issue not found for identifier: ${identifier}`);
+    return { ok: false, error: `Linear issue not found: ${identifier}` };
   }
 
-  const checks =
-    parseAcceptanceChecks(issue.description) ??
-    [
-      {
-        type: 'http',
-        url: PROD_URL,
-        status: 200,
-        bodyIncludes: 'Walk-Up Music Manager',
-      },
-    ];
+  /** @type {ReturnType<typeof parseAcceptanceChecks> | null} */
+  let checks;
+  try {
+    checks =
+      parseAcceptanceChecks(issue.description) ??
+      [
+        {
+          type: 'http',
+          url: PROD_URL,
+          status: 200,
+          bodyIncludes: 'Walk-Up Music Manager',
+        },
+      ];
+  } catch (error) {
+    await linear.createComment(
+      issue.id,
+      `Invalid charlie-acceptance block for ${identifier}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return { ok: false, error: 'Invalid charlie-acceptance block' };
+  }
 
+  // @ts-expect-error: runtime validated
   const result = await runAcceptanceChecks(checks);
   if (!result.ok) {
     await linear.createComment(
       issue.id,
       `Post-deploy verification failed for ${identifier}: ${result.error}`,
     );
-    return;
+    return { ok: false, error: result.error };
   }
 
   await linear.moveIssueToState(identifier, 'Accepted');
   await linear.createComment(issue.id, `Accepted: ${identifier} verified in prod`);
+
+  return { ok: true };
 }
 
 const server = http.createServer(async (request, response) => {
@@ -213,44 +234,102 @@ const server = http.createServer(async (request, response) => {
     const normalized = normalizePayload(body);
 
     if (url.pathname === '/hooks/github/pr-merged') {
+      /** @type {string[]} */
+      const moved = [];
+      /** @type {{ identifier: string, error: string }[]} */
+      const failed = [];
+
       for (const identifier of normalized.issues) {
-        await moveAndComment(
-          identifier,
-          'Merged',
-          `Moved to Merged via GitHub PR merge${normalized.pr?.url ? ` (${normalized.pr.url})` : ''}`,
-        );
+        try {
+          await moveAndComment(
+            identifier,
+            'Merged',
+            `Moved to Merged via GitHub PR merge${normalized.pr?.url ? ` (${normalized.pr.url})` : ''}`,
+          );
+          moved.push(identifier);
+        } catch (error) {
+          failed.push({
+            identifier,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
 
-      sendJson(response, 200, { ok: true, moved: normalized.issues });
+      sendJson(response, 200, { ok: failed.length === 0, moved, failed });
       return;
     }
 
     if (url.pathname === '/hooks/github/deploy') {
+      /** @type {string[]} */
+      const moved = [];
+      /** @type {{ identifier: string, error: string }[]} */
+      const failed = [];
+
       for (const identifier of normalized.issues) {
-        await moveAndComment(
-          identifier,
-          'Delivered',
-          `Moved to Delivered via deploy success${normalized.repo ? ` (${normalized.repo})` : ''}`,
-        );
+        try {
+          await moveAndComment(
+            identifier,
+            'Delivered',
+            `Moved to Delivered via deploy success${normalized.repo ? ` (${normalized.repo})` : ''}`,
+          );
+          moved.push(identifier);
+        } catch (error) {
+          failed.push({
+            identifier,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
 
       const autoAccept = normalized.autoAccept ?? true;
       if (autoAccept) {
-        for (const identifier of normalized.issues) {
-          await verifyAndAccept(identifier);
+        for (const identifier of moved) {
+          try {
+            const result = await verifyAndAccept(identifier);
+            if (!result.ok) {
+              failed.push({ identifier, error: result.error });
+            }
+          } catch (error) {
+            failed.push({
+              identifier,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
         }
       }
 
-      sendJson(response, 200, { ok: true, moved: normalized.issues, autoAccept });
+      sendJson(response, 200, {
+        ok: failed.length === 0,
+        moved,
+        failed,
+        autoAccept,
+      });
       return;
     }
 
     if (url.pathname === '/hooks/verify') {
+      /** @type {string[]} */
+      const verified = [];
+      /** @type {{ identifier: string, error: string }[]} */
+      const failed = [];
+
       for (const identifier of normalized.issues) {
-        await verifyAndAccept(identifier);
+        try {
+          const result = await verifyAndAccept(identifier);
+          if (result.ok) {
+            verified.push(identifier);
+          } else {
+            failed.push({ identifier, error: result.error });
+          }
+        } catch (error) {
+          failed.push({
+            identifier,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
 
-      sendJson(response, 200, { ok: true, verified: normalized.issues });
+      sendJson(response, 200, { ok: failed.length === 0, verified, failed });
       return;
     }
 

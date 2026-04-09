@@ -113,10 +113,11 @@ export async function runAcceptanceChecks(checks) {
         };
       }
 
-      if (check.status !== undefined && response.status !== check.status) {
+      const expectedStatus = check.status ?? 200;
+      if (response.status !== expectedStatus) {
         return {
           ok: false,
-          error: `Expected ${check.url} status ${check.status}, got ${response.status}`,
+          error: `Expected ${check.url} status ${expectedStatus}, got ${response.status}`,
         };
       }
 

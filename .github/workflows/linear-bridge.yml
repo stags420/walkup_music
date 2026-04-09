@@ -59,4 +59,5 @@ jobs:
             -H "Authorization: Bearer $CHARLIEHOOKS_SHARED_SECRET" \
             -H 'Content-Type: application/json' \
             -d "$PAYLOAD" \
-            "$CHARLIEHOOKS_BASE_URL/hooks/github/pr-merged"
+            "$CHARLIEHOOKS_BASE_URL/hooks/github/pr-merged" \
+            || echo "Warning: charliehooks pr-merged notification failed"

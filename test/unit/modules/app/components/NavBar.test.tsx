@@ -42,7 +42,7 @@ mockUseSettingsActions.mockReturnValue({
 });
 
 describe('NavBar', () => {
-  test('renders the ROBO-KITTY tagline', () => {
+  test('renders the updated ROBO-KITTY message', () => {
     render(<NavBar />);
 
     expect(

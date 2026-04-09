@@ -193,15 +193,22 @@ export async function mergePullRequest(params) {
   return { merged: Boolean(res.json?.merged), sha: res.json?.sha };
 }
 
+function encodeUrlPath(input) {
+  return input
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+}
+
 /**
 * @param {{ token: string; owner: string; repo: string; branch: string }} params
 */
 export async function deleteBranchRef(params) {
-  const encoded = encodeURIComponent(params.branch);
+  const encoded = encodeUrlPath(`heads/${params.branch}`);
   const res = await githubRest({
     token: params.token,
     method: 'DELETE',
-    url: `/repos/${params.owner}/${params.repo}/git/refs/heads/${encoded}`,
+    url: `/repos/${params.owner}/${params.repo}/git/refs/${encoded}`,
   });
 
   if (res.status === 404) return { deleted: false, skipped: 'not_found' };
@@ -523,7 +530,7 @@ export async function handleGitHubWebhookEvent(params) {
       };
     }
 
-    if (!['clean', 'unstable'].includes(pr?.mergeable_state)) {
+    if (pr?.mergeable_state !== 'clean') {
       return {
         ok: true,
         httpStatus: 409,

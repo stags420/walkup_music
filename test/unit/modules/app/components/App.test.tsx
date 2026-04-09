@@ -1,10 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import {
-  App,
-  AppContent,
-  AuthenticatedApp,
-} from '@/modules/app/components/App';
+import { AppContent, AuthenticatedApp } from '@/modules/app/components/App';
+import { NavBar } from '@/modules/app/components/NavBar';
 import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
 // Mock the components
@@ -93,16 +90,14 @@ describe('App Component Rendering', () => {
     });
 
     test('should render the ROBO-KITTY disclaimer in the navbar', () => {
-      // Given I have an unauthenticated user
-      // When I render the full App
-      render(<App />);
+      // Given I render the navbar
+      render(<NavBar />);
 
       // Then it should show the navbar disclaimer
       expect(
-        screen.getByText(/This website was built using ROBO-KITTY/i)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(/ALL HAIL THE ROBOTIC KITTEN/i)
+        screen.getByText(
+          /This website was built using ROBO-KITTY\.?\s*ALL HAIL THE ROBOTIC KITTEN\.?/i
+        )
       ).toBeInTheDocument();
     });
 

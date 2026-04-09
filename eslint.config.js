@@ -16,6 +16,20 @@ export default [
   unicorn.configs['recommended'],
 
   {
+    files: ['hooks/charliehooks/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        fetch: 'readonly',
+      },
+    },
+    rules: {
+      'unicorn/prevent-abbreviations': 'off',
+    },
+  },
+
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsparser,

@@ -43,6 +43,9 @@ Instruction comments currently hardcode `@Charlie` (not configurable via env var
 
 Separately, `POST /github` can move issues forward based on GitHub events:
 
+Linear issue identifiers are extracted from the GitHub webhook payload by scanning
+for `CHA-123`-style strings (team key is configurable via `LINEAR_TEAM_KEY`).
+
 - `pull_request.closed` (merged into `CHARLIEHOOKS_MAIN_BRANCH`) → move referenced issues to `Merged`
 - `workflow_run.completed` for `Deploy to GitHub Pages` on `CHARLIEHOOKS_MAIN_BRANCH` → move referenced issues to `Delivered`
 

@@ -5,6 +5,14 @@ on:
     branches: [v2.1]
   pull_request:
     branches: [v2.1]
+  workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
@@ -17,13 +25,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
-
-      - name: Run tests
-        run: npm run test:unit
 
       - name: Run linting
         run: npm run lint
@@ -31,12 +36,22 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Install Playwright chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e -- --project=chromium
+
       - name: Build
         run: npm run build:prod
 
       - name: Deploy to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/v2.1'
-        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/v2.1' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
           publish_dir: ./dist

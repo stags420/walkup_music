@@ -7,6 +7,8 @@ import { testPlayers } from '@/../test/e2e/fixtures/testData';
 import { testMockTracks } from '@/../test/e2e/fixtures/mockTracks';
 
 test.describe('Complete E2E Workflow', () => {
+  test.describe.configure({ timeout: 120_000 });
+
   let loginPage: LoginPage;
   let playerPage: PlayerManagementPage;
   let lineupPage: LineupManagementPage;

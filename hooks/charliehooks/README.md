@@ -22,15 +22,16 @@ issue changes `stateId`, charliehooks resolves the workflow state name and posts
 instruction comment based on the new state.
 
 State names are string-matched and assumed to exist in the team workflow (default
-team key: `CHA`). The only states that currently generate instruction comments are:
+team key: `CHA`, configurable via `LINEAR_TEAM_KEY`). The only states that currently
+generate instruction comments are:
 
 - `Intake`: tells Charlie to break work into tasks, set `blocking`/`blocked by`
   relationships, move tasks to `Ready`, and stop
-- `Ready`: posts one of two instructions depending on whether the issue has
-  `blockedBy` relations
-  - if no `blockedBy` relations: move only this issue to `In Progress`
-  - if there are `blockedBy` relations: wait until all blockers are `Merged` or
-    later, then move only this issue to `In Progress`
+- `Ready`: posts one of two instructions to Charlie depending on whether the issue
+  has `blockedBy` relations
+  - if no `blockedBy` relations: Charlie should move only this issue to `In Progress`
+  - if there are `blockedBy` relations: Charlie should wait until all blockers are
+    `Merged` or later, then move only this issue to `In Progress`
 - `In Progress`: tells Charlie to implement and link the Linear issue in the PR / final commit
 - `Merged`: `CR Merged, awaiting deployment`
 - `Delivered`: tells Charlie to verify in prod with a screenshot; on success move

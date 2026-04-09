@@ -111,6 +111,48 @@ export async function getIssueByIdentifier(
   };
 }
 
+export async function getIssueById(client: LinearClient, id: string): Promise<LinearIssue> {
+  const query =
+    'query($id:String!){ issue(id:$id){ id identifier title description state { name } } }';
+
+  const data: {
+    issue: {
+      id: string;
+      identifier: string;
+      title: string;
+      description: string;
+      state: { name: string };
+    } | null;
+  } = await linearGraphql(client, query, { id });
+
+  if (!data.issue) {
+    throw new Error(`Linear issue not found: ${id}`);
+  }
+
+  return {
+    id: data.issue.id,
+    identifier: data.issue.identifier,
+    title: data.issue.title,
+    description: data.issue.description ?? '',
+    stateName: data.issue.state.name,
+  };
+}
+
+export async function getWorkflowStateNameById(client: LinearClient, id: string): Promise<string> {
+  const query = 'query($id:String!){ workflowState(id:$id){ id name } }';
+  const data: { workflowState: { id: string; name: string } | null } = await linearGraphql(
+    client,
+    query,
+    { id },
+  );
+
+  if (!data.workflowState) {
+    throw new Error(`Linear workflow state not found: ${id}`);
+  }
+
+  return data.workflowState.name;
+}
+
 async function getWorkflowStateIdByName(
   client: LinearClient,
   stateName: string,
@@ -187,5 +229,28 @@ export async function addIssueComment(
 
   if (!data.commentCreate.success) {
     throw new Error(`Linear commentCreate failed: ${issueIdentifier}`);
+  }
+}
+
+export async function addIssueCommentById(
+  client: LinearClient,
+  issueId: string,
+  body: string,
+): Promise<void> {
+  if (client.dryRun) {
+    console.log(`[dry-run] Linear comment on ${issueId}: ${body}`);
+    return;
+  }
+
+  const mutation =
+    'mutation($issueId:String!,$body:String!){ commentCreate(input:{issueId:$issueId, body:$body}) { success } }';
+
+  const data: { commentCreate: { success: boolean } } = await linearGraphql(client, mutation, {
+    issueId,
+    body,
+  });
+
+  if (!data.commentCreate.success) {
+    throw new Error(`Linear commentCreate failed: ${issueId}`);
   }
 }

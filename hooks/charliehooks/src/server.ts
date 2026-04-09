@@ -773,9 +773,13 @@ async function handleLinearWebhook(
       return;
     }
 
+    let oldStateName: string | undefined;
     let newStateName: string | undefined;
     try {
-      newStateName = await getWorkflowStateNameById(client, newStateId);
+      [oldStateName, newStateName] = await Promise.all([
+        getWorkflowStateNameById(client, oldStateId),
+        getWorkflowStateNameById(client, newStateId),
+      ]);
     } catch (error: unknown) {
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }

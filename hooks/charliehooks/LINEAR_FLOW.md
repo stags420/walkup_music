@@ -70,9 +70,11 @@ In practice, that means the issue identifier needs to appear somewhere in the PR
   - Moves referenced issues to `Delivered`.
   - Adds the same `Delivered` instruction comment as the Linear state-change handler.
 
-State transitions are monotonic for these GitHub-driven updates:
+State ordering used for GitHub-driven monotonicity checks (earliest to latest):
 
-- `Merged` → `Delivered` → `Accepted`
+- `Merged` < `Delivered` < `Accepted`
+
+For GitHub-driven updates, `charliehooks` only ever targets `Merged` or `Delivered`.
 
 If the current state is already at-or-after the target (by this ordering),
 `charliehooks` will not re-transition it.

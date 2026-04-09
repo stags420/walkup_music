@@ -7,6 +7,22 @@ export type GithubDerivedTransition = {
   comment: string;
 };
 
+export type GithubAutoMergeRequest = {
+  issueIdentifiers: string[];
+  pullRequestId: string;
+  pullRequestNumber: number;
+  repositoryFullName: string;
+};
+
+type GithubGraphqlError = {
+  message: string;
+};
+
+type GithubGraphqlResponse<TData> = {
+  data?: TData;
+  errors?: GithubGraphqlError[];
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -93,6 +109,128 @@ export function verifyGithubSignature(options: {
   }
 
   return timingSafeEqual(expected, actual);
+}
+
+export function deriveAutoMergeRequestFromGithubWebhook(options: {
+  eventName: string | undefined;
+  payload: unknown;
+  teamKey: string;
+  mainBranch: string;
+}): GithubAutoMergeRequest | undefined {
+  if (options.eventName !== 'pull_request') {
+    return;
+  }
+
+  const payload: unknown = options.payload;
+  if (!isRecord(payload)) {
+    return;
+  }
+
+  const action: unknown = payload.action;
+  if (action !== 'opened' && action !== 'ready_for_review' && action !== 'reopened') {
+    return;
+  }
+
+  const pr: unknown = payload.pull_request;
+  if (!isRecord(pr)) {
+    return;
+  }
+
+  const draft: unknown = pr.draft;
+  if (draft === true) {
+    return;
+  }
+
+  const base: unknown = pr.base;
+  if (!isRecord(base)) {
+    return;
+  }
+
+  const baseRef: unknown = base.ref;
+  if (typeof baseRef !== 'string' || baseRef !== options.mainBranch) {
+    return;
+  }
+
+  const pullRequestId: unknown = pr.node_id;
+  const pullRequestNumber: unknown = pr.number;
+  const repository: unknown = payload.repository;
+  const repositoryFullName: unknown = isRecord(repository) ? repository.full_name : undefined;
+  if (
+    typeof pullRequestId !== 'string' ||
+    typeof pullRequestNumber !== 'number' ||
+    !Number.isInteger(pullRequestNumber) ||
+    typeof repositoryFullName !== 'string'
+  ) {
+    return;
+  }
+
+  const identifiers: string[] = extractLinearIssueIdentifiers(payload, options.teamKey);
+  if (identifiers.length === 0) {
+    return;
+  }
+
+  return {
+    issueIdentifiers: identifiers,
+    pullRequestId,
+    pullRequestNumber,
+    repositoryFullName,
+  };
+}
+
+async function githubGraphql<TData>(
+  token: string,
+  query: string,
+  variables: Record<string, unknown>,
+): Promise<TData> {
+  const timeoutMs = 10_000;
+  const response: Response = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'User-Agent': 'charliehooks',
+      Accept: 'application/vnd.github+json',
+    },
+    body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub GraphQL HTTP ${response.status}`);
+  }
+
+  const payloadUnknown: unknown = await response.json();
+  const payload: GithubGraphqlResponse<TData> = payloadUnknown as GithubGraphqlResponse<TData>;
+  if (payload.errors && payload.errors.length > 0) {
+    const messages: string = payload.errors.map((error) => error.message).join('; ');
+    throw new Error(`GitHub GraphQL error: ${messages}`);
+  }
+
+  if (!payload.data) {
+    throw new Error('GitHub GraphQL error: missing data');
+  }
+
+  return payload.data;
+}
+
+export async function enablePullRequestAutoMerge(options: {
+  token: string;
+  pullRequestId: string;
+  dryRun?: boolean;
+}): Promise<void> {
+  if (options.dryRun) {
+    console.log(`[dry-run] GitHub auto-merge enabled for ${options.pullRequestId}`);
+    return;
+  }
+
+  const mutation =
+    'mutation($pullRequestId:ID!){ enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) { pullRequest { id number } } }';
+
+  await githubGraphql<{
+    enablePullRequestAutoMerge: {
+      pullRequest: { id: string; number: number } | null;
+    } | null;
+  }>(options.token, mutation, { pullRequestId: options.pullRequestId });
 }
 
 export function deriveTransitionFromGithubWebhook(options: {

@@ -18,12 +18,15 @@ import {
   addIssueComment,
   addIssueCommentById,
   createLinearClient,
+  getBlockRelationsByIssueId,
   getIssueById,
   getIssueByIdentifier,
   getWorkflowStateNameById,
   setIssueState,
+  setIssueStateById,
   type LinearClient,
   type LinearIssue,
+  type LinearIssueReference,
 } from './linear.js';
 import {
   parseAcceptanceChecks,
@@ -223,6 +226,24 @@ function getInstructionCommentForState(stateName: string): string | undefined {
       return;
     }
   }
+}
+
+const mergedOrLaterStateNames: Set<string> = new Set([
+  'Merged',
+  'Delivered',
+  'Accepted',
+  'Canceled',
+  'Duplicate',
+]);
+
+function isMergedOrLaterState(stateName: string): boolean {
+  return mergedOrLaterStateNames.has(stateName);
+}
+
+async function isIssueUnblocked(client: LinearClient, issueId: string): Promise<boolean> {
+  const relations: { blockers: LinearIssueReference[] } =
+    await getBlockRelationsByIssueId(client, issueId);
+  return relations.blockers.every((blocker) => isMergedOrLaterState(blocker.stateName));
 }
 
 function createHookHistoryState(): HookHistoryState {
@@ -791,6 +812,34 @@ async function handleLinearWebhook(
 
     if (queuedRun) {
       queuedRun.linearStateName = newStateName;
+    }
+
+    if (newStateName === 'Ready') {
+      const unblocked: boolean = await isIssueUnblocked(client, issueId);
+      if (unblocked) {
+        await setIssueStateById(client, issueId, 'In Progress');
+        return;
+      }
+    }
+
+    if (isMergedOrLaterState(newStateName)) {
+      const relations: { blocks: LinearIssueReference[] } =
+        await getBlockRelationsByIssueId(client, issueId);
+
+      for (const blockedIssue of relations.blocks) {
+        if (!blockedIssue.identifier.startsWith(`${client.teamKey}-`)) {
+          continue;
+        }
+
+        if (blockedIssue.stateName !== 'Ready') {
+          continue;
+        }
+
+        const unblocked: boolean = await isIssueUnblocked(client, blockedIssue.id);
+        if (unblocked) {
+          await setIssueStateById(client, blockedIssue.id, 'In Progress');
+        }
+      }
     }
 
     const comment: string | undefined = getInstructionCommentForState(newStateName);

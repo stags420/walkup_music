@@ -21,6 +21,12 @@ export type LinearIssue = {
   stateName: string;
 };
 
+export type LinearIssueReference = {
+  id: string;
+  identifier: string;
+  stateName: string;
+};
+
 export function createLinearClient(options: {
   apiKey: string;
   teamKey: string;
@@ -205,6 +211,105 @@ export async function setIssueState(
   if (!data.issueUpdate.success) {
     throw new Error(`Linear issueUpdate failed: ${issueIdentifier} -> ${stateName}`);
   }
+}
+
+export async function setIssueStateById(
+  client: LinearClient,
+  issueId: string,
+  stateName: string,
+): Promise<void> {
+  const issue: LinearIssue = await getIssueById(client, issueId);
+
+  if (issue.stateName === stateName) {
+    return;
+  }
+
+  if (client.dryRun) {
+    console.log(`[dry-run] Linear issue ${issue.identifier}: ${issue.stateName} -> ${stateName}`);
+    return;
+  }
+
+  const stateId: string = await getWorkflowStateIdByName(client, stateName);
+  const mutation =
+    'mutation($id:String!,$stateId:String!){ issueUpdate(id:$id, input:{ stateId:$stateId }) { success } }';
+
+  const data: { issueUpdate: { success: boolean } } = await linearGraphql(client, mutation, {
+    id: issue.id,
+    stateId,
+  });
+
+  if (!data.issueUpdate.success) {
+    throw new Error(`Linear issueUpdate failed: ${issue.identifier} -> ${stateName}`);
+  }
+}
+
+export async function getBlockRelationsByIssueId(
+  client: LinearClient,
+  issueId: string,
+): Promise<{ blockers: LinearIssueReference[]; blocks: LinearIssueReference[] }> {
+  const query =
+    'query($id:String!){ issue(id:$id){ id relations(first:50){ nodes{ type relatedIssue{ id identifier state{ name } } } } inverseRelations(first:50){ nodes{ type issue{ id identifier state{ name } } } } } }';
+
+  const data: {
+    issue: {
+      id: string;
+      relations: {
+        nodes: {
+          type: string;
+          relatedIssue: {
+            id: string;
+            identifier: string;
+            state: { name: string };
+          } | null;
+        }[];
+      };
+      inverseRelations: {
+        nodes: {
+          type: string;
+          issue: {
+            id: string;
+            identifier: string;
+            state: { name: string };
+          } | null;
+        }[];
+      };
+    } | null;
+  } = await linearGraphql(client, query, { id: issueId });
+
+  if (!data.issue) {
+    throw new Error(`Linear issue not found: ${issueId}`);
+  }
+
+  const blockersById: Map<string, LinearIssueReference> = new Map();
+  for (const relation of data.issue.inverseRelations.nodes) {
+    if (relation.type !== 'blocks' || !relation.issue) {
+      continue;
+    }
+
+    blockersById.set(relation.issue.id, {
+      id: relation.issue.id,
+      identifier: relation.issue.identifier,
+      stateName: relation.issue.state.name,
+    });
+  }
+
+  const blocksById: Map<string, LinearIssueReference> = new Map();
+  for (const relation of data.issue.relations.nodes) {
+    if (relation.type !== 'blocks' || !relation.relatedIssue) {
+      continue;
+    }
+
+    blocksById.set(relation.relatedIssue.id, {
+      id: relation.relatedIssue.id,
+      identifier: relation.relatedIssue.identifier,
+      stateName: relation.relatedIssue.state.name,
+    });
+  }
+
+  return {
+    blockers: [...blockersById.values()],
+    blocks: [...blocksById.values()],
+  };
 }
 
 export async function addIssueComment(

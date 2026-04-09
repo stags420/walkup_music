@@ -8,6 +8,7 @@ import {
 const mockGetRandomValues = jest.fn();
 const mockDigest = jest.fn();
 
+const hadCrypto = 'crypto' in globalThis;
 const originalGetRandomValues = globalThis.crypto?.getRandomValues;
 const originalSubtle = globalThis.crypto?.subtle;
 
@@ -17,6 +18,7 @@ const originalSubtle = globalThis.crypto?.subtle;
 if (!globalThis.crypto) {
   Object.defineProperty(globalThis, 'crypto', {
     value: {},
+    configurable: true,
   });
 }
 
@@ -51,6 +53,14 @@ Object.defineProperty(globalThis, 'btoa', {
 
 describe('PKCE Utilities', () => {
   afterAll(() => {
+    if (!hadCrypto) {
+      Reflect.deleteProperty(
+        globalThis as unknown as Record<string, unknown>,
+        'crypto'
+      );
+      return;
+    }
+
     (
       globalThis.crypto as unknown as {
         getRandomValues?: typeof originalGetRandomValues;

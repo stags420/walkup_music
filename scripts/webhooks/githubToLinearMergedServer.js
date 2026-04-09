@@ -20,7 +20,7 @@ const port = process.env.PORT ? Number(process.env.PORT) : 8787;
 const deployBranch = process.env.DEPLOY_BRANCH ?? 'v2.1';
 const mergedStateName = process.env.LINEAR_MERGED_STATE_NAME ?? 'Merged';
 
-const githubApiToken = process.env.GITHUB_API_TOKEN;
+const githubApiToken = readRequiredEnv('GITHUB_API_TOKEN');
 const autoMergeWorkflowName =
   process.env.AUTO_MERGE_WORKFLOW_NAME ?? 'Deploy to GitHub Pages';
 const autoMergeScope = process.env.AUTO_MERGE_SCOPE === 'all' ? 'all' : 'charliecreates';

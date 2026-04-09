@@ -590,14 +590,26 @@ export async function handleGitHubWebhookEvent(params) {
       };
     }
 
-    const mergeResult = await mergePullRequest({
-      token: githubApiToken,
-      owner,
-      repo,
-      prNumber,
-      mergeMethod,
-      sha,
-    });
+    let mergeResult;
+    try {
+      mergeResult = await mergePullRequest({
+        token: githubApiToken,
+        owner,
+        repo,
+        prNumber,
+        mergeMethod,
+        sha,
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        httpStatus: 502,
+        event: 'workflow_run.completed',
+        prNumber,
+        error: 'github_merge_failed',
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
 
     if (!mergeResult.merged) {
       return {
@@ -611,6 +623,7 @@ export async function handleGitHubWebhookEvent(params) {
     }
 
     let deleteResult = null;
+    let deleteError = null;
     if (params.autoMergeDeleteBranch === true) {
       const headRef = pr?.head?.ref;
       const defaultBranch = pr?.base?.repo?.default_branch;
@@ -619,12 +632,16 @@ export async function handleGitHubWebhookEvent(params) {
         headRef !== params.deployBranch &&
         headRef !== defaultBranch
       ) {
-        deleteResult = await deleteBranchRef({
-          token: githubApiToken,
-          owner,
-          repo,
-          branch: headRef,
-        });
+        try {
+          deleteResult = await deleteBranchRef({
+            token: githubApiToken,
+            owner,
+            repo,
+            branch: headRef,
+          });
+        } catch (error) {
+          deleteError = error instanceof Error ? error.message : String(error);
+        }
       }
     }
 
@@ -636,6 +653,7 @@ export async function handleGitHubWebhookEvent(params) {
       mergeMethod,
       deletedBranch: deleteResult?.deleted ?? false,
       deleteBranchSkipped: deleteResult?.skipped,
+      deleteBranchError: deleteError,
     };
   }
 

@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Buffer } from 'node:buffer';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import path from 'node:path';
 
 import {
   deriveAutoMergeRequestFromGithubWebhook,
@@ -96,7 +96,7 @@ function readSecretFile(name: string): string | undefined {
   const fileNames: string[] = SECRET_FILE_NAMES[name] ?? [name.toLowerCase()];
   for (const fileName of fileNames) {
     try {
-      const value: string = readFileSync(join(SECRET_DIR, fileName), 'utf8').trim();
+      const value: string = readFileSync(path.join(SECRET_DIR, fileName), 'utf8').trim();
       if (value.length > 0) {
         return value;
       }
@@ -171,16 +171,21 @@ function verifyLinearSignature(options: {
 
 function getInstructionCommentForState(stateName: string): string | undefined {
   switch (stateName) {
-    case 'Intake':
+    case 'Intake': {
       return 'Charlie, proceed with plan and breakdown of this requeset into appropriately sized tasks with blockers linked. Put those tasks in the backlog. Once you have finished creating all tasks, move them all to ready.';
-    case 'Ready':
+    }
+    case 'Ready': {
       return 'Charlie, proceed with implementation. First move the task to in progress.';
-    case 'Merged':
+    }
+    case 'Merged': {
       return 'CR Merged, awaiting deployment';
-    case 'Delivered':
+    }
+    case 'Delivered': {
       return 'Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.';
-    default:
+    }
+    default: {
       return;
+    }
   }
 }
 
@@ -519,13 +524,9 @@ async function handleLinearWebhook(
       return;
     }
 
-    let oldStateName: string | undefined;
     let newStateName: string | undefined;
     try {
-      [oldStateName, newStateName] = await Promise.all([
-        getWorkflowStateNameById(client, oldStateId),
-        getWorkflowStateNameById(client, newStateId),
-      ]);
+      newStateName = await getWorkflowStateNameById(client, newStateId);
     } catch (error: unknown) {
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }

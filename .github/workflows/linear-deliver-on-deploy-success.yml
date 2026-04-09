@@ -1,0 +1,175 @@
+name: Mark Linear issues Delivered after prod deploy
+
+on:
+  workflow_run:
+    workflows: ['Deploy to GitHub Pages']
+    types: [completed]
+    branches: [v2.1]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  deliver:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Move linked Linear issue(s) to Delivered
+        uses: actions/github-script@v7
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        with:
+          script: |
+            const linearApiKey = process.env.LINEAR_API_KEY;
+            if (!linearApiKey) {
+              core.setFailed('Missing secrets.LINEAR_API_KEY');
+              return;
+            }
+
+            const workflowRun = context.payload.workflow_run;
+            const sha = workflowRun.head_sha;
+            const texts = [];
+
+            if (workflowRun.head_commit?.message) texts.push(workflowRun.head_commit.message);
+            if (workflowRun.display_title) texts.push(workflowRun.display_title);
+
+            const commit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: sha,
+            });
+            texts.push(commit.data.commit.message);
+
+            const pullsForCommit = await github.request(
+              'GET /repos/{owner}/{repo}/commits/{ref}/pulls',
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: sha,
+                mediaType: { previews: ['groot'] },
+              }
+            );
+
+            for (const pr of pullsForCommit.data) {
+              if (pr.title) texts.push(pr.title);
+              if (pr.body) texts.push(pr.body);
+              if (pr.head?.ref) texts.push(pr.head.ref);
+            }
+
+            const issueIdRegex = /\bCHA-\d+\b/gi;
+            const identifiers = new Set();
+
+            for (const text of texts) {
+              for (const match of text.matchAll(issueIdRegex)) {
+                identifiers.add(match[0].toUpperCase());
+              }
+            }
+
+            if (identifiers.size === 0) {
+              core.info(`No Linear issue identifiers found for ${sha}.`);
+              return;
+            }
+
+            core.info(
+              `Found Linear issue identifiers: ${Array.from(identifiers).join(', ')}`
+            );
+
+            const linearFetch = async (query, variables) => {
+              const res = await fetch('https://api.linear.app/graphql', {
+                method: 'POST',
+                headers: {
+                  Authorization: linearApiKey,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query, variables }),
+              });
+
+              if (!res.ok) {
+                const body = await res.text();
+                throw new Error(`Linear API HTTP ${res.status}: ${body}`);
+              }
+
+              const json = await res.json();
+              if (json.errors?.length) {
+                throw new Error(`Linear API errors: ${JSON.stringify(json.errors)}`);
+              }
+              return json.data;
+            };
+
+            const issueQuery = `
+              query IssueForDeliveredState($identifier: String!) {
+                issue(identifier: $identifier) {
+                  id
+                  identifier
+                  team {
+                    states {
+                      nodes {
+                        id
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const updateMutation = `
+              mutation MoveIssueToDelivered($id: String!, $stateId: String!) {
+                issueUpdate(id: $id, input: { stateId: $stateId }) {
+                  success
+                  issue {
+                    identifier
+                    state {
+                      name
+                    }
+                  }
+                }
+              }
+            `;
+
+            let hadErrors = false;
+            for (const identifier of identifiers) {
+              core.info(`Updating ${identifier}...`);
+              const data = await linearFetch(issueQuery, { identifier });
+              const issue = data.issue;
+
+              if (!issue) {
+                core.warning(`Linear issue ${identifier} not found.`);
+                continue;
+              }
+
+              const deliveredState = issue.team.states.nodes.find(
+                (s) => s.name.toLowerCase() === 'delivered'
+              );
+
+              if (!deliveredState) {
+                core.error(
+                  `Linear team for ${identifier} does not have a workflow state named "Delivered".`
+                );
+                hadErrors = true;
+                continue;
+              }
+
+              const update = await linearFetch(updateMutation, {
+                id: issue.id,
+                stateId: deliveredState.id,
+              });
+
+              if (!update.issueUpdate?.success) {
+                core.error(`Linear issueUpdate failed for ${identifier}.`);
+                hadErrors = true;
+                continue;
+              }
+
+              core.info(
+                `Moved ${identifier} to ${update.issueUpdate.issue.state.name}.`
+              );
+            }
+
+            if (hadErrors) {
+              core.setFailed('One or more Linear updates failed; see logs above.');
+            }

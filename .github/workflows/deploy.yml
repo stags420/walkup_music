@@ -17,6 +17,8 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      PROD_BRANCH: v2.1
 
     steps:
       - name: Checkout
@@ -30,6 +32,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate Spotify client id (prod build/deploy)
+        if: github.ref_name == env.PROD_BRANCH
+        env:
+          # Prefer an Actions repository variable; fall back to secrets for legacy setups.
+          VITE_SPOTIFY_CLIENT_ID: ${{ vars.VITE_SPOTIFY_CLIENT_ID || secrets.VITE_SPOTIFY_CLIENT_ID || secrets.SPOTIFY_CLIENT_ID }}
+        run: |
+          if [ -z "${VITE_SPOTIFY_CLIENT_ID}" ] || [ "${VITE_SPOTIFY_CLIENT_ID}" = "REPLACE_ME_IN_.env.local" ]; then
+            echo "Missing VITE_SPOTIFY_CLIENT_ID (required for GitHub Pages prod build/deploy)."
+            echo "Set a repository Actions variable (preferred) or secret named VITE_SPOTIFY_CLIENT_ID (or SPOTIFY_CLIENT_ID)."
+            exit 1
+          fi
 
       - name: Run linting
         run: npm run lint
@@ -47,10 +61,12 @@ jobs:
         run: npm run test:e2e -- --project=chromium
 
       - name: Build
+        env:
+          VITE_SPOTIFY_CLIENT_ID: ${{ vars.VITE_SPOTIFY_CLIENT_ID || secrets.VITE_SPOTIFY_CLIENT_ID || secrets.SPOTIFY_CLIENT_ID }}
         run: npm run build:prod
 
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/v2.1'
+        if: github.ref_name == env.PROD_BRANCH
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -40,7 +40,8 @@ Follow the instructions for the current state exactly.
 ## Delivered
 
 - The code is deployed for this task.
-- Verify it in production and send proof it works via screenshot.
+- Verify it in production and attach proof (screenshot) as a comment on the
+  Linear issue.
 - If you verify success, move the task to `Accepted`.
 - If you find an issue, note the bug in the issue and put the issue back to `Ready`.
 

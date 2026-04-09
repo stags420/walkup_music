@@ -38,6 +38,9 @@ instruction comment based on the *new* state name.
 
 - Entering `In Progress`
   - Posts instructions to implement work and link the Linear issue in the PR/commit.
+    For GitHub-driven automation to work, the issue identifier (e.g. `CHA-50`) needs to
+    appear in PR metadata (title/body/branch name) so it can be extracted from GitHub
+    webhook payloads.
 
 - Entering `Merged`
   - Posts: `CR Merged, awaiting deployment`.

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { AppContent, AuthenticatedApp } from '@/modules/app/components/App';
+import { App, AppContent, AuthenticatedApp } from '@/modules/app/components/App';
 import { useAuthUser } from '@/modules/auth/hooks/useAuthUser';
 
 // Mock the components
@@ -86,6 +86,19 @@ describe('App Component Rendering', () => {
       await waitFor(() => {
         expect(screen.getByText('Welcome, Test User!')).toBeInTheDocument();
       });
+    });
+
+    test('should render the ROBO-KITTY disclaimer in the navbar', () => {
+      // Given I have an unauthenticated user
+      // When I render the full App
+      render(<App />);
+
+      // Then it should show the navbar disclaimer
+      expect(
+        screen.getByText(
+          'This website was built using ROBO-KITTY. ALL HAIL THE ROBOTIC KITTEN.'
+        )
+      ).toBeInTheDocument();
     });
 
     // Callback page behavior is covered elsewhere; omitted here

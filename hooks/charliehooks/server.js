@@ -12,12 +12,19 @@ if (!linearApiKey) {
 
 const linearTeamKey = process.env.LINEAR_TEAM_KEY ?? 'CHA';
 const githubWebhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+const githubToken = process.env.GITHUB_TOKEN;
 
 const host = process.env.HOST ?? '127.0.0.1';
 const port = Number.parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
 
 const walkupMusicProdUrl =
   process.env.WALKUP_MUSIC_PROD_URL ?? 'https://stagswtf.github.io/walkup_music/';
+
+const deployBranch = process.env.DEPLOY_BRANCH ?? 'v2.1';
+const deployWorkflowPath =
+  process.env.DEPLOY_WORKFLOW_PATH ?? '.github/workflows/deploy.yml';
+const deployWorkflowName =
+  process.env.DEPLOY_WORKFLOW_NAME ?? 'Deploy to GitHub Pages';
 
 const mergeShaToLinearIdentifiers = new Map();
 
@@ -40,7 +47,7 @@ createServer(async (request, response) => {
       if (githubWebhookSecret) {
         const signatureHeader = request.headers['x-hub-signature-256'];
         if (typeof signatureHeader !== 'string') {
-          throw new Error('Missing X-Hub-Signature-256 header');
+          throw new TypeError('Missing X-Hub-Signature-256 header');
         }
 
         verifyGitHubSignature({
@@ -52,7 +59,7 @@ createServer(async (request, response) => {
 
       const eventName = request.headers['x-github-event'];
       if (typeof eventName !== 'string') {
-        throw new Error('Missing X-GitHub-Event header');
+        throw new TypeError('Missing X-GitHub-Event header');
       }
 
       const payload = JSON.parse(rawBody.toString('utf8'));
@@ -75,6 +82,8 @@ createServer(async (request, response) => {
     response.writeHead(404, { 'content-type': 'text/plain' });
     response.end('not found');
   } catch (error) {
+    console.error('Error handling request', error);
+
     response.writeHead(500, { 'content-type': 'application/json' });
     response.end(
       JSON.stringify({
@@ -83,7 +92,6 @@ createServer(async (request, response) => {
     );
   }
 }).listen(port, host, () => {
-  // eslint-disable-next-line no-console
   console.log(`charliehooks listening on http://${host}:${port}`);
 });
 
@@ -167,7 +175,7 @@ async function handleWorkflowRunEvent(options, payload) {
   }
 
   const headBranch = workflowRun.head_branch;
-  if (headBranch !== 'v2.1') {
+  if (headBranch !== deployBranch) {
     return {
       ok: true,
       ignored: true,
@@ -177,8 +185,7 @@ async function handleWorkflowRunEvent(options, payload) {
   }
 
   const isDeployWorkflow =
-    workflowRun.path === '.github/workflows/deploy.yml' ||
-    workflowRun.name === 'Deploy to GitHub Pages';
+    workflowRun.path === deployWorkflowPath || workflowRun.name === deployWorkflowName;
 
   if (!isDeployWorkflow) {
     return {
@@ -204,9 +211,21 @@ async function handleWorkflowRunEvent(options, payload) {
     values: [workflowRun.display_title],
   });
 
+  const repoFullName = payload.repository?.full_name;
+  const apiIdentifiers =
+    githubToken && typeof repoFullName === 'string'
+      ? await lookupLinearIdentifiersForCommit({
+          githubToken,
+          repoFullName,
+          sha: headSha,
+          teamKey: options.linearTeamKey,
+        })
+      : [];
+
   const identifiers = uniqueStrings([
     ...(cachedIdentifiers ?? []),
     ...parsedIdentifiers,
+    ...apiIdentifiers,
   ]);
 
   if (identifiers.length === 0) {
@@ -282,7 +301,7 @@ async function verifyWalkupMusicProd(options) {
   }
 
   const homepageHtml = await homepageResponse.text();
-  const hasTitle = homepageHtml.includes('<title>Walk-Up Music Manager</title>');
+  const hasTitle = /<title>[^<]*Walk-Up Music[^<]*<\/title>/i.test(homepageHtml);
   if (!hasTitle) {
     return {
       ok: false,
@@ -290,7 +309,7 @@ async function verifyWalkupMusicProd(options) {
         {
           name: 'homepage-title',
           ok: false,
-          details: 'missing expected <title>Walk-Up Music Manager</title>',
+          details: 'missing expected Walk-Up Music title',
         },
       ],
     };
@@ -409,12 +428,12 @@ async function loadLinearStateIds(options) {
 
   const teams = result.teams?.nodes;
   if (!Array.isArray(teams) || teams.length !== 1) {
-    throw new Error(`Could not resolve Linear team key: ${teamKey}`);
+    throw new TypeError(`Could not resolve Linear team key: ${teamKey}`);
   }
 
   const states = teams[0]?.states?.nodes;
   if (!Array.isArray(states)) {
-    throw new Error(`Could not load workflow states for team: ${teamKey}`);
+    throw new TypeError(`Could not load workflow states for team: ${teamKey}`);
   }
 
   const entries = states
@@ -427,7 +446,7 @@ async function loadLinearStateIds(options) {
 async function setLinearIssueState(options) {
   const stateId = options.stateIdsByName.get(options.stateName);
   if (!stateId) {
-    throw new Error(`Unknown Linear workflow state: ${options.stateName}`);
+    throw new TypeError(`Unknown Linear workflow state: ${options.stateName}`);
   }
 
   const lookup = await linearGraphql({
@@ -445,10 +464,10 @@ async function setLinearIssueState(options) {
 
   const issueId = lookup.issue?.id;
   if (typeof issueId !== 'string') {
-    throw new Error(`Could not resolve Linear issue: ${options.issueIdentifier}`);
+    throw new TypeError(`Could not resolve Linear issue: ${options.issueIdentifier}`);
   }
 
-  await linearGraphql({
+  const updateResult = await linearGraphql({
     linearApiKey: options.linearApiKey,
     query: `
       mutation IssueStateUpdate($issueId: String!, $stateId: String!) {
@@ -459,6 +478,47 @@ async function setLinearIssueState(options) {
     `,
     variables: { issueId, stateId },
   });
+
+  if (updateResult.issueUpdate?.success !== true) {
+    throw new Error(
+      `Linear issueUpdate failed for ${options.issueIdentifier} to state ${options.stateName}`,
+    );
+  }
+}
+
+async function lookupLinearIdentifiersForCommit(options) {
+  const response = await fetch(
+    `https://api.github.com/repos/${options.repoFullName}/commits/${options.sha}/pulls`,
+    {
+      method: 'GET',
+      headers: {
+        authorization: `Bearer ${options.githubToken}`,
+        accept: 'application/vnd.github+json',
+        'x-github-api-version': '2022-11-28',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const pullRequests = await response.json();
+  if (!Array.isArray(pullRequests)) {
+    return [];
+  }
+
+  const identifiers = [];
+  for (const pullRequest of pullRequests) {
+    identifiers.push(
+      ...extractLinearIdentifiers({
+        teamKey: options.teamKey,
+        values: [pullRequest.title, pullRequest.body, pullRequest.head?.ref],
+      }),
+    );
+  }
+
+  return uniqueStrings(identifiers);
 }
 
 async function linearGraphql(options) {

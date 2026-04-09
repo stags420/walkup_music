@@ -12,9 +12,13 @@ Local webhook receiver meant to run on Joey's laptop (or inside Docker) and rece
 - `LINEAR_API_KEY` (required)
 - `LINEAR_TEAM_KEY` (optional; default: `CHA`)
 - `GITHUB_WEBHOOK_SECRET` (optional; if set, requests must include `X-Hub-Signature-256`)
+- `GITHUB_TOKEN` (optional; used to resolve PR metadata from a deploy commit SHA)
 - `PORT` (optional; default: `8787`)
 - `HOST` (optional; default: `127.0.0.1`)
 - `WALKUP_MUSIC_PROD_URL` (optional; default: `https://stagswtf.github.io/walkup_music/`)
+- `DEPLOY_BRANCH` (optional; default: `v2.1`)
+- `DEPLOY_WORKFLOW_PATH` (optional; default: `.github/workflows/deploy.yml`)
+- `DEPLOY_WORKFLOW_NAME` (optional; default: `Deploy to GitHub Pages`)
 
 ## Run
 

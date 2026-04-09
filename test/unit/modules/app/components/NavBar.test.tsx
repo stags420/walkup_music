@@ -56,6 +56,8 @@ describe('NavBar', () => {
     render(<NavBar />);
 
     const tagline = screen.getByText(/ALL HAIL THE ROBOTIC KITTEN/i);
-    expect(tagline).toHaveTextContent(/This website was built using ROBO-KITTY/i);
+    expect(tagline).toHaveTextContent(
+      /This website was built using ROBO-KITTY/i
+    );
   });
 });

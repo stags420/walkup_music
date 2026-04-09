@@ -209,7 +209,7 @@ function getInstructionCommentForState(stateName: string): string | undefined {
       return '@Charlie, wait for the blocking tasks to finish. Once they do, move this task to in progress.';
     }
     case 'In Progress': {
-      return '@Charlie, implement!';
+      return '@Charlie, implement and make sure you link this Linear issue in your PR/final commit.';
     }
     case 'Merged': {
       return 'CR Merged, awaiting deployment';

@@ -7,7 +7,8 @@ Follow the instructions for the current state exactly.
 
 - You are part of a workflow that uses Linear states to progress.
 - Never tackle more than you are told in the instructions you are given.
-- NEVER transition a task between Linear states unless explicitly told by the user.
+- Do not transition a task between Linear states unless explicitly instructed
+  (either by the user or by these workflow rules).
 - Plan and break down the request into appropriately sized tasks in `Backlog`.
 - After all tasks are created, update the blocking relationships using Linear
   `blocking` and `blocked by` links:

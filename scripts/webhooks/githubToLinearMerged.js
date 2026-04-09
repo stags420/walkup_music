@@ -414,15 +414,6 @@ export async function handleGitHubWebhookEvent(params) {
       };
     }
 
-    const runEvent = workflowRun?.event;
-    if (runEvent !== 'pull_request') {
-      return {
-        ok: true,
-        skipped: 'workflow_run_not_pull_request',
-        details: { runEvent },
-      };
-    }
-
     const prs = Array.isArray(workflowRun?.pull_requests)
       ? workflowRun.pull_requests
       : [];

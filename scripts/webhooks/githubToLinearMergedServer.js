@@ -73,6 +73,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify(result));
   } catch (error) {
+    console.error('[githubToLinearMergedServer] Error handling webhook', error);
     res.writeHead(500, { 'content-type': 'application/json' });
     res.end(
       JSON.stringify({

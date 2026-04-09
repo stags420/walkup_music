@@ -208,7 +208,29 @@ function getInstructionCommentForState(stateName: string): string | undefined {
       return '@Charlie, you are part of a workflow that utilizes Linear states to progress. Never tackle more than you are told in the instructions you are given. NEVER transition a task between Linear states unless explicitly told by the user. Now, 1. Plan and breakdown this requeset into appropriately sized tasks in BACKLOG linear status. 2. After all tasks are created, update the blocking relationships using Linear "blocking" and "blocked by" links - if two tasks may merge conflict, you must choose one to block the other, and prerequisites should be linked as blocking/blocked by as appropriate. 3. Once blockers are set, move all of the tasks to READY. 4. Do NOT move anything to IN PROGRESS as part of working on this task 5. Stop.';
     }
     case 'Ready': {
-      return '@Charlie, check this task’s Linear "blocked by" relationships only. Wait until every task in this task’s "blocked by" list is in MERGED or later. Then move only this task to IN PROGRESS. Do not change the state of any other task.';
+      return `@Charlie, check this task's Linear Relations of type "blockedBy" only. Do not look for a field literally named "Blockers". Use this GraphQL shape directly, replacing ENG-123 with this task's identifier or id:
+
+query {
+  issue(id: "ENG-123") {
+    id
+    title
+    relations {
+      nodes {
+        type
+        relatedIssue {
+          id
+          title
+          identifier
+          state {
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+Only consider relations where type is "blockedBy". Wait until every relatedIssue in those "blockedBy" relations is in MERGED or later. Then move only this task to IN PROGRESS. Do not change the state of any other task.`;
     }
     case 'In Progress': {
       return '@Charlie, implement and make sure you link this Linear issue in your PR/final commit.';

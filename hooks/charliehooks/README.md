@@ -27,6 +27,20 @@ Entrypoint: `hooks/charliehooks/src/server.ts`.
 - `HOST` (optional, default `0.0.0.0`)
 - `PORT` (optional, default `8787`)
 
+## Docker
+
+Build and publish from the repo root:
+
+```bash
+./hooks/charliehooks/scripts/build.sh
+./hooks/charliehooks/scripts/publish.sh
+```
+
+The container reads secrets from env vars, and will also read `/run/app-secrets`
+via the file fallback in `src/server.ts` for keys such as `linear_api_key`,
+`github_webhook_secret`, `github_pr_pat`, `linear_webhook_secret`, and
+`charliehooks_internal_secret`.
+
 ## Acceptance checks
 
 If a Linear issue description contains a fenced JSON block with a `charliehooks.acceptance.checks` array,

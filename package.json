@@ -44,7 +44,9 @@
     "clean": "./scripts/clean-builds.sh",
     
     "sync:steering": "node ./scripts/sync-steering.js",
-    "webhook:github-linear": "node ./scripts/webhooks/githubToLinearMergedServer.js"
+    "webhook:github-linear": "node ./scripts/webhooks/githubToLinearMergedServer.js",
+    "charliehooks:build-image": "./hooks/charliehooks/scripts/build.sh",
+    "charliehooks:publish-image": "./hooks/charliehooks/scripts/publish.sh"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",

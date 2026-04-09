@@ -19,8 +19,8 @@ Notes:
 
 ## What happens on Linear state changes (`POST /linear`)
 
-When a `${LINEAR_TEAM_KEY}-*` issue changes workflow state, `charliehooks` posts an
-instruction comment based on the *new* state name.
+When a `${LINEAR_TEAM_KEY}-*` issue changes workflow state into one of the handled states
+below, `charliehooks` posts an instruction comment based on the *new* state name.
 
 - Entering `Intake`
   - Posts instructions to break the request down into tasks in `Backlog`, set
@@ -31,8 +31,8 @@ instruction comment based on the *new* state name.
   - If the issue has **no** `blockedBy` relations: posts instructions to move **only this
     issue** to `In Progress`.
   - If the issue **does** have `blockedBy` relations: posts instructions to wait until
-    **all** `blockedBy` issues are in `Merged` (or later), then move **only this issue**
-    to `In Progress`.
+    **all** `blockedBy` issues are in `Merged`, `Delivered`, or `Accepted`, then move
+    **only this issue** to `In Progress`.
   - The `blockedBy` list is computed from `issue.inverseRelations` where
     `relation.type === "blocks"`.
 
@@ -97,6 +97,7 @@ Instead, `POST /verify-and-accept` (internal endpoint) can be called with:
 
 This endpoint:
 
+- is typically called after deployment, when the issue is in `Delivered`, and
 - runs acceptance checks (either a default HTTP 200 check against the prod URL, or checks
   configured in the Linear issue description), then
 - moves the issue to `Accepted` only if all checks pass.

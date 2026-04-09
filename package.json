@@ -43,7 +43,8 @@
     
     "clean": "./scripts/clean-builds.sh",
     
-    "sync:steering": "node ./scripts/sync-steering.js"
+    "sync:steering": "node ./scripts/sync-steering.js",
+    "webhook:github-linear": "node ./scripts/webhooks/githubToLinearMergedServer.js"
   },
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
@@ -61,6 +62,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
+    "@types/node": "^22.19.17",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@typescript-eslint/eslint-plugin": "^8.39.1",

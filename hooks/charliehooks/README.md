@@ -1,43 +1,46 @@
 # charliehooks (walkup_music)
 
-Local webhook receiver meant to run on Joey's laptop (or inside Docker) and receive GitHub webhooks via `https://charliehooks.pi.stags.wtf/`.
+This directory contains a small webhook receiver that moves Linear issues through the
+`Merged` → `Delivered` → `Accepted` states based on GitHub events.
 
-## What it does
+## Endpoints
 
-- `pull_request.closed` (merged): moves referenced Linear issue(s) to `Merged`.
-- `workflow_run.completed` (success) for `.github/workflows/deploy.yml` on `v2.1`: moves referenced Linear issue(s) to `Delivered`, then runs a simple production smoke-check and (if it passes) moves the issue(s) to `Accepted`.
+- `GET /healthz` → `ok`
+- `POST /github` → GitHub webhooks (`pull_request`, `workflow_run`)
+- `POST /verify-and-accept` → force post-deploy verification + accept (JSON body: `{ "issueIdentifiers": ["CHA-123"] }`)
+
+Entrypoint: `hooks/charliehooks/src/server.ts`.
 
 ## Env vars
 
 - `LINEAR_API_KEY` (required)
-- `LINEAR_TEAM_KEY` (optional; default: `CHA`)
-- `GITHUB_WEBHOOK_SECRET` (required unless `ALLOW_INSECURE_WEBHOOKS=1`; requests must include `X-Hub-Signature-256`)
-- `ALLOW_INSECURE_WEBHOOKS` (optional; set to `1` to run without signature verification)
-- `GITHUB_TOKEN` (optional; used to resolve PR metadata from a deploy commit SHA)
-- `PORT` (optional; default: `8787`)
-- `HOST` (optional; default: `127.0.0.1`)
-- `WALKUP_MUSIC_PROD_URL` (optional; default: `https://stagswtf.github.io/walkup_music/`)
-- `DEPLOY_BRANCH` (optional; default: `v2.1`)
-- `DEPLOY_WORKFLOW_PATH` (optional; default: `.github/workflows/deploy.yml`)
-- `DEPLOY_WORKFLOW_NAME` (optional; default: `Deploy to GitHub Pages`)
+- `LINEAR_TEAM_KEY` (optional, default `CHA`)
+- `GITHUB_WEBHOOK_SECRET` (optional, enables `X-Hub-Signature-256` verification)
+- `CHARLIEHOOKS_DEFAULT_PROD_URL` (optional, default `https://stagswtf.github.io/walkup_music/`)
+- `CHARLIEHOOKS_MAIN_BRANCH` (optional, default `v2.1`)
+- `CHARLIEHOOKS_DRY_RUN=1` (optional, no Linear writes)
+- `CHARLIEHOOKS_INTERNAL_SECRET` (optional, requires `x-charliehooks-secret` header for `/verify-and-accept`)
+- `HOST` (optional, default `0.0.0.0`)
+- `PORT` (optional, default `8787`)
 
-## Run
+## Acceptance checks
 
-Requires Node.js 18+ (for global `fetch`).
+If a Linear issue description contains a fenced JSON block with a `charliehooks.acceptance.checks` array,
+those checks will be used when moving the issue to `Accepted`.
 
-```bash
-node hooks/charliehooks/server.js
+Example:
+
+````
+```json
+{
+  "charliehooks": {
+    "acceptance": {
+      "checks": [
+        { "type": "http", "url": "https://stagswtf.github.io/walkup_music/", "status": 200 },
+        { "type": "contains", "url": "https://stagswtf.github.io/walkup_music/", "text": "Walk-Up Music" }
+      ]
+    }
+  }
+}
 ```
-
-## GitHub webhook setup
-
-Point the webhook at:
-
-- `POST /github`
-
-Enable events:
-
-- Pull requests
-- Workflow runs
-
-This expects Linear issue identifiers to be present somewhere on the PR (usually in the PR title, e.g. `CHA-123: ...`).
+````

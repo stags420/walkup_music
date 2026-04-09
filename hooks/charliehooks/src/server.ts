@@ -267,7 +267,7 @@ function appendLinearFlowInstructions(comment: string): string {
   return (
     `${comment}\n\n` +
     '+++ Linear workflow reference\n' +
-    '_Source: `.charlie/instructions/LINEAR_FLOW.md`_\n\n' +
+    '_Source: LINEAR_FLOW.md (default: `.charlie/instructions/LINEAR_FLOW.md`; override: `CHARLIEHOOKS_LINEAR_FLOW_PATH`)_\n\n' +
     `${linearFlow}\n` +
     '+++'
   );

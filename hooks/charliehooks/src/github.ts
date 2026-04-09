@@ -145,7 +145,7 @@ export function deriveTransitionFromGithubWebhook(options: {
     return {
       issueIdentifiers: identifiers,
       targetStateName: 'Merged',
-      comment: 'Auto-moved via GitHub pull_request merged webhook.',
+      comment: 'CR Merged, awaiting deployment',
     };
   }
 
@@ -183,7 +183,8 @@ export function deriveTransitionFromGithubWebhook(options: {
     return {
       issueIdentifiers: identifiers,
       targetStateName: 'Delivered',
-      comment: 'Auto-moved via GitHub workflow_run deploy success webhook.',
+      comment:
+        'Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.',
     };
   }
 

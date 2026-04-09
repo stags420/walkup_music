@@ -131,6 +131,21 @@ function verifyLinearSignature(options: {
   return timingSafeEqual(expected, actual);
 }
 
+function getInstructionCommentForState(stateName: string): string | undefined {
+  switch (stateName) {
+    case 'Intake':
+      return 'Charlie, proceed with plan and breakdown of this requeset into appropriately sized tasks with blockers linked. Put those tasks in the backlog. Once you have finished creating all tasks, move them all to ready.';
+    case 'Ready':
+      return 'Charlie, proceed with implementation. First move the task to in progress.';
+    case 'Merged':
+      return 'CR Merged, awaiting deployment';
+    case 'Delivered':
+      return 'Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.';
+    default:
+      return;
+  }
+}
+
 async function applyGithubDerivedTransition(
   client: LinearClient,
   transition: GithubDerivedTransition,
@@ -150,7 +165,9 @@ async function applyGithubDerivedTransition(
       await setIssueState(client, identifier, transition.targetStateName);
     }
 
-    await addIssueComment(client, identifier, transition.comment);
+    if (transition.comment.length > 0) {
+      await addIssueComment(client, identifier, transition.comment);
+    }
   }
 }
 
@@ -240,20 +257,6 @@ async function handleGithubWebhook(
     state: transition.targetStateName,
     issues: transition.issueIdentifiers,
   });
-
-  if (transition.targetStateName === 'Delivered') {
-    void (async () => {
-      for (const issueIdentifier of transition.issueIdentifiers) {
-        await verifyAndAcceptIssue({
-          client,
-          issueIdentifier,
-          defaultProdUrl,
-        });
-      }
-    })().catch((error: unknown) => {
-      console.error(`verifyAndAcceptIssue failed after Delivered: ${String(error)}`);
-    });
-  }
 }
 
 async function handleVerifyAndAccept(
@@ -387,13 +390,6 @@ async function handleLinearWebhook(
     return;
   }
 
-  const actorName: string | undefined =
-    isRecord(payloadUnknown.actor) && typeof payloadUnknown.actor.name === 'string'
-      ? payloadUnknown.actor.name
-      : undefined;
-
-  const issueUrl: string | undefined =
-    typeof payloadUnknown.url === 'string' ? payloadUnknown.url : undefined;
   const issueIdentifier: string | undefined =
     typeof data.identifier === 'string' ? data.identifier : undefined;
   const issueId: string | undefined = typeof data.id === 'string' ? data.id : undefined;
@@ -412,12 +408,18 @@ async function handleLinearWebhook(
     }
   }
 
-  jsonResponse(res, 200, {
+  const responseBody: { ok: boolean; action: string; issueId?: string; issueIdentifier?: string } = {
     ok: true,
     action: 'queued',
-    issueId,
-    issueIdentifier,
-  });
+  };
+  if (issueId) {
+    responseBody.issueId = issueId;
+  }
+  if (issueIdentifier) {
+    responseBody.issueIdentifier = issueIdentifier;
+  }
+
+  jsonResponse(res, 200, responseBody);
 
   void (async () => {
     if (!issueId) {
@@ -445,16 +447,17 @@ async function handleLinearWebhook(
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }
 
-    const mention: string = getEnv('CHARLIEHOOKS_LINEAR_MENTION') ?? '@charlie';
-    const byText: string = actorName ? ` by ${actorName}` : '';
-    const fromText: string = oldStateName ?? oldStateId;
-    const toText: string = newStateName ?? newStateId;
-    const urlText: string = issueUrl ? `\n\n${issueUrl}` : '';
+    const comment: string | undefined = newStateName
+      ? getInstructionCommentForState(newStateName)
+      : undefined;
+    if (!comment) {
+      return;
+    }
 
     await addIssueCommentById(
       client,
       issueId,
-      `${mention} ${resolvedIdentifier}: State transition${byText}: ${fromText} -> ${toText}.${urlText}`,
+      comment,
     );
   })().catch((error: unknown) => {
     console.error(

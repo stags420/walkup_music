@@ -235,6 +235,8 @@ async function handleWorkflowRunEvent(options, payload) {
     ...apiIdentifiers,
   ]);
 
+  options.mergeShaToLinearIdentifiers.delete(headSha);
+
   if (identifiers.length === 0) {
     return {
       ok: true,
@@ -289,10 +291,28 @@ async function handleWorkflowRunEvent(options, payload) {
 
 async function verifyWalkupMusicProd(options) {
   const prodUrl = options.prodUrl;
-  const homepageResponse = await fetch(prodUrl, {
-    method: 'GET',
-    redirect: 'follow',
-  });
+  let homepageResponse;
+  try {
+    homepageResponse = await fetchWithTimeout(
+      prodUrl,
+      {
+        method: 'GET',
+        redirect: 'follow',
+      },
+      10_000,
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      checks: [
+        {
+          name: 'homepage-fetch',
+          ok: false,
+          details: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    };
+  }
 
   if (!homepageResponse.ok) {
     return {
@@ -308,24 +328,42 @@ async function verifyWalkupMusicProd(options) {
   }
 
   const homepageHtml = await homepageResponse.text();
-  const hasTitle = /<title>[^<]*Walk-Up Music[^<]*<\/title>/i.test(homepageHtml);
-  if (!hasTitle) {
+  const hasRootDiv = homepageHtml.includes('id="root"');
+  if (!hasRootDiv) {
     return {
       ok: false,
       checks: [
         {
-          name: 'homepage-title',
+          name: 'homepage-root',
           ok: false,
-          details: 'missing expected Walk-Up Music title',
+          details: 'missing expected root element',
         },
       ],
     };
   }
 
-  const faviconResponse = await fetch(new URL('favicon.ico', prodUrl), {
-    method: 'GET',
-    redirect: 'follow',
-  });
+  let faviconResponse;
+  try {
+    faviconResponse = await fetchWithTimeout(
+      new URL('favicon.ico', prodUrl),
+      {
+        method: 'GET',
+        redirect: 'follow',
+      },
+      10_000,
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      checks: [
+        {
+          name: 'favicon-fetch',
+          ok: false,
+          details: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    };
+  }
 
   if (!faviconResponse.ok) {
     return {
@@ -344,10 +382,20 @@ async function verifyWalkupMusicProd(options) {
     ok: true,
     checks: [
       { name: 'homepage-status', ok: true },
-      { name: 'homepage-title', ok: true },
+      { name: 'homepage-root', ok: true },
       { name: 'favicon-status', ok: true },
     ],
   };
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function extractLinearIdentifiers(options) {

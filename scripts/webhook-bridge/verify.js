@@ -42,8 +42,10 @@ export function parseAcceptanceChecks(description) {
 
   // @ts-expect-error: runtime validated
   const checks = parsed.checks;
-  if (!Array.isArray(checks)) {
-    throw new Error('Invalid charlie-acceptance JSON: expected checks[]');
+  if (!Array.isArray(checks) || checks.length === 0) {
+    throw new Error(
+      'Invalid charlie-acceptance JSON: expected non-empty checks[]',
+    );
   }
 
   /** @type {AcceptanceCheck[]} */

@@ -4,6 +4,8 @@ import http from 'node:http';
 import { LinearClient } from './linearClient.js';
 import { parseAcceptanceChecks, runAcceptanceChecks } from './verify.js';
 
+class BadRequestError extends Error {}
+
 const HOST = process.env.HOST ?? '127.0.0.1';
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 
@@ -120,7 +122,7 @@ function unique(values) {
 */
 function normalizePayload(payload) {
   if (!payload || typeof payload !== 'object') {
-    return { issues: [] };
+    throw new BadRequestError('Invalid payload: expected JSON object');
   }
 
   // @ts-expect-error: runtime validated
@@ -340,7 +342,15 @@ const server = http.createServer(async (request, response) => {
     sendJson(response, 404, { ok: false, error: 'Not found' });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    sendJson(response, message === 'Unauthorized' ? 401 : 500, {
+
+    const statusCode =
+      error instanceof BadRequestError
+        ? 400
+        : message === 'Unauthorized'
+          ? 401
+          : 500;
+
+    sendJson(response, statusCode, {
       ok: false,
       error: message,
     });

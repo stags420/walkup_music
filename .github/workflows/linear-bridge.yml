@@ -26,14 +26,26 @@ jobs:
         run: |
           TEXT="$(jq -r '[.pull_request.title, (.pull_request.body // ""), .pull_request.head.ref] | join("\n")' "$GITHUB_EVENT_PATH")"
 
-          COMMITS_TEXT="$(
-            curl -sS \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
-              -H 'Accept: application/vnd.github+json' \
-              "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits?per_page=100" \
-              | jq -r '.[].commit.message' \
-              || true
-          )"
+          page=1
+          COMMITS_TEXT=""
+          while :; do
+            response="$(
+              curl -sS \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H 'Accept: application/vnd.github+json' \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits?per_page=100&page=$page" \
+                || true
+            )"
+
+            page_text="$(printf '%s' "$response" | jq -r '.[].commit.message' 2>/dev/null || true)"
+            if [ -z "$page_text" ]; then
+              break
+            fi
+
+            COMMITS_TEXT="$COMMITS_TEXT
+$page_text"
+            page=$((page + 1))
+          done
 
           TEXT="$TEXT
 $COMMITS_TEXT"

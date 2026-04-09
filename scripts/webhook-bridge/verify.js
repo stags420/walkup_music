@@ -7,6 +7,57 @@
 * }} AcceptanceCheck
 */
 
+const DEFAULT_ALLOWED_HOSTS = ['stagswtf.github.io', '.stags.wtf'];
+
+const ALLOWED_HOST_RULES = (process.env.ACCEPTANCE_ALLOWED_HOSTS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/** @param {string} hostname */
+function isHostnameAllowed(hostname) {
+  const rules = ALLOWED_HOST_RULES.length > 0 ? ALLOWED_HOST_RULES : DEFAULT_ALLOWED_HOSTS;
+
+  for (const rule of rules) {
+    if (rule.startsWith('.') && hostname.endsWith(rule)) {
+      return true;
+    }
+
+    if (hostname === rule) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** @param {string} urlString */
+function validateAcceptanceUrl(urlString) {
+  let url;
+  try {
+    url = new URL(urlString);
+  } catch {
+    throw new Error(`Invalid URL: ${urlString}`);
+  }
+
+  if (url.protocol !== 'https:') {
+    throw new Error(`Disallowed URL protocol for ${urlString} (https only)`);
+  }
+
+  const hostname = url.hostname;
+  if (!hostname) {
+    throw new Error(`Invalid URL hostname for ${urlString}`);
+  }
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+    throw new Error(`Disallowed hostname for ${urlString}`);
+  }
+
+  if (!isHostnameAllowed(hostname)) {
+    throw new Error(`Disallowed hostname for ${urlString}`);
+  }
+}
+
 /**
 * @param {string | null | undefined} description
 * @returns {AcceptanceCheck[] | null}
@@ -66,6 +117,9 @@ export function parseAcceptanceChecks(description) {
     if (typeof check.url !== 'string' || check.url.length === 0) {
       throw new Error('Invalid acceptance check: missing url');
     }
+
+    // @ts-expect-error: runtime validated
+    validateAcceptanceUrl(check.url);
 
     // @ts-expect-error: runtime validated
     if (check.status !== undefined && typeof check.status !== 'number') {

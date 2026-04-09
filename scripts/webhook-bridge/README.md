@@ -25,6 +25,8 @@ Requests must include `Authorization: Bearer <secret>`.
 
 If a Linear issue description contains a `charlie-acceptance` code block, it will be used for verification:
 
+By default, only `https` URLs on `stagswtf.github.io` and `*.stags.wtf` are allowed for checks. You can override this with `ACCEPTANCE_ALLOWED_HOSTS`.
+
 ````
 ```charlie-acceptance
 {

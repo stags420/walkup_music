@@ -62,13 +62,16 @@ function requireAuth(request) {
 async function readJsonBody(request) {
   /** @type {Buffer[]} */
   const chunks = [];
+  let total = 0;
 
   for await (const chunk of request) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-    const total = chunks.reduce((sum, c) => sum + c.length, 0);
+    const buf = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+    total += buf.length;
     if (total > 1_000_000) {
-      throw new Error('Payload too large');
+      throw new BadRequestError('Payload too large');
     }
+
+    chunks.push(buf);
   }
 
   const raw = Buffer.concat(chunks).toString('utf8');
@@ -79,7 +82,7 @@ async function readJsonBody(request) {
   try {
     return JSON.parse(raw);
   } catch (error) {
-    throw new Error(
+    throw new BadRequestError(
       `Invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
     );
   }

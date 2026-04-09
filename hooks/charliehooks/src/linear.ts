@@ -150,14 +150,14 @@ export async function getBlockedByIssuesForIssueId(
   id: string,
 ): Promise<LinearRelatedIssue[]> {
   const query =
-    'query($id:String!){ issue(id:$id){ inverseRelations { nodes { type relatedIssue { id identifier title state { name } } } } } }';
+    'query($id:String!){ issue(id:$id){ inverseRelations { nodes { type issue { id identifier title state { name } } } } } }';
 
   const data: {
     issue: {
       inverseRelations: {
         nodes: {
           type: string;
-          relatedIssue: {
+          issue: {
             id: string;
             identifier: string;
             title: string;
@@ -173,16 +173,16 @@ export async function getBlockedByIssuesForIssueId(
   }
 
   return data.issue.inverseRelations.nodes.flatMap((node) => {
-    if (node.type !== 'blocks' || !node.relatedIssue) {
+    if (node.type !== 'blocks' || !node.issue) {
       return [];
     }
 
     return [
       {
-        id: node.relatedIssue.id,
-        identifier: node.relatedIssue.identifier,
-        title: node.relatedIssue.title,
-        stateName: node.relatedIssue.state.name,
+        id: node.issue.id,
+        identifier: node.issue.identifier,
+        title: node.issue.title,
+        stateName: node.issue.state.name,
       },
     ];
   });

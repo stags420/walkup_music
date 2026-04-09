@@ -63,8 +63,7 @@ In practice, that means the issue identifier needs to appear somewhere in the PR
 
 - `pull_request.closed` (merged = true) targeting the main branch (`CHARLIEHOOKS_MAIN_BRANCH`,
   default `v2.1`)
-  - Moves referenced issues to `Merged`.
-  - Adds the comment: `CR Merged, awaiting deployment`.
+  - Moves referenced issues to `Merged` and posts the `Merged` state-entry comment.
 
 - `workflow_run.completed` (conclusion = success) for a run named `Deploy to GitHub Pages`
   on the main branch (`v2.1` by default)
@@ -101,6 +100,8 @@ Instead, `POST /verify-and-accept` (internal endpoint) can be called with:
 This endpoint:
 
 - is typically called after deployment, when the issue is in `Delivered`, and
+- does not enforce `Delivered` as a precondition; if checks pass it will move the issue to
+  `Accepted` from whatever its current state is.
 - runs acceptance checks (either a default HTTP 200 check against the prod URL, or checks
   configured in the Linear issue description), then
 - moves the issue to `Accepted` only if all checks pass.

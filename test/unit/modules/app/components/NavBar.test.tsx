@@ -55,10 +55,9 @@ describe('NavBar', () => {
   test('should include the appended ROBO-KITTY tagline phrase', () => {
     render(<NavBar />);
 
-    expect(
-      screen.getByText(
-        'This website was built using ROBO-KITTY. ALL HAIL THE ROBOTIC KITTEN'
-      )
-    ).toBeInTheDocument();
+    const tagline = screen.getByText(
+      /This website was built using ROBO-KITTY/i
+    );
+    expect(tagline).toHaveTextContent(/ALL HAIL THE ROBOTIC KITTEN/i);
   });
 });

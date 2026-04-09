@@ -94,12 +94,18 @@ function sendJson(response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
+/** @param {string} value */
+function escapeRegExp(value) {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
 * @param {string} teamKey
 * @param {string} text
 */
 function extractIdentifiers(teamKey, text) {
-  const pattern = new RegExp(`\\b${teamKey}-\\d+\\b`, 'g');
+  const escapedKey = escapeRegExp(teamKey);
+  const pattern = new RegExp(`\\b${escapedKey}-\\d+\\b`, 'g');
   return text.match(pattern) ?? [];
 }
 

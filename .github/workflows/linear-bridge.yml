@@ -1,0 +1,62 @@
+name: Linear bridge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [v2.1]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-merged:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Collect Linear issue identifiers
+        id: linear
+        run: |
+          TEXT="$(jq -r '[.pull_request.title, (.pull_request.body // ""), .pull_request.head.ref] | join("\n")' "$GITHUB_EVENT_PATH")"
+
+          printf '%s\n' "$TEXT" | grep -Eo 'CHA-[0-9]+' | sort -u > /tmp/linear_issues.txt || true
+          ISSUES_JSON="$(jq -Rsc 'split("\n") | map(select(length>0))' /tmp/linear_issues.txt)"
+
+          echo "issues_json=$ISSUES_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Notify charliehooks (Merged)
+        env:
+          CHARLIEHOOKS_BASE_URL: ${{ vars.CHARLIEHOOKS_BASE_URL || 'https://charliehooks.pi.stags.wtf' }}
+          CHARLIEHOOKS_SHARED_SECRET: ${{ secrets.CHARLIEHOOKS_SHARED_SECRET }}
+          ISSUES_JSON: ${{ steps.linear.outputs.issues_json }}
+        run: |
+          if [ -z "$CHARLIEHOOKS_SHARED_SECRET" ]; then
+            echo "Skipping: missing secret CHARLIEHOOKS_SHARED_SECRET"
+            exit 0
+          fi
+
+          if [ "$ISSUES_JSON" = "[]" ]; then
+            echo "Skipping: no Linear issue identifiers found in PR"
+            exit 0
+          fi
+
+          PR_URL="$(jq -r '.pull_request.html_url' "$GITHUB_EVENT_PATH")"
+          PR_NUMBER="$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")"
+          BASE_REF="$(jq -r '.pull_request.base.ref' "$GITHUB_EVENT_PATH")"
+          HEAD_REF="$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")"
+
+          PAYLOAD="$(jq -n \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg prUrl "$PR_URL" \
+            --arg baseRef "$BASE_REF" \
+            --arg headRef "$HEAD_REF" \
+            --argjson prNumber "$PR_NUMBER" \
+            --argjson issues "$ISSUES_JSON" \
+            '{repo:$repo, pr:{number:$prNumber, url:$prUrl, baseRef:$baseRef, headRef:$headRef}, issues:$issues}' \
+          )"
+
+          curl -sS --fail-with-body \
+            -H "Authorization: Bearer $CHARLIEHOOKS_SHARED_SECRET" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD" \
+            "$CHARLIEHOOKS_BASE_URL/hooks/github/pr-merged"

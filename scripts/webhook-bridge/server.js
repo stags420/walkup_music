@@ -1,0 +1,272 @@
+import crypto from 'node:crypto';
+import http from 'node:http';
+
+import { LinearClient } from './linearClient.js';
+import { parseAcceptanceChecks, runAcceptanceChecks } from './verify.js';
+
+const HOST = process.env.HOST ?? '127.0.0.1';
+const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
+
+const LINEAR_API_KEY = process.env.LINEAR_API_KEY;
+const LINEAR_TEAM_KEY = process.env.LINEAR_TEAM_KEY ?? 'CHA';
+
+const PROD_URL =
+  process.env.PROD_URL ?? 'https://stagswtf.github.io/walkup_music/';
+
+const SHARED_SECRET = process.env.CHARLIEHOOKS_SHARED_SECRET ?? '';
+
+if (!LINEAR_API_KEY) {
+  throw new Error('Missing env var: LINEAR_API_KEY');
+}
+
+/** @param {string} value */
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+/** @param {string} a @param {string} b */
+function timingSafeEqualString(a, b) {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
+
+/** @param {http.IncomingMessage} request */
+function requireAuth(request) {
+  if (!SHARED_SECRET) {
+    return;
+  }
+
+  const authHeader = request.headers.authorization;
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+    throw new Error('Unauthorized');
+  }
+
+  const token = authHeader.slice('bearer '.length);
+  if (!timingSafeEqualString(sha256(token), sha256(SHARED_SECRET))) {
+    throw new Error('Unauthorized');
+  }
+}
+
+/**
+* @param {http.IncomingMessage} request
+* @returns {Promise<unknown>}
+*/
+async function readJsonBody(request) {
+  /** @type {Buffer[]} */
+  const chunks = [];
+
+  for await (const chunk of request) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    const total = chunks.reduce((sum, c) => sum + c.length, 0);
+    if (total > 1_000_000) {
+      throw new Error('Payload too large');
+    }
+  }
+
+  const raw = Buffer.concat(chunks).toString('utf8');
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(
+      `Invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+* @param {http.ServerResponse} response
+* @param {number} statusCode
+* @param {unknown} payload
+*/
+function sendJson(response, statusCode, payload) {
+  response.statusCode = statusCode;
+  response.setHeader('Content-Type', 'application/json');
+  response.end(JSON.stringify(payload));
+}
+
+/**
+* @param {string} teamKey
+* @param {string} text
+*/
+function extractIdentifiers(teamKey, text) {
+  const pattern = new RegExp(`\\b${teamKey}-\\d+\\b`, 'g');
+  return text.match(pattern) ?? [];
+}
+
+/** @param {string[]} values */
+function unique(values) {
+  return [...new Set(values.map((v) => v.trim()).filter(Boolean))];
+}
+
+/**
+* @param {unknown} payload
+* @returns {{ issues: string[], pr?: { number?: number, url?: string, baseRef?: string, headRef?: string }, repo?: string, autoAccept?: boolean } }
+*/
+function normalizePayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return { issues: [] };
+  }
+
+  // @ts-expect-error: runtime validated
+  const issues = Array.isArray(payload.issues) ? payload.issues : [];
+  // @ts-expect-error: runtime validated
+  const pr = payload.pr && typeof payload.pr === 'object' ? payload.pr : undefined;
+
+  // @ts-expect-error: runtime validated
+  const repo = typeof payload.repo === 'string' ? payload.repo : undefined;
+  // @ts-expect-error: runtime validated
+  const autoAccept = typeof payload.autoAccept === 'boolean' ? payload.autoAccept : undefined;
+
+  /** @type {string[]} */
+  const textSources = [];
+  if (pr) {
+    // @ts-expect-error: runtime validated
+    if (typeof pr.baseRef === 'string') textSources.push(pr.baseRef);
+    // @ts-expect-error: runtime validated
+    if (typeof pr.headRef === 'string') textSources.push(pr.headRef);
+    // @ts-expect-error: runtime validated
+    if (typeof pr.url === 'string') textSources.push(pr.url);
+  }
+
+  const extracted = extractIdentifiers(LINEAR_TEAM_KEY, textSources.join('\n'));
+  return {
+    issues: unique([...issues, ...extracted]),
+    // @ts-expect-error: runtime validated
+    pr: pr ? { number: pr.number, url: pr.url, baseRef: pr.baseRef, headRef: pr.headRef } : undefined,
+    repo,
+    autoAccept,
+  };
+}
+
+const linear = new LinearClient({ apiKey: LINEAR_API_KEY, teamKey: LINEAR_TEAM_KEY });
+
+/**
+* @param {string} identifier
+* @param {string} stateName
+* @param {string} reason
+*/
+async function moveAndComment(identifier, stateName, reason) {
+  const { issueId } = await linear.moveIssueToState(identifier, stateName);
+  await linear.createComment(issueId, reason);
+}
+
+/**
+* @param {string} identifier
+* @returns {Promise<void>}
+*/
+async function verifyAndAccept(identifier) {
+  const issue = await linear.findIssueByIdentifier(identifier);
+  if (!issue) {
+    throw new Error(`Linear issue not found for identifier: ${identifier}`);
+  }
+
+  const checks =
+    parseAcceptanceChecks(issue.description) ??
+    [
+      {
+        type: 'http',
+        url: PROD_URL,
+        status: 200,
+        bodyIncludes: 'Walk-Up Music Manager',
+      },
+    ];
+
+  const result = await runAcceptanceChecks(checks);
+  if (!result.ok) {
+    await linear.createComment(
+      issue.id,
+      `Post-deploy verification failed for ${identifier}: ${result.error}`,
+    );
+    return;
+  }
+
+  await linear.moveIssueToState(identifier, 'Accepted');
+  await linear.createComment(issue.id, `Accepted: ${identifier} verified in prod`);
+}
+
+const server = http.createServer(async (request, response) => {
+  try {
+    const url = new URL(request.url ?? '/', 'http://localhost');
+
+    if (request.method === 'GET' && url.pathname === '/health') {
+      sendJson(response, 200, { ok: true });
+      return;
+    }
+
+    if (request.method !== 'POST') {
+      sendJson(response, 405, { ok: false, error: 'Method not allowed' });
+      return;
+    }
+
+    requireAuth(request);
+
+    const body = await readJsonBody(request);
+    const normalized = normalizePayload(body);
+
+    if (url.pathname === '/hooks/github/pr-merged') {
+      for (const identifier of normalized.issues) {
+        await moveAndComment(
+          identifier,
+          'Merged',
+          `Moved to Merged via GitHub PR merge${normalized.pr?.url ? ` (${normalized.pr.url})` : ''}`,
+        );
+      }
+
+      sendJson(response, 200, { ok: true, moved: normalized.issues });
+      return;
+    }
+
+    if (url.pathname === '/hooks/github/deploy') {
+      for (const identifier of normalized.issues) {
+        await moveAndComment(
+          identifier,
+          'Delivered',
+          `Moved to Delivered via deploy success${normalized.repo ? ` (${normalized.repo})` : ''}`,
+        );
+      }
+
+      const autoAccept = normalized.autoAccept ?? true;
+      if (autoAccept) {
+        for (const identifier of normalized.issues) {
+          await verifyAndAccept(identifier);
+        }
+      }
+
+      sendJson(response, 200, { ok: true, moved: normalized.issues, autoAccept });
+      return;
+    }
+
+    if (url.pathname === '/hooks/verify') {
+      for (const identifier of normalized.issues) {
+        await verifyAndAccept(identifier);
+      }
+
+      sendJson(response, 200, { ok: true, verified: normalized.issues });
+      return;
+    }
+
+    sendJson(response, 404, { ok: false, error: 'Not found' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    sendJson(response, message === 'Unauthorized' ? 401 : 500, {
+      ok: false,
+      error: message,
+    });
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  // eslint-disable-next-line no-console
+  console.log(
+    `webhook-bridge listening on http://${HOST}:${PORT} (team=${LINEAR_TEAM_KEY})`,
+  );
+});

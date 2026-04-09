@@ -72,3 +72,37 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./dist
+
+      - name: Notify charliehooks (Delivered + Accepted)
+        if: github.ref_name == env.PROD_BRANCH && github.event_name == 'push'
+        env:
+          CHARLIEHOOKS_BASE_URL: ${{ vars.CHARLIEHOOKS_BASE_URL || 'https://charliehooks.pi.stags.wtf' }}
+          CHARLIEHOOKS_SHARED_SECRET: ${{ secrets.CHARLIEHOOKS_SHARED_SECRET }}
+        run: |
+          if [ -z "$CHARLIEHOOKS_SHARED_SECRET" ]; then
+            echo "Skipping: missing secret CHARLIEHOOKS_SHARED_SECRET"
+            exit 0
+          fi
+
+          TEXT="$(jq -r '[.head_commit.message, (.commits[].message)] | join("\n")' "$GITHUB_EVENT_PATH")"
+          printf '%s\n' "$TEXT" | grep -Eo 'CHA-[0-9]+' | sort -u > /tmp/linear_issues.txt || true
+          ISSUES_JSON="$(jq -Rsc 'split("\n") | map(select(length>0))' /tmp/linear_issues.txt)"
+
+          if [ "$ISSUES_JSON" = "[]" ]; then
+            echo "Skipping: no Linear issue identifiers found in commit messages"
+            exit 0
+          fi
+
+          PAYLOAD="$(jq -n \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg sha "$GITHUB_SHA" \
+            --argjson issues "$ISSUES_JSON" \
+            --argjson autoAccept true \
+            '{repo:$repo, sha:$sha, issues:$issues, autoAccept:$autoAccept}' \
+          )"
+
+          curl -sS --fail-with-body \
+            -H "Authorization: Bearer $CHARLIEHOOKS_SHARED_SECRET" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD" \
+            "$CHARLIEHOOKS_BASE_URL/hooks/github/deploy"

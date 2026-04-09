@@ -2,11 +2,17 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Buffer } from 'node:buffer';
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 import {
+  deriveAutoMergeRequestFromGithubWebhook,
   deriveTransitionFromGithubWebhook,
+  enablePullRequestAutoMerge,
   verifyGithubSignature,
+  type GithubAutoMergeRequest,
   type GithubDerivedTransition,
+  type GithubPullRequestIntegrationResult,
 } from './github.js';
 import {
   addIssueComment,
@@ -27,6 +33,15 @@ import {
 } from './acceptance.js';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+const SECRET_DIR = '/run/app-secrets';
+const SECRET_FILE_NAMES: Record<string, string[]> = {
+  CHARLIEHOOKS_INTERNAL_SECRET: ['charliehooks_internal_secret'],
+  GITHUB_PR_PAT: ['github_pr_pat'],
+  GITHUB_TOKEN: ['github_token', 'github_pr_pat'],
+  GITHUB_WEBHOOK_SECRET: ['github_webhook_secret'],
+  LINEAR_API_KEY: ['linear_api_key'],
+  LINEAR_WEBHOOK_SECRET: ['linear_webhook_secret'],
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -78,9 +93,33 @@ function parseJsonBody(body: Buffer): unknown {
   return JSON.parse(text) as unknown;
 }
 
+function readSecretFile(name: string): string | undefined {
+  const fileNames: string[] = SECRET_FILE_NAMES[name] ?? [name.toLowerCase()];
+  for (const fileName of fileNames) {
+    try {
+      const value: string = readFileSync(path.join(SECRET_DIR, fileName), 'utf8').trim();
+      if (value.length > 0) {
+        return value;
+      }
+    } catch (error: unknown) {
+      const code: string | undefined =
+        isRecord(error) && typeof error.code === 'string' ? error.code : undefined;
+      if (code !== 'ENOENT' && code !== 'ENOTDIR') {
+        throw error;
+      }
+    }
+  }
+
+  return;
+}
+
 function getEnv(name: string): string | undefined {
   const value: string | undefined = process.env[name];
-  return value && value.length > 0 ? value : undefined;
+  if (value && value.length > 0) {
+    return value;
+  }
+
+  return readSecretFile(name);
 }
 
 function getRequiredEnv(name: string): string {
@@ -131,6 +170,26 @@ function verifyLinearSignature(options: {
   return timingSafeEqual(expected, actual);
 }
 
+function getInstructionCommentForState(stateName: string): string | undefined {
+  switch (stateName) {
+    case 'Intake': {
+      return 'Charlie, proceed with plan and breakdown of this requeset into appropriately sized tasks with blockers linked. Put those tasks in the backlog. Once you have finished creating all tasks, move them all to ready.';
+    }
+    case 'Ready': {
+      return 'Charlie, proceed with implementation. First move the task to in progress.';
+    }
+    case 'Merged': {
+      return 'CR Merged, awaiting deployment';
+    }
+    case 'Delivered': {
+      return 'Charlie, the code is deployed for this task. Go verify it in production and send proof it works via screenshot. If you verify success, move the task to accepted. If you find an issue, note the bug in the issue and put the issue back to ready.';
+    }
+    default: {
+      return;
+    }
+  }
+}
+
 async function applyGithubDerivedTransition(
   client: LinearClient,
   transition: GithubDerivedTransition,
@@ -150,7 +209,9 @@ async function applyGithubDerivedTransition(
       await setIssueState(client, identifier, transition.targetStateName);
     }
 
-    await addIssueComment(client, identifier, transition.comment);
+    if (transition.comment.length > 0) {
+      await addIssueComment(client, identifier, transition.comment);
+    }
   }
 }
 
@@ -196,8 +257,8 @@ async function handleGithubWebhook(
   req: IncomingMessage,
   res: ServerResponse,
   client: LinearClient,
-  defaultProdUrl: string,
   mainBranch: string,
+  githubToken: string | undefined,
 ): Promise<void> {
   const body: Buffer = await readRequestBody(req);
   const eventName: string | undefined = getHeader(req, 'x-github-event');
@@ -221,6 +282,12 @@ async function handleGithubWebhook(
     return;
   }
 
+  const autoMergeRequest: GithubAutoMergeRequest | undefined = deriveAutoMergeRequestFromGithubWebhook({
+    eventName,
+    payload,
+    teamKey: client.teamKey,
+    mainBranch,
+  });
   const transition: GithubDerivedTransition | undefined = deriveTransitionFromGithubWebhook({
     eventName,
     payload,
@@ -228,32 +295,62 @@ async function handleGithubWebhook(
     mainBranch,
   });
 
-  if (!transition) {
+  let autoMergeStatus: string | undefined;
+  if (autoMergeRequest) {
+    if (githubToken) {
+      const integrationResult: GithubPullRequestIntegrationResult = await enablePullRequestAutoMerge({
+        token: githubToken,
+        pullRequestId: autoMergeRequest.pullRequestId,
+        dryRun: client.dryRun,
+      });
+      if (client.dryRun) {
+        autoMergeStatus = 'dry-run';
+      } else {
+        autoMergeStatus =
+          integrationResult === 'merged' ? 'merged-immediately' : 'enabled';
+      }
+    } else {
+      autoMergeStatus = 'missing-token';
+      console.warn(
+        `GitHub auto-merge skipped for PR #${autoMergeRequest.pullRequestNumber}: missing GitHub token`,
+      );
+    }
+  }
+
+  if (!transition && !autoMergeRequest) {
     jsonResponse(res, 200, { ok: true, action: 'noop' });
     return;
   }
 
-  await applyGithubDerivedTransition(client, transition);
-  jsonResponse(res, 200, {
-    ok: true,
-    action: 'updated',
-    state: transition.targetStateName,
-    issues: transition.issueIdentifiers,
-  });
-
-  if (transition.targetStateName === 'Delivered') {
-    void (async () => {
-      for (const issueIdentifier of transition.issueIdentifiers) {
-        await verifyAndAcceptIssue({
-          client,
-          issueIdentifier,
-          defaultProdUrl,
-        });
-      }
-    })().catch((error: unknown) => {
-      console.error(`verifyAndAcceptIssue failed after Delivered: ${String(error)}`);
-    });
+  if (transition) {
+    await applyGithubDerivedTransition(client, transition);
   }
+
+  const responseBody: {
+    ok: boolean;
+    action: string;
+    state?: string;
+    issues?: string[];
+    autoMerge?: string;
+    pullRequestNumber?: number;
+  } = {
+    ok: true,
+    action: transition ? 'updated' : 'auto-merge',
+  };
+
+  if (transition) {
+    responseBody.state = transition.targetStateName;
+    responseBody.issues = transition.issueIdentifiers;
+  }
+  if (autoMergeStatus) {
+    responseBody.autoMerge = autoMergeStatus;
+  }
+  if (autoMergeRequest) {
+    responseBody.pullRequestNumber = autoMergeRequest.pullRequestNumber;
+    responseBody.issues = responseBody.issues ?? autoMergeRequest.issueIdentifiers;
+  }
+
+  jsonResponse(res, 200, responseBody);
 }
 
 async function handleVerifyAndAccept(
@@ -387,13 +484,6 @@ async function handleLinearWebhook(
     return;
   }
 
-  const actorName: string | undefined =
-    isRecord(payloadUnknown.actor) && typeof payloadUnknown.actor.name === 'string'
-      ? payloadUnknown.actor.name
-      : undefined;
-
-  const issueUrl: string | undefined =
-    typeof payloadUnknown.url === 'string' ? payloadUnknown.url : undefined;
   const issueIdentifier: string | undefined =
     typeof data.identifier === 'string' ? data.identifier : undefined;
   const issueId: string | undefined = typeof data.id === 'string' ? data.id : undefined;
@@ -412,12 +502,18 @@ async function handleLinearWebhook(
     }
   }
 
-  jsonResponse(res, 200, {
+  const responseBody: { ok: boolean; action: string; issueId?: string; issueIdentifier?: string } = {
     ok: true,
     action: 'queued',
-    issueId,
-    issueIdentifier,
-  });
+  };
+  if (issueId) {
+    responseBody.issueId = issueId;
+  }
+  if (issueIdentifier) {
+    responseBody.issueIdentifier = issueIdentifier;
+  }
+
+  jsonResponse(res, 200, responseBody);
 
   void (async () => {
     if (!issueId) {
@@ -434,27 +530,24 @@ async function handleLinearWebhook(
       return;
     }
 
-    let oldStateName: string | undefined;
     let newStateName: string | undefined;
     try {
-      [oldStateName, newStateName] = await Promise.all([
-        getWorkflowStateNameById(client, oldStateId),
-        getWorkflowStateNameById(client, newStateId),
-      ]);
+      newStateName = await getWorkflowStateNameById(client, newStateId);
     } catch (error: unknown) {
       console.warn(`Could not resolve workflow state names: ${String(error)}`);
     }
 
-    const mention: string = getEnv('CHARLIEHOOKS_LINEAR_MENTION') ?? '@charlie';
-    const byText: string = actorName ? ` by ${actorName}` : '';
-    const fromText: string = oldStateName ?? oldStateId;
-    const toText: string = newStateName ?? newStateId;
-    const urlText: string = issueUrl ? `\n\n${issueUrl}` : '';
+    const comment: string | undefined = newStateName
+      ? getInstructionCommentForState(newStateName)
+      : undefined;
+    if (!comment) {
+      return;
+    }
 
     await addIssueCommentById(
       client,
       issueId,
-      `${mention} ${resolvedIdentifier}: State transition${byText}: ${fromText} -> ${toText}.${urlText}`,
+      comment,
     );
   })().catch((error: unknown) => {
     console.error(
@@ -469,6 +562,7 @@ async function handleLinearWebhook(
 
 export function startServer(): void {
   const linearApiKey: string = getRequiredEnv('LINEAR_API_KEY');
+  const githubToken: string | undefined = getEnv('GITHUB_TOKEN') ?? getEnv('GITHUB_PR_PAT');
   const teamKey: string = getEnv('LINEAR_TEAM_KEY') ?? 'CHA';
   const defaultProdUrl: string = getEnv('CHARLIEHOOKS_DEFAULT_PROD_URL') ??
     'https://stagswtf.github.io/walkup_music/';
@@ -505,7 +599,7 @@ export function startServer(): void {
     }
 
     if (method === 'POST' && url.pathname === '/github') {
-      await handleGithubWebhook(req, res, client, defaultProdUrl, mainBranch);
+      await handleGithubWebhook(req, res, client, mainBranch, githubToken);
       return;
     }
 

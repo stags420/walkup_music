@@ -438,6 +438,18 @@ export async function handleGitHubWebhookEvent(params) {
     }
 
     const prNumber = prs[0].number;
+    const workflowHeadSha =
+      typeof workflowRun?.head_sha === 'string' ? workflowRun.head_sha : undefined;
+    if (!workflowHeadSha) {
+      return {
+        ok: false,
+        httpStatus: 400,
+        event: 'workflow_run.completed',
+        prNumber,
+        error: 'missing_workflow_head_sha',
+      };
+    }
+
     const owner = payload?.repository?.owner?.login;
     const repo = payload?.repository?.name;
     if (typeof owner !== 'string' || typeof repo !== 'string') {
@@ -496,6 +508,30 @@ export async function handleGitHubWebhookEvent(params) {
         ok: true,
         skipped: 'not_deploy_branch',
         details: { baseRef, deployBranch: params.deployBranch },
+      };
+    }
+
+    const prHeadSha = pr?.head?.sha;
+    if (typeof prHeadSha !== 'string') {
+      return {
+        ok: false,
+        httpStatus: 400,
+        event: 'workflow_run.completed',
+        prNumber,
+        error: 'missing_pr_head_sha',
+      };
+    }
+
+    if (prHeadSha !== workflowHeadSha) {
+      return {
+        ok: true,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'head_sha_mismatch',
+        details: {
+          workflowHeadSha,
+          prHeadSha,
+        },
       };
     }
 
@@ -581,16 +617,7 @@ export async function handleGitHubWebhookEvent(params) {
     }
 
     const mergeMethod = params.autoMergeMethod;
-    const sha = pr?.head?.sha;
-    if (typeof sha !== 'string') {
-      return {
-        ok: false,
-        httpStatus: 400,
-        error: 'missing_head_sha',
-        event: 'workflow_run.completed',
-        prNumber,
-      };
-    }
+    const sha = workflowHeadSha;
 
     let mergeResult;
     try {

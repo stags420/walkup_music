@@ -135,7 +135,14 @@ export async function githubRest(params) {
   });
 
   const text = await res.text();
-  const json = text.length ? JSON.parse(text) : null;
+  let json = null;
+  if (text.length) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+  }
   return { ok: res.ok, status: res.status, statusText: res.statusText, json };
 }
 
@@ -442,13 +449,43 @@ export async function handleGitHubWebhookEvent(params) {
     /** @type {any} */
     let pr = null;
     for (let attempt = 0; attempt < 6; attempt += 1) {
-      pr = await fetchPullRequest({ token: githubApiToken, owner, repo, prNumber });
+      try {
+        pr = await fetchPullRequest({
+          token: githubApiToken,
+          owner,
+          repo,
+          prNumber,
+        });
+      } catch (error) {
+        return {
+          ok: false,
+          httpStatus: 502,
+          event: 'workflow_run.completed',
+          prNumber,
+          error: 'github_pr_fetch_failed',
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
 
       if (pr?.mergeable !== null && pr?.mergeable_state !== 'unknown') {
         break;
       }
 
       await sleep(500);
+    }
+
+    if (pr?.mergeable === null || pr?.mergeable_state === 'unknown') {
+      return {
+        ok: true,
+        httpStatus: 409,
+        event: 'workflow_run.completed',
+        prNumber,
+        skipped: 'mergeable_state_unknown',
+        details: {
+          mergeable: pr?.mergeable,
+          mergeableState: pr?.mergeable_state,
+        },
+      };
     }
 
     const baseRef = pr?.base?.ref;
@@ -503,8 +540,8 @@ export async function handleGitHubWebhookEvent(params) {
     const headRepoFullName = pr?.head?.repo?.full_name;
     const baseRepoFullName = pr?.base?.repo?.full_name;
     if (
-      typeof headRepoFullName === 'string' &&
-      typeof baseRepoFullName === 'string' &&
+      typeof headRepoFullName !== 'string' ||
+      typeof baseRepoFullName !== 'string' ||
       headRepoFullName !== baseRepoFullName
     ) {
       return {

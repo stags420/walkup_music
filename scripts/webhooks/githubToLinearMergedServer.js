@@ -92,6 +92,18 @@ const server = http.createServer(async (req, res) => {
       autoMergeDeleteBranch,
     });
 
+    console.log(
+      '[githubToLinearMergedServer] delivery=%s outcome=%j',
+      typeof deliveryId === 'string' ? deliveryId : 'unknown',
+      {
+        event: result.event,
+        prNumber: result.prNumber,
+        skipped: result.skipped,
+        error: result.error,
+        httpStatus: result.httpStatus,
+      }
+    );
+
     const httpStatus =
       typeof result?.httpStatus === 'number' ? result.httpStatus : 200;
     res.writeHead(httpStatus, { 'content-type': 'application/json' });

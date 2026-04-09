@@ -19,7 +19,7 @@ All endpoints are `POST` and accept JSON `{ issues: ["CHA-123", ...] }`.
 - `/hooks/github/deploy` → moves issues to `Delivered` and (by default) runs post-deploy verification, moving to `Accepted` when checks pass (requires a `charlie-acceptance` block on the issue)
 - `/hooks/verify` → run post-deploy verification and (if successful) move to `Accepted`
 
-If `CHARLIEHOOKS_SHARED_SECRET` is set, requests must include `Authorization: Bearer <secret>`.
+Requests must include `Authorization: Bearer <secret>`.
 
 ## Per-issue acceptance checks
 

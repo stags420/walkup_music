@@ -10,10 +10,14 @@ const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const LINEAR_API_KEY = process.env.LINEAR_API_KEY;
 const LINEAR_TEAM_KEY = process.env.LINEAR_TEAM_KEY ?? 'CHA';
 
-const SHARED_SECRET = process.env.CHARLIEHOOKS_SHARED_SECRET ?? '';
+const SHARED_SECRET = process.env.CHARLIEHOOKS_SHARED_SECRET;
 
 if (!LINEAR_API_KEY) {
   throw new Error('Missing env var: LINEAR_API_KEY');
+}
+
+if (!SHARED_SECRET) {
+  throw new Error('Missing env var: CHARLIEHOOKS_SHARED_SECRET');
 }
 
 if (typeof fetch !== 'function') {
@@ -38,10 +42,6 @@ function timingSafeEqualString(a, b) {
 
 /** @param {http.IncomingMessage} request */
 function requireAuth(request) {
-  if (!SHARED_SECRET) {
-    return;
-  }
-
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
     throw new Error('Unauthorized');

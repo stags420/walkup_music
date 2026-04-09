@@ -12,6 +12,7 @@ import {
   verifyGithubSignature,
   type GithubAutoMergeRequest,
   type GithubDerivedTransition,
+  type GithubPullRequestIntegrationResult,
 } from './github.js';
 import {
   addIssueComment,
@@ -297,12 +298,17 @@ async function handleGithubWebhook(
   let autoMergeStatus: string | undefined;
   if (autoMergeRequest) {
     if (githubToken) {
-      await enablePullRequestAutoMerge({
+      const integrationResult: GithubPullRequestIntegrationResult = await enablePullRequestAutoMerge({
         token: githubToken,
         pullRequestId: autoMergeRequest.pullRequestId,
         dryRun: client.dryRun,
       });
-      autoMergeStatus = client.dryRun ? 'dry-run' : 'enabled';
+      if (client.dryRun) {
+        autoMergeStatus = 'dry-run';
+      } else {
+        autoMergeStatus =
+          integrationResult === 'merged' ? 'merged-immediately' : 'enabled';
+      }
     } else {
       autoMergeStatus = 'missing-token';
       console.warn(

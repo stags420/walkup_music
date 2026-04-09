@@ -14,6 +14,8 @@ export type GithubAutoMergeRequest = {
   repositoryFullName: string;
 };
 
+export type GithubPullRequestIntegrationResult = 'auto-merge-enabled' | 'merged';
+
 type GithubGraphqlError = {
   message: string;
 };
@@ -217,20 +219,39 @@ export async function enablePullRequestAutoMerge(options: {
   token: string;
   pullRequestId: string;
   dryRun?: boolean;
-}): Promise<void> {
+}): Promise<GithubPullRequestIntegrationResult> {
   if (options.dryRun) {
     console.log(`[dry-run] GitHub auto-merge enabled for ${options.pullRequestId}`);
-    return;
+    return 'auto-merge-enabled';
   }
 
   const mutation =
     'mutation($pullRequestId:ID!){ enablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) { pullRequest { id number } } }';
 
+  try {
+    await githubGraphql<{
+      enablePullRequestAutoMerge: {
+        pullRequest: { id: string; number: number } | null;
+      } | null;
+    }>(options.token, mutation, { pullRequestId: options.pullRequestId });
+    return 'auto-merge-enabled';
+  } catch (error: unknown) {
+    const message: string = error instanceof Error ? error.message : String(error);
+    if (!message.includes('Pull request is in clean status')) {
+      throw error;
+    }
+  }
+
+  const mergeMutation =
+    'mutation($pullRequestId:ID!){ mergePullRequest(input:{pullRequestId:$pullRequestId, mergeMethod:SQUASH}) { pullRequest { id number merged } } }';
+
   await githubGraphql<{
-    enablePullRequestAutoMerge: {
-      pullRequest: { id: string; number: number } | null;
+    mergePullRequest: {
+      pullRequest: { id: string; number: number; merged: boolean } | null;
     } | null;
-  }>(options.token, mutation, { pullRequestId: options.pullRequestId });
+  }>(options.token, mergeMutation, { pullRequestId: options.pullRequestId });
+
+  return 'merged';
 }
 
 export function deriveTransitionFromGithubWebhook(options: {

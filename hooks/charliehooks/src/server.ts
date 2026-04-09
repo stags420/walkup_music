@@ -234,18 +234,21 @@ function loadLinearFlowInstructions(): string | undefined {
 
   loadedLinearFlowInstructions = true;
 
-  const filePath: string = path.join(
-    process.cwd(),
-    '.charlie',
-    'instructions',
-    'LINEAR_FLOW.md',
-  );
+  const configuredPathRaw: string | undefined = process.env.CHARLIEHOOKS_LINEAR_FLOW_PATH;
+  const configuredPath: string | undefined = configuredPathRaw?.trim();
+
+  const filePath: string = configuredPath && configuredPath.length > 0
+    ? configuredPath
+    : path.join(process.cwd(), '.charlie', 'instructions', 'LINEAR_FLOW.md');
 
   try {
     const contents: string = readFileSync(filePath, 'utf8').trim();
     cachedLinearFlowInstructions = contents.length > 0 ? contents : undefined;
     return cachedLinearFlowInstructions;
-  } catch {
+  } catch (error: unknown) {
+    console.warn(
+      `Could not load Linear workflow instructions from ${filePath}: ${String(error)}`,
+    );
     cachedLinearFlowInstructions = undefined;
     return cachedLinearFlowInstructions;
   }
